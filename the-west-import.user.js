@@ -69,41 +69,81 @@ const CALC_URL = "https://exsmczmra.github.io/the-west-kalkulator-inventorymanag
         return out;
     }
 
+    const POS_KEY = "mk-import-pos";
+
     function addButton() {
         if (document.getElementById("mk-import-btn")) return;
         const b = document.createElement("div");
         b.id = "mk-import-btn";
-        b.textContent = "📦 Kalkulátor";
+        b.textContent = "📦";
         b.title = "Raktárkészlet küldése a mesterség-kalkulátorba";
+
+        let pos = { right: 2, top: 300 };
+        try {
+            const saved = JSON.parse(localStorage.getItem(POS_KEY) || "null");
+            if (saved && typeof saved.top === "number") pos = saved;
+        } catch (e) { /* marad az alapérték */ }
+
         b.style.cssText = [
-            "position:fixed", "left:10px", "bottom:10px", "z-index:99999",
-            "background:#2f261d", "color:#e0a844", "border:1px solid #e0a844",
-            "border-radius:6px", "padding:6px 12px", "cursor:pointer",
-            "font:600 13px/1.2 Arial,sans-serif", "user-select:none",
-            "box-shadow:0 2px 6px rgba(0,0,0,.5)"
+            "position:fixed", "z-index:99999",
+            "right:" + pos.right + "px", "top:" + pos.top + "px",
+            "width:30px", "height:30px", "line-height:30px", "text-align:center",
+            "background:#2f261d", "border:1px solid #e0a844", "border-radius:5px",
+            "cursor:pointer", "font-size:16px", "user-select:none",
+            "box-shadow:0 1px 4px rgba(0,0,0,.6)"
         ].join(";");
         b.onmouseover = () => b.style.background = "#3d3125";
         b.onmouseout = () => b.style.background = "#2f261d";
 
-        b.onclick = () => {
-            const data = readInventory();
-            if (!data.length) {
-                flash(b, "Üres raktár?");
-                return;
+        /* húzással áthelyezhető; a rövid kattintás marad kattintás */
+        let dragging = false, moved = false, startY = 0, startX = 0, baseTop = 0, baseRight = 0;
+        b.addEventListener("mousedown", e => {
+            dragging = true; moved = false;
+            startY = e.clientY; startX = e.clientX;
+            baseTop = parseInt(b.style.top) || 0;
+            baseRight = parseInt(b.style.right) || 0;
+            e.preventDefault();
+        });
+        document.addEventListener("mousemove", e => {
+            if (!dragging) return;
+            const dy = e.clientY - startY, dx = e.clientX - startX;
+            if (Math.abs(dy) > 3 || Math.abs(dx) > 3) moved = true;
+            b.style.top = Math.max(0, baseTop + dy) + "px";
+            b.style.right = Math.max(0, baseRight - dx) + "px";
+        });
+        document.addEventListener("mouseup", () => {
+            if (!dragging) return;
+            dragging = false;
+            if (moved) {
+                try {
+                    localStorage.setItem(POS_KEY, JSON.stringify({
+                        top: parseInt(b.style.top) || 0,
+                        right: parseInt(b.style.right) || 0
+                    }));
+                } catch (e) { /* nem baj */ }
             }
-            const payload = data.join(",");
-            try { GM_setClipboard(payload); } catch (e) { /* nem baj, az URL úgyis viszi */ }
+        });
 
-            const url = CALC_URL.replace(/\/+$/, "/") + "#imp=" + payload;
-            try {
-                GM_openInTab(url, { active: true, insert: true });
-            } catch (e) {
-                window.open(url, "_blank");
-            }
-            flash(b, "✓ " + data.length + " tétel");
-        };
+        b.addEventListener("click", () => {
+            if (moved) { moved = false; return; }   /* húzás volt, nem kattintás */
+            sendInventory(b);
+        });
 
         document.body.appendChild(b);
+    }
+
+    function sendInventory(b) {
+        const data = readInventory();
+        if (!data.length) { flash(b, "?"); return; }
+        const payload = data.join(",");
+        try { GM_setClipboard(payload); } catch (e) { /* az URL úgyis viszi */ }
+        const url = CALC_URL.replace(/\/+$/, "/") + "#imp=" + payload;
+        try {
+            GM_openInTab(url, { active: true, insert: true });
+        } catch (e) {
+            window.open(url, "_blank");
+        }
+        flash(b, "✓");
     }
 
     function flash(el, txt) {
