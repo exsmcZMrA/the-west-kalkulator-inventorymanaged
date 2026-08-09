@@ -25,9 +25,10 @@
 // ==/UserScript==
 
 /* =======================================================================
-   BEÁLLÍTÁS — ide írd be a saját kalkulátorod címét, záró perjellel!
+   A kalkulátor címe. Csak akkor kell hozzányúlni, ha a repó neve vagy a
+   GitHub Pages beállítása változik.
    ======================================================================= */
-const CALC_URL = "https://FELHASZNALONEV.github.io/REPO-NEVE/";
+const CALC_URL = "https://exsmczmra.github.io/the-west-kalkulator-inventorymanaged/";
 
 (function () {
     "use strict";
@@ -93,10 +94,6 @@ const CALC_URL = "https://FELHASZNALONEV.github.io/REPO-NEVE/";
             const payload = data.join(",");
             try { GM_setClipboard(payload); } catch (e) { /* nem baj, az URL úgyis viszi */ }
 
-            if (CALC_URL.indexOf("FELHASZNALONEV") !== -1) {
-                alert("Előbb írd be a szkript elejére a kalkulátorod címét (CALC_URL).");
-                return;
-            }
             const url = CALC_URL.replace(/\/+$/, "/") + "#imp=" + payload;
             try {
                 GM_openInTab(url, { active: true, insert: true });
