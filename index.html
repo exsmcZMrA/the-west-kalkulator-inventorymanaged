@@ -319,7 +319,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
   <div style="border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:12px">
     <b style="font-size:14.5px">Egy kattintással, a játékból</b>
     <p style="margin:6px 0 8px">Húzd ezt a gombot a könyvjelzősávodra, majd a <b>futó játékablakban</b> kattints rá.
-    A raktárad azonnal átkerül ide, beillesztés nélkül.</p>
+    A raktárad a vágólapra kerül — utána itt elég a <b>Beolvasás vágólapról</b> gomb.</p>
     <a id="bmLink" href="#" style="display:inline-block;background:var(--raised);border:1px solid var(--brass);
        color:var(--brass);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px"
        onclick="return false">📦 Raktár → kalkulátor</a>
@@ -332,6 +332,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
   </div>
   <div id="impPreview"></div>
   <div class="drow">
+    <button id="impPaste">Beolvasás vágólapról</button>
     <button id="impCheck">Ellenőrzés</button>
     <button id="impApply" disabled>Beolvasás</button>
     <button id="impClose">Bezárás</button>
@@ -1037,8 +1038,9 @@ function buildBookmarklet(){
     "var B=W.Bag;if(!B||!B.getItemCount){alert('Ezt a gombot a futó The West játékablakban kell megnyomni.');return}" +
     "var I=[" + ids.join(",") + "],o=[];for(var j=0;j<I.length;j++){var c=0;try{c=B.getItemCount(I[j]*1000)||0}catch(e){}if(c>0)o.push(I[j]+':'+c)}" +
     "if(!o.length){alert('Nem talaltam egyetlen ismert tetelt sem a raktarban.');return}" +
-    "var u='" + target + "#imp='+o.join(',');var w=window.open(u,'_blank');" +
-    "if(!w){prompt('A megnyitas le lett tiltva. Masold ki ezt a cimet:',u)}})()";
+    "var d=o.join(',');var m='Kimasolva: '+o.length+' tetel. Valts at a kalkulator fulere, Raktar > Importalas > Beolvasas vagolaprol.';" +
+    "try{navigator.clipboard.writeText(d).then(function(){alert(m)},function(){prompt('Masold ki ezt:',d)})}" +
+    "catch(e){prompt('Masold ki ezt:',d)}})()";
   $("bmLink").setAttribute("href", code);
 }
 function importFromHash(){
@@ -1109,6 +1111,18 @@ $("openImp").onclick = () => {
 };
 $("impClose").onclick = () => $("impDlg").close();
 $("impCheck").onclick = renderImportPreview;
+$("impPaste").onclick = async () => {
+  try{
+    const t = await navigator.clipboard.readText();
+    if(!t.trim()){ $("impMsg").className = "msg err"; $("impMsg").textContent = "A vágólap üres."; return; }
+    $("impText").value = t;
+    renderImportPreview();
+    $("impMsg").className = "msg"; $("impMsg").textContent = "Vágólapról beolvasva — ellenőrizd, majd Beolvasás.";
+  }catch(e){
+    $("impMsg").className = "msg err";
+    $("impMsg").textContent = "A böngésző nem engedte a vágólapot — illeszd be kézzel (Ctrl+V).";
+  }
+};
 $("impText").oninput = () => { $("impApply").disabled = true; $("impMsg").textContent = ""; };
 $("impApply").onclick = () => {
   const found = window.__imp || {};
