@@ -132,6 +132,11 @@ select.done-btn:hover{border-color:var(--brass);color:var(--brass)}
 .done-btn:hover[disabled]{border-color:var(--line);color:var(--dim)}
 .lock{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--brass);border:1px solid var(--brass);border-radius:20px;padding:2px 8px;opacity:.85}
+.excl{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:13px;color:var(--dim);cursor:pointer}
+.excl input{width:auto;cursor:pointer}
+.texcl{display:flex;align-items:center;gap:5px;font-family:"Space Mono",monospace;font-size:10px;
+  color:var(--dim);margin-top:3px;cursor:pointer;font-weight:400}
+.texcl input{width:auto;margin:0;cursor:pointer}
 .addbtn{background:none;border:0;color:var(--faint);cursor:pointer;font-size:15px;padding:0 4px;line-height:1}
 .addbtn:hover{color:var(--brass)}
 .needmain{display:flex;align-items:center;gap:10px;min-width:0}
@@ -303,6 +308,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
             <input id="qty" value="1" inputmode="numeric" aria-label="Darabszám">
             <button id="qtyPlus" aria-label="Több">+</button>
           </div>
+          <label class="excl"><input type="checkbox" id="excl" checked><span id="exclTxt"></span></label>
         </div>
         <div id="orderMulti" hidden></div>
       </div>
@@ -1295,8 +1301,14 @@ function chain(rootIds){
   return [...depth.entries()].sort((a,b) => a[1] - b[1]).map(e => e[0]);
 }
 /* targets: [{i, q}] — egyszerre több végtermék is tervezhető */
-function compute(targets){
+/* a célként megjelölt termékek saját készlete alapból nem számít bele */
+function planPool(ts){
   const pool = Object.assign({}, stock);
+  ts.forEach(t => { if(t.x !== false) delete pool[t.i]; });
+  return pool;
+}
+function compute(targets){
+  const pool = planPool(targets);
   const need = {};
   targets.forEach(t => { need[t.i] = (need[t.i] || 0) + t.q; });
   const base = [], steps = [], byId = {};
@@ -1326,14 +1338,15 @@ function targets(){
   return sel.targets;
 }
 function setTargets(list){
-  sel.targets = list.filter(t => recipeMap.has(t.i) && t.q > 0);
+  sel.targets = list.filter(t => recipeMap.has(t.i) && t.q >= 0)
+                    .map(t => ({ i:t.i, q:t.q, x:t.x !== false }));
   if(sel.targets.length){ sel.recipe = sel.targets[0].i; sel.qty = sel.targets[0].q; }
 }
 function addTarget(id){
   planDirty();
   const t = sel.targets.find(x => x.i === id);
   if(t) t.q++;
-  else sel.targets.push({ i:id, q:1 });
+  else sel.targets.push({ i:id, q:1, x:true });
   sel.recipe = id;
   renderRecipes(); renderPlan(); save();
 }
@@ -1413,11 +1426,18 @@ function renderPlan(){
     $("orderMeta").innerHTML = `${profLabel(r.p)} · ${r.l}` +
       (r.t ? ` · <span style="color:var(--brass)">${lockLabel(r.t)}</span>` : "");
     $("qty").value = ts[0].q;
+    const have = stock[r.i] || 0;
+    $("excl").checked = ts[0].x !== false;
+    $("exclTxt").textContent = have
+      ? `A raktáradban lévő ${have} db nem számít bele`
+      : "A meglévő készlet nem számít bele";
   }else{
     $("orderMulti").innerHTML = ts.map(t => {
       const r = recipeMap.get(t.i);
       return `<div class="trow">${ico(t.i,"lg")}
-        <div class="tname">${r.n}<small>${profLabel(r.p)} · ${r.l}</small></div>
+        <div class="tname">${r.n}<small>${profLabel(r.p)} · ${r.l}</small>
+          <label class="texcl"><input type="checkbox" data-tx="${t.i}" ${t.x !== false ? "checked" : ""}>
+            meglévő ${stock[t.i] || 0} db nem számít</label></div>
         <div class="miniset"><button data-tdec="${t.i}">−</button>
           <input data-tq="${t.i}" inputmode="numeric" value="${t.q}" aria-label="${r.n} darabszám">
           <button data-tinc="${t.i}">+</button></div>
@@ -1433,6 +1453,10 @@ function renderPlan(){
       const t = sel.targets.find(x => x.i === b2.dataset.tinc); if(t){ planDirty(); t.q++; renderPlan(); save(); } });
     $("orderMulti").querySelectorAll("[data-tdec]").forEach(b2 => b2.onclick = () => {
       const t = sel.targets.find(x => x.i === b2.dataset.tdec); if(t && t.q > 1){ planDirty(); t.q--; renderPlan(); save(); } });
+    $("orderMulti").querySelectorAll("[data-tx]").forEach(cb => cb.onchange = () => {
+      const t = sel.targets.find(x => x.i === cb.dataset.tx);
+      if(t){ t.x = cb.checked; renderPlan(); save(); }
+    });
     $("orderMulti").querySelectorAll("[data-tdel]").forEach(b2 => b2.onclick = () => {
       planDirty();
       setTargets(sel.targets.filter(x => x.i !== b2.dataset.tdel));
@@ -1481,8 +1505,9 @@ function treeHTML(node, root){
     ${kids ? `<ul>${node.kids.map(k => treeHTML(k)).join("")}</ul>` : ""}</li>`;
 }
 function renderTree(){
-  const pool = Object.assign({}, stock);
-  const forest = targets().map(t => buildTree(t.i, t.q, [], pool));
+  const ts = targets();
+  const pool = planPool(ts);
+  const forest = ts.map(t => buildTree(t.i, t.q, [], pool));
   $("steps").className = "tree";
   $("steps").innerHTML = `<div class="treebar">
       <button data-tb="open">Mind kinyit</button><button data-tb="close">Mind bezár</button></div>` +
@@ -1586,6 +1611,14 @@ function logCraft(id){
     if(left > 0) stock[gid] = left; else delete stock[gid];
   });
   stock[id] = (stock[id] || 0) + 1;
+  const t = sel.targets.find(x => x.i === id);
+  if(t && t.x !== false){
+    t.q = Math.max(0, t.q - 1);
+    if(t.q === 0 && sel.targets.length > 1)
+      setTargets(sel.targets.filter(x => x.i !== id));
+    else if(t.q === 0)
+      flashSaved(`${r.n}: a terv elkészült`);
+  }
   renderPlan(); renderRecipes(); save();
   flashSaved(`${r.n} legyártva`);
 }
@@ -1870,9 +1903,17 @@ $("lvl").oninput = () => {
 };
 const setQty = v => {
   planDirty();
-  sel.qty = Math.min(999, Math.max(1, v || 1));
+  sel.qty = Math.min(999, Math.max(0, isNaN(v) ? 1 : v));
   if(sel.targets.length === 1) sel.targets[0].q = sel.qty;
   renderPlan(); save();
+};
+$("excl").onchange = () => {
+  const ts = targets();
+  if(ts.length === 1){
+    if(!sel.targets.length) setTargets([{ i:sel.recipe, q:sel.qty }]);
+    sel.targets[0].x = $("excl").checked;
+    renderPlan(); save();
+  }
 };
 $("qtyMinus").onclick = () => setQty(sel.qty - 1);
 $("qtyPlus").onclick  = () => setQty(sel.qty + 1);
