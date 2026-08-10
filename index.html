@@ -110,6 +110,22 @@ button,input{font-family:inherit;color:inherit;font-size:inherit}
 .ico.xl{width:38px;height:38px}
 html[data-icons="0"] .ico{display:none}
 .nmwrap{display:flex;align-items:center;gap:8px;min-width:0}
+.trow{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;
+  padding:7px 0;border-bottom:1px dotted var(--line)}
+.trow:last-child{border-bottom:0}
+.tname{font-size:15.5px;font-weight:600;line-height:1.2;min-width:0}
+.tname small{display:block;font-family:"Space Mono",monospace;font-size:10px;
+  font-weight:400;color:var(--dim)}
+.trow .miniset{margin:0}
+.done-btn{background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:5px;
+  padding:4px 10px;font-size:12px;cursor:pointer;margin-left:8px;white-space:nowrap}
+.done-btn:hover{border-color:var(--green);color:var(--green)}
+.done-btn[disabled]{opacity:.35;cursor:not-allowed}
+.done-btn:hover[disabled]{border-color:var(--line);color:var(--dim)}
+.lock{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--brass);border:1px solid var(--brass);border-radius:20px;padding:2px 8px;opacity:.85}
+.addbtn{background:none;border:0;color:var(--faint);cursor:pointer;font-size:15px;padding:0 4px;line-height:1}
+.addbtn:hover{color:var(--brass)}
 .needmain{display:flex;align-items:center;gap:10px;min-width:0}
 .step-title{font-size:16.5px;font-weight:600}
 .step-count{font-family:"Space Mono",monospace;font-size:12.5px;color:var(--brass);margin-left:auto}
@@ -264,17 +280,20 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
   <main class="col">
     <p class="eyebrow">Munkalap</p>
     <div class="order">
-      <div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <img id="orderIco" class="ico xl" alt="" hidden>
-          <h1 id="orderName">—</h1>
+      <div style="min-width:0">
+        <div id="orderSingle">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img id="orderIco" class="ico xl" alt="" hidden>
+            <h1 id="orderName">—</h1>
+          </div>
+          <p class="meta" id="orderMeta"></p>
+          <div class="stepper">
+            <button id="qtyMinus" aria-label="Kevesebb">−</button>
+            <input id="qty" value="1" inputmode="numeric" aria-label="Darabszám">
+            <button id="qtyPlus" aria-label="Több">+</button>
+          </div>
         </div>
-        <p class="meta" id="orderMeta"></p>
-        <div class="stepper">
-          <button id="qtyMinus" aria-label="Kevesebb">−</button>
-          <input id="qty" value="1" inputmode="numeric" aria-label="Darabszám">
-          <button id="qtyPlus" aria-label="Több">+</button>
-        </div>
+        <div id="orderMulti" hidden></div>
       </div>
       <div class="ring">
         <svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true">
@@ -286,10 +305,13 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
       </div>
     </div>
 
-    <div class="seg" role="tablist" id="seg">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="seg" role="tablist" id="seg">
       <button role="tab" data-mode="tree" aria-selected="true">Robbantott ábra</button>
       <button role="tab" data-mode="all" aria-selected="false">Lépéskártyák</button>
       <button role="tab" data-mode="raw" aria-selected="false">Csak alapanyag</button>
+      </div>
+      <button class="done-btn" id="share" title="Link másolása ehhez a tervhez">🔗 Terv megosztása</button>
     </div>
 
     <ul class="steps" id="steps"></ul>
@@ -930,10 +952,10 @@ const RECIPES = [
 {i:"54824000",n:"Lapos kenyér",p:1,l:"1/?/1",g:[["745000",4],["766000",7],["722000",2],["1859000",2]]},
 {i:"1942000",n:"Paradicsomszósz",p:1,l:"10/20/20",g:[["1941000",1]]},
 {i:"1943000",n:"Sült bab",p:1,l:"20/40/40",g:[["1942000",1],["746000",1]]},
-{i:"53340000",n:"15. születésnapi torta",p:[1,2,3,4],l:"50/?/150",g:[["53336000",1],["53337000",1],["53338000",1],["53339000",1]]},
+{i:"53340000",t:604800,n:"15. születésnapi torta",p:[1,2,3,4],l:"50/?/150",g:[["53336000",1],["53337000",1],["53338000",1],["53339000",1]]},
 {i:"52504000",n:"Desszert dekoráció",p:1,l:"50/100/150",g:[["792000",1],["766000",1],["1708000",2],["703000",4],["748000",3]]},
 {i:"1864000",n:"Lekvár",p:1,l:"50/100/100",g:[["1811000",2],["1855000",1],["703000",2]]},
-{i:"52518000",n:"Pohárdesszert",p:[1,2,3,4],l:"50/100/150",g:[["52499000",1],["52505000",1],["52504000",1],["52501000",1],["52500000",1]]},
+{i:"52518000",t:86400,n:"Pohárdesszert",p:[1,2,3,4],l:"50/100/150",g:[["52499000",1],["52505000",1],["52504000",1],["52501000",1],["52500000",1]]},
 {i:"1863000",n:"Szalonnás bab",p:1,l:"50/100/100",g:[["746000",1],["700000",1],["1855000",1],["1859000",1]]},
 {i:"53336000",n:"Tortalap",p:1,l:"50/?/150",g:[["766000",6],["745000",3],["703000",2],["792000",1]]},
 {i:"52029000",n:"Vaj",p:1,l:"50/100/150",g:[["2432000",1]]},
@@ -964,18 +986,18 @@ const RECIPES = [
 {i:"2737000",n:"Méz",p:1,l:"550/575/600",g:[["2735000",1],["1835000",1]]},
 {i:"1982000",n:"Oldalas",p:1,l:"550/575/600",g:[["710000",4],["1877000",4],["1855000",4]]},
 {i:"2001000",n:"A legtüzesebb chili a vadnyugaton",p:1,l:"600/625/650",g:[["2000000",1],["1999000",4],["1874000",7],["721000",5]]},
-{i:"1999000",n:"Babkonzerv",p:1,l:"600/625/650",g:[["746000",7],["1902000",3],["716000",12],["721000",12],["747000",5]]},
+{i:"1999000",t:604800,n:"Babkonzerv",p:1,l:"600/625/650",g:[["746000",7],["1902000",3],["716000",12],["721000",12],["747000",5]]},
 {i:"2738000",n:"Mézbor",p:1,l:"600/650/700",g:[["2737000",2],["1856000",1],["2432000",2],["1862000",1]]},
-{i:"51581000",n:"Castello sajt",p:1,l:"650/700/750",g:[["2432000",6],["1708000",6],["2737000",2],["2447000",1]]},
-{i:"52503000",n:"Francia reggeli",p:1,l:"700/800/850",g:[["2162000",4],["2450000",2],["1811000",4],["745000",4]]},
+{i:"51581000",t:345600,n:"Castello sajt",p:1,l:"650/700/750",g:[["2432000",6],["1708000",6],["2737000",2],["2447000",1]]},
+{i:"52503000",t:345600,n:"Francia reggeli",p:1,l:"700/800/850",g:[["2162000",4],["2450000",2],["1811000",4],["745000",4]]},
 {i:"51576000",n:"Koktél",p:1,l:"700/725/750",g:[["2456000",10],["2447000",5],["1834000",4],["2458000",1],["2736000",1],["1888000",1]]},
 {i:"51580000",n:"Trágya",p:1,l:"700/750/800",g:[["1860000",10],["1809000",5],["1873000",1],["1943000",2],["1862000",1],["1866000",1],["797000",1]]},
 {i:"51578000",n:"Bányász burger",p:1,l:"750/775/800",g:[["1855000",10],["710000",1],["1980000",3],["1866000",2],["1877000",4]]},
-{i:"51579000",n:"Gyümölcskoktél",p:1,l:"750/788/825",g:[["791000",4],["2737000",2],["1811000",10],["1865000",2],["2432000",1]]},
+{i:"51579000",t:604800,n:"Gyümölcskoktél",p:1,l:"750/788/825",g:[["791000",4],["2737000",2],["1811000",10],["1865000",2],["2432000",1]]},
 {i:"51577000",n:"Egy csomag ízesített rágógumi",p:1,l:"775/800/825",g:[["793000",2],["1811000",2],["2517000",1],["1825000",1],["1808000",2],["791000",2]]},
-{i:"54599000",n:"A tábori szakács emlékei",p:1,l:"825/?/875",g:[["52943000",2],["52936000",1],["2458000",3],["2454000",4],["2450000",3]]},
+{i:"54599000",t:345600,n:"A tábori szakács emlékei",p:1,l:"825/?/875",g:[["52943000",2],["52936000",1],["2458000",3],["2454000",4],["2450000",3]]},
 {i:"54488000",n:"Fehér tál",p:1,l:"850/?/900",g:[["1865000",2],["52951000",5],["52969000",3],["52964000",2]]},
-{i:"54475000",n:"Téli élelmiszerkészletek",p:1,l:"875/?/925",g:[["52933000",2],["2447000",2],["1810000",2],["52967000",2],["52965000",4],["1859000",2]]},
+{i:"54475000",t:604800,n:"Téli élelmiszerkészletek",p:1,l:"875/?/925",g:[["52933000",2],["2447000",2],["1810000",2],["52967000",2],["52965000",4],["1859000",2]]},
 {i:"54476000",n:"Fűszeres kenyér",p:1,l:"900/?/950",g:[["52932000",3],["52933000",2],["52967000",2],["1902000",1],["52946000",2],["52950000",2],["1862000",2]]},
 {i:"54532000",n:"Forró ital",p:1,l:"925/?/975",g:[["52967000",2],["52941000",4],["2456000",4],["2447000",3],["1826000",5]]},
 {i:"54474000",n:"Szarvasgombás saláta",p:1,l:"950/?/1000",g:[["52961000",2],["52932000",3],["52933000",3],["52946000",4],["1942000",2]]},
@@ -1019,19 +1041,19 @@ const RECIPES = [
 {i:"1984000",n:"Hajnövesztő szer",p:2,l:"525/550/575",g:[["1893000",1],["1886000",1],["1824000",1]]},
 {i:"2731000",n:"Gyógyító baba",p:2,l:"550/575/600",g:[["1880000",1],["1897000",1],["1917000",2],["2730000",1]]},
 {i:"1985000",n:"Különleges likőr",p:2,l:"550/575/600",g:[["1889000",1],["1895000",1],["741000",1]]},
-{i:"2002000",n:"Izzó keverék",p:2,l:"600/625/650",g:[["1983000",1],["1876000",3],["1814000",2],["752000",3]]},
+{i:"2002000",t:604800,n:"Izzó keverék",p:2,l:"600/625/650",g:[["1983000",1],["1876000",3],["1814000",2],["752000",3]]},
 {i:"2004000",n:"Legendás ellenanyag",p:2,l:"600/625/650",g:[["2003000",1],["2002000",4],["721000",4],["1895000",5]]},
 {i:"2732000",n:"Szellemzene",p:2,l:"600/650/700",g:[["2436000",4],["1833000",1],["2525000",2],["1888000",1],["2730000",1]]},
 {i:"51599000",n:"Álomcsapda",p:2,l:"650/700/750",g:[["757000",10],["1813000",3],["712000",1],["1917000",1],["767000",1]]},
-{i:"51598000",n:"Behozatali adóigazolás",p:2,l:"700/750/800",g:[["2443000",3],["2458000",1],["1923000",1],["1896000",1],["2525000",1]]},
+{i:"51598000",t:345600,n:"Behozatali adóigazolás",p:2,l:"700/750/800",g:[["2443000",3],["2458000",1],["1923000",1],["1896000",1],["2525000",1]]},
 {i:"51594000",n:"Csodaszer",p:2,l:"700/725/750",g:[["2162000",10],["2450000",2],["2432000",2],["2731000",1],["1895000",1],["1889000",1]]},
-{i:"52506000",n:"Lázcsillapító",p:2,l:"700/800/850",g:[["2432000",1],["1826000",1],["2456000",2],["2447000",1]]},
+{i:"52506000",t:345600,n:"Lázcsillapító",p:2,l:"700/800/850",g:[["2432000",1],["1826000",1],["2456000",2],["2447000",1]]},
 {i:"51596000",n:"Erős sav és lúg",p:2,l:"750/775/800",g:[["1884000",10],["1894000",10],["1821000",10],["794000",4],["766000",10]]},
-{i:"51597000",n:"Orvosság kínok ellen",p:2,l:"750/788/825",g:[["1876000",2],["702000",5],["2730000",1],["751000",1]]},
+{i:"51597000",t:604800,n:"Orvosság kínok ellen",p:2,l:"750/788/825",g:[["1876000",2],["702000",5],["2730000",1],["751000",1]]},
 {i:"51595000",n:"Fém koponya",p:2,l:"775/800/825",g:[["2452000",3],["725000",5],["1827000",3],["1945000",5],["789000",4]]},
-{i:"54601000",n:"A sarlatán emlékei",p:2,l:"825/?/875",g:[["52958000",6],["52946000",3],["52932000",1],["2456000",2],["2432000",3],["733000",1]]},
+{i:"54601000",t:345600,n:"A sarlatán emlékei",p:2,l:"825/?/875",g:[["52958000",6],["52946000",3],["52932000",1],["2456000",2],["2432000",3],["733000",1]]},
 {i:"54490000",n:"Kocsmai itallap",p:2,l:"850/?/900",g:[["1886000",2],["52946000",5],["52950000",2],["778000",3]]},
-{i:"54480000",n:"Méhviasz gyertya",p:2,l:"875/?/925",g:[["52959000",15],["52965000",3],["52967000",2],["52972000",2],["1930000",2]]},
+{i:"54480000",t:604800,n:"Méhviasz gyertya",p:2,l:"875/?/925",g:[["52959000",15],["52965000",3],["52967000",2],["52972000",2],["1930000",2]]},
 {i:"54482000",n:"Tűzszerész készlet",p:2,l:"900/?/950",g:[["1986000",1],["1861000",2],["52974000",2],["52953000",3],["52956000",3],["52963000",2],["2456000",3]]},
 {i:"54534000",n:"Fűszerkeverék",p:2,l:"925/?/975",g:[["2447000",2],["52932000",2],["52961000",1],["52942000",1],["52939000",2]]},
 {i:"54481000",n:"Gyógyászati paróka",p:2,l:"950/?/1000",g:[["52947000",3],["1883000",2],["52959000",8],["52941000",2],["52936000",4]]},
@@ -1077,17 +1099,17 @@ const RECIPES = [
 {i:"2735000",n:"Mézprés",p:3,l:"550/575/600",g:[["711000",3],["790000",1],["1911000",2],["747000",1]]},
 {i:"2010000",n:"Arany zenedoboz",p:3,l:"600/625/650",g:[["2009000",1],["2008000",4],["728000",4],["767000",5]]},
 {i:"2734000",n:"Lámpás",p:3,l:"600/650/700",g:[["2733000",3],["1914000",2],["784000",1],["1899000",2]]},
-{i:"2008000",n:"Órásmester szerszámai",p:3,l:"600/625/650",g:[["765000",2],["1925000",2],["1913000",2],["739000",3],["1989000",1]]},
-{i:"51593000",n:"Lovassági szablya",p:3,l:"650/700/750",g:[["1913000",2],["1911000",1],["1855000",4]]},
+{i:"2008000",t:604800,n:"Órásmester szerszámai",p:3,l:"600/625/650",g:[["765000",2],["1925000",2],["1913000",2],["739000",3],["1989000",1]]},
+{i:"51593000",t:345600,n:"Lovassági szablya",p:3,l:"650/700/750",g:[["1913000",2],["1911000",1],["1855000",4]]},
 {i:"51592000",n:"Kereső",p:3,l:"700/750/800",g:[["2733000",1],["711000",2],["1880000",1],["1907000",2],["1902000",1],["2453000",1]]},
-{i:"52497000",n:"Mesteri sarkantyúk",p:3,l:"700/800/850",g:[["2433000",1],["2442000",1],["790000",2],["747000",1]]},
+{i:"52497000",t:345600,n:"Mesteri sarkantyúk",p:3,l:"700/800/850",g:[["2433000",1],["2442000",1],["790000",2],["747000",1]]},
 {i:"51588000",n:"Rejtett bomba",p:3,l:"700/725/750",g:[["1832000",5],["2437000",2],["2451000",5],["737000",10],["2739000",1],["1915000",1]]},
-{i:"51591000",n:"Edzett acél",p:3,l:"750/788/825",g:[["1904000",1],["1902000",3],["761000",2],["1856000",4],["1855000",5]]},
+{i:"51591000",t:604800,n:"Edzett acél",p:3,l:"750/788/825",g:[["1904000",1],["1902000",3],["761000",2],["1856000",4],["1855000",5]]},
 {i:"51590000",n:"Fejlesztett szerszámkészlet",p:3,l:"750/775/800",g:[["1989000",3],["1913000",3],["1907000",3],["756000",2],["2433000",4]]},
 {i:"51589000",n:"Szabó próbabábúja",p:3,l:"775/800/825",g:[["1905000",1],["712000",6],["715000",6],["2445000",3],["2435000",3]]},
-{i:"54598000",n:"A kovács emlékei",p:3,l:"825/?/875",g:[["2433000",3],["1827000",6],["1813000",2],["790000",3],["725000",1]]},
+{i:"54598000",t:345600,n:"A kovács emlékei",p:3,l:"825/?/875",g:[["2433000",3],["1827000",6],["1813000",2],["790000",3],["725000",1]]},
 {i:"54487000",n:"Kovács üllője",p:3,l:"850/?/900",g:[["1904000",2],["52967000",2],["52954000",5],["761000",3]]},
-{i:"54472000",n:"Állatok nagy atlasza",p:3,l:"875/?/925",g:[["52934000",2],["52971000",2],["52975000",15],["1885000",2],["1813000",2]]},
+{i:"54472000",t:604800,n:"Állatok nagy atlasza",p:3,l:"875/?/925",g:[["52934000",2],["52971000",2],["52975000",15],["1885000",2],["1813000",2]]},
 {i:"54473000",n:"Játék pisztoly",p:3,l:"900/?/950",g:[["52938000",2],["52970000",4],["52939000",2],["52935000",1],["1893000",1],["2446000",2],["1914000",2]]},
 {i:"54531000",n:"Vödör",p:3,l:"925/?/975",g:[["52954000",6],["52949000",2],["52937000",3],["2457000",2],["2433000",4]]},
 {i:"54471000",n:"Pót alkatrészek",p:3,l:"950/?/1000",g:[["52953000",4],["1907000",2],["52949000",3],["52958000",6],["52970000",4],["52964000",2]]},
@@ -1132,18 +1154,18 @@ const RECIPES = [
 {i:"1988000",n:"Tartós pisztolytáska",p:4,l:"550/575/600",g:[["1950000",1],["1921000",1],["1922000",1]]},
 {i:"2740000",n:"Utazókocsi",p:4,l:"550/575/600",g:[["1932000",2],["1931000",1],["2730000",1]]},
 {i:"2741000",n:"Lőszeröv",p:4,l:"600/650/700",g:[["1950000",2],["2433000",1],["2446000",1],["1986000",1]]},
-{i:"2005000",n:"Pehelykönnyű bőr",p:4,l:"600/625/650",g:[["1986000",1],["1894000",3],["1950000",5],["1922000",3]]},
+{i:"2005000",t:604800,n:"Pehelykönnyű bőr",p:4,l:"600/625/650",g:[["1986000",1],["1894000",3],["1950000",5],["1922000",3]]},
 {i:"2007000",n:"Pony expressz lószerszámok",p:4,l:"600/625/650",g:[["2006000",1],["2005000",4],["1930000",5],["724000",6]]},
-{i:"51587000",n:"Bőrkabát",p:4,l:"650/700/750",g:[["715000",2],["724000",2],["1824000",3],["1922000",4]]},
-{i:"52502000",n:"Bőr nyeregtáska",p:4,l:"700/800/850",g:[["2445000",1],["1824000",2],["2457000",1]]},
+{i:"51587000",t:345600,n:"Bőrkabát",p:4,l:"650/700/750",g:[["715000",2],["724000",2],["1824000",3],["1922000",4]]},
+{i:"52502000",t:345600,n:"Bőr nyeregtáska",p:4,l:"700/800/850",g:[["2445000",1],["1824000",2],["2457000",1]]},
 {i:"51582000",n:"Maria Roalstad postakocsija",p:4,l:"700/725/750",g:[["2163000",10],["779000",1],["2740000",1],["1921000",1],["1986000",1],["1907000",1]]},
 {i:"51586000",n:"Páncél a hátasnak",p:4,l:"700/750/800",g:[["1991000",1],["1929000",3]]},
 {i:"51584000",n:"Szövetdoboz",p:4,l:"750/775/800",g:[["1929000",3],["1922000",3],["1950000",3],["1824000",8],["2455000",10]]},
-{i:"51585000",n:"Öv szíjakkal",p:4,l:"750/788/825",g:[["1917000",3],["2005000",1],["1907000",1],["761000",1]]},
+{i:"51585000",t:604800,n:"Öv szíjakkal",p:4,l:"750/788/825",g:[["1917000",3],["2005000",1],["1907000",1],["761000",1]]},
 {i:"51583000",n:"A The West zenéje",p:4,l:"775/800/825",g:[["1813000",3],["2436000",5],["2739000",2],["1885000",3]]},
-{i:"54600000",n:"Az istállómester emlékei",p:4,l:"825/?/875",g:[["1820000",2],["2453000",2],["2455000",3],["2442000",3],["52934000",1]]},
+{i:"54600000",t:345600,n:"Az istállómester emlékei",p:4,l:"825/?/875",g:[["1820000",2],["2453000",2],["2455000",3],["2442000",3],["52934000",1]]},
 {i:"54489000",n:"Csomag vászonképpel",p:4,l:"850/?/900",g:[["1922000",2],["52964000",5],["52952000",3],["52936000",2]]},
-{i:"54477000",n:"Lófelszerelés",p:4,l:"875/?/925",g:[["52952000",2],["2457000",2],["52963000",5],["52945000",2],["52942000",2],["52935000",1]]},
+{i:"54477000",t:604800,n:"Lófelszerelés",p:4,l:"875/?/925",g:[["52952000",2],["2457000",2],["52963000",5],["52945000",2],["52942000",2],["52935000",1]]},
 {i:"54478000",n:"Kengyelbőr",p:4,l:"900/?/950",g:[["52937000",1],["52941000",2],["52935000",1],["1877000",1],["747000",1],["2453000",2],["1951000",2]]},
 {i:"54533000",n:"Fonal",p:4,l:"925/?/975",g:[["52975000",6],["52971000",2],["52958000",5],["2431000",2],["2445000",2]]},
 {i:"54479000",n:"Mobil sátor",p:4,l:"950/?/1000",g:[["52962000",5],["52966000",4],["52942000",3],["1917000",2],["2730000",2]]}
@@ -1154,7 +1176,7 @@ const $ = id => document.getElementById(id);
 const STORE = "twcalc.v2";
 let stock = {}, names = Object.assign({}, BASE_NAMES), levels = {};
 let recipeMap = new Map(), baseIds = [];
-let sel = { prof:1, recipe:null, qty:1, mode:"tree" };
+let sel = { prof:1, recipe:null, qty:1, mode:"tree", targets:[] };
 let plan = null, needOrder = [];
 
 DATA_INIT();
@@ -1192,7 +1214,7 @@ function save(){
       localStorage.setItem(STORE, JSON.stringify({
         stock, names:custom, levels, theme:document.documentElement.dataset.theme,
         icons:document.documentElement.dataset.icons === "0" ? 0 : 1,
-        recipe:sel.recipe, prof:sel.prof, qty:sel.qty, mode:sel.mode
+        recipe:sel.recipe, prof:sel.prof, qty:sel.qty, mode:sel.mode, targets:sel.targets
       }));
       const el = $("saved"); el.style.opacity = 1; setTimeout(() => el.style.opacity = 0, 1200);
     }catch(e){}
@@ -1210,25 +1232,29 @@ function load(){
     if(p.qty) sel.qty = p.qty;
     if(p.mode) sel.mode = p.mode === "todo" ? "all" : p.mode;
     if(p.recipe && RECIPES.some(r => r.i === p.recipe)) sel.recipe = p.recipe;
+    if(Array.isArray(p.targets)) setTargets(p.targets);
   }catch(e){}
 }
 
 /* ======================= számolás ======================= */
-function chain(rootId){
+function chain(rootIds){
   const depth = new Map();
-  (function walk(id, d, path){
+  const walk = (id, d, path) => {
     if(path.includes(id)) return;
     depth.set(id, Math.max(depth.get(id) ?? 0, d));
     const r = recipeMap.get(id);
     if(r) r.g.forEach(([gid]) => walk(gid, d + 1, [...path, id]));
-  })(rootId, 0, []);
+  };
+  rootIds.forEach(id => walk(id, 0, []));
   return [...depth.entries()].sort((a,b) => a[1] - b[1]).map(e => e[0]);
 }
-function compute(rootId, qty){
+/* targets: [{i, q}] — egyszerre több végtermék is tervezhető */
+function compute(targets){
   const pool = Object.assign({}, stock);
-  const need = { [rootId]: qty };
+  const need = {};
+  targets.forEach(t => { need[t.i] = (need[t.i] || 0) + t.q; });
   const base = [], steps = [], byId = {};
-  for(const id of chain(rootId)){
+  for(const id of chain(targets.map(t => t.i))){
     const n = need[id] || 0;
     const have = Math.min(pool[id] || 0, n);
     const rest = n - have;
@@ -1248,6 +1274,23 @@ function compute(rootId, qty){
   return { base, steps, byId, pct: totalNeed ? Math.round(covered / totalNeed * 100) : 100,
            missing: base.reduce((a,b) => a + b.rest, 0), crafts: steps.reduce((a,s) => a + s.batches, 0) };
 }
+const lockLabel = t => !t ? "" : (t >= 86400 ? (t/86400) + " napos zárolás" : (t/3600) + " órás zárolás");
+function targets(){
+  if(!sel.targets.length && sel.recipe) return [{ i:sel.recipe, q:sel.qty }];
+  return sel.targets;
+}
+function setTargets(list){
+  sel.targets = list.filter(t => recipeMap.has(t.i) && t.q > 0);
+  if(sel.targets.length){ sel.recipe = sel.targets[0].i; sel.qty = sel.targets[0].q; }
+}
+function addTarget(id){
+  const t = sel.targets.find(x => x.i === id);
+  if(t) t.q++;
+  else sel.targets.push({ i:id, q:1 });
+  sel.recipe = id;
+  renderRecipes(); renderPlan(); save();
+}
+
 const canCraftNow = r => r.g.every(([id, q]) => (stock[id] || 0) >= q);
 
 /* ======================= receptlista ======================= */
@@ -1261,13 +1304,21 @@ function renderRecipes(){
     const lv = levels[r.p];
     const locked = lv != null && lv !== "" && minLvl(r) > Number(lv);
     const state = locked ? "" : canCraftNow(r) ? "ready" : "close";
-    return `<li><button data-pick="${r.i}" class="${locked ? "locked" : ""}" ${r.i === sel.recipe ? 'aria-current="true"' : ""}>
-      <i class="dot ${state}"></i>
-      <span class="nmwrap">${ico(r.i)}<span class="rname">${r.n}${q ? `<small>${profLabel(r.p)}</small>` : ""}</span></span>
-      <span class="rlvl">${minLvl(r)}</span></button></li>`;
+    const inPlan = sel.targets.some(t => t.i === r.i);
+    return `<li style="display:grid;grid-template-columns:1fr auto;align-items:center">
+      <button data-pick="${r.i}" class="${locked ? "locked" : ""}" ${r.i === sel.recipe ? 'aria-current="true"' : ""}>
+        <i class="dot ${state}"></i>
+        <span class="nmwrap">${ico(r.i)}<span class="rname">${r.n}${q ? `<small>${profLabel(r.p)}</small>` : ""}</span></span>
+        <span class="rlvl">${minLvl(r)}</span></button>
+      <button class="addbtn" data-add="${r.i}" title="${inPlan ? "Még egy a tervbe" : "Hozzáadás a tervhez"}"
+        style="${inPlan ? "color:var(--brass)" : ""}">+</button></li>`;
   }).join("") || `<p class="empty">Nincs ilyen nevű recept.</p>`;
+  $("rlist").querySelectorAll("[data-add]").forEach(b => {
+    b.onclick = () => addTarget(b.dataset.add);
+  });
   $("rlist").querySelectorAll("[data-pick]").forEach(b => {
     b.onclick = () => { sel.recipe = b.dataset.pick;
+      setTargets([{ i:sel.recipe, q:1 }]);
       const ps = profIds(recipeMap.get(sel.recipe).p);
       if(!ps.includes(sel.prof)) sel.prof = ps[0];
       renderChips(); syncLevel(); renderRecipes(); renderPlan(); save(); };
@@ -1285,14 +1336,46 @@ function syncLevel(){ $("lvl").value = levels[sel.prof] ?? ""; }
 
 /* ======================= munkalap ======================= */
 function renderPlan(){
-  const r = recipeMap.get(sel.recipe);
-  if(!r) return;
-  plan = compute(sel.recipe, sel.qty);
-  $("orderName").textContent = r.n;
-  const oi = $("orderIco");
-  if(ITEM_IMG[r.i]){ oi.src = IMG_BASE + ITEM_IMG[r.i]; oi.hidden = false; } else oi.hidden = true;
-  $("orderMeta").textContent = `${profLabel(r.p)} · ${r.l}`;
-  $("qty").value = sel.qty;
+  const ts = targets();
+  if(!ts.length) return;
+  plan = compute(ts);
+  const multi = ts.length > 1;
+  $("orderSingle").hidden = multi;
+  $("orderMulti").hidden = !multi;
+
+  if(!multi){
+    const r = recipeMap.get(ts[0].i);
+    $("orderName").textContent = r.n;
+    const oi = $("orderIco");
+    if(ITEM_IMG[r.i]){ oi.src = IMG_BASE + ITEM_IMG[r.i]; oi.hidden = false; } else oi.hidden = true;
+    $("orderMeta").innerHTML = `${profLabel(r.p)} · ${r.l}` +
+      (r.t ? ` · <span style="color:var(--brass)">${lockLabel(r.t)}</span>` : "");
+    $("qty").value = ts[0].q;
+  }else{
+    $("orderMulti").innerHTML = ts.map(t => {
+      const r = recipeMap.get(t.i);
+      return `<div class="trow">${ico(t.i,"lg")}
+        <div class="tname">${r.n}<small>${profLabel(r.p)} · ${r.l}</small></div>
+        <div class="miniset"><button data-tdec="${t.i}">−</button>
+          <input data-tq="${t.i}" inputmode="numeric" value="${t.q}" aria-label="${r.n} darabszám">
+          <button data-tinc="${t.i}">+</button></div>
+        <button class="wipe" data-tdel="${t.i}" title="Eltávolítás">×</button></div>`;
+    }).join("");
+    $("orderMulti").querySelectorAll("[data-tq]").forEach(inp => {
+      inp.oninput = () => {
+        const t = sel.targets.find(x => x.i === inp.dataset.tq);
+        if(t){ t.q = Math.max(1, parseInt(inp.value) || 1); refreshNumbers(); save(); }
+      };
+    });
+    $("orderMulti").querySelectorAll("[data-tinc]").forEach(b2 => b2.onclick = () => {
+      const t = sel.targets.find(x => x.i === b2.dataset.tinc); if(t){ t.q++; renderPlan(); save(); } });
+    $("orderMulti").querySelectorAll("[data-tdec]").forEach(b2 => b2.onclick = () => {
+      const t = sel.targets.find(x => x.i === b2.dataset.tdec); if(t && t.q > 1){ t.q--; renderPlan(); save(); } });
+    $("orderMulti").querySelectorAll("[data-tdel]").forEach(b2 => b2.onclick = () => {
+      setTargets(sel.targets.filter(x => x.i !== b2.dataset.tdel));
+      renderRecipes(); renderPlan(); save(); });
+  }
+
   const arc = 2 * Math.PI * 38;
   $("ringArc").setAttribute("stroke-dashoffset", arc * (1 - plan.pct / 100));
   $("ringPct").textContent = plan.pct + "%";
@@ -1308,7 +1391,7 @@ function buildTree(id, need, path, pool){
   const node = { id, name:nameOf(id), need, have, rest, craft:!!r, kids:[] };
   if(!r || rest === 0) return node;
   if(path.includes(id)){ node.cycle = true; return node; }
-  node.p = r.p; node.lvl = r.l; node.batches = rest;
+  node.p = r.p; node.lvl = r.l; node.batches = rest; node.t = r.t;
   node.kids = r.g.map(([gid, q]) => buildTree(gid, q * rest, [...path, id], pool));
   return node;
 }
@@ -1320,6 +1403,7 @@ function treeHTML(node, root){
   let meta = "";
   if(node.cycle) meta = `<span class="mt">körkörös recept</span>`;
   else if(node.craft) meta = `<span class="mt">${profLabel(node.p)} · ${node.lvl}</span>` +
+    (node.t ? `<span class="lock">${lockLabel(node.t)}</span>` : "") +
     (covered ? `<span class="mt ok">raktárból fedezve</span>`
              : `<span class="mt">${node.have ? node.have + " raktárból · " : ""}${node.batches}× gyártás</span>`);
   else meta = node.rest === 0
@@ -1333,11 +1417,12 @@ function treeHTML(node, root){
     ${kids ? `<ul>${node.kids.map(k => treeHTML(k)).join("")}</ul>` : ""}</li>`;
 }
 function renderTree(){
-  const root = buildTree(sel.recipe, sel.qty, [], Object.assign({}, stock));
+  const pool = Object.assign({}, stock);
+  const forest = targets().map(t => buildTree(t.i, t.q, [], pool));
   $("steps").className = "tree";
   $("steps").innerHTML = `<div class="treebar">
       <button data-tb="open">Mind kinyit</button><button data-tb="close">Mind bezár</button></div>` +
-    treeHTML(root, true);
+    forest.map(n => treeHTML(n, true)).join("");
   $("steps").querySelectorAll(".toggle").forEach(t => {
     t.onclick = () => t.closest("li").classList.toggle("collapsed");
   });
@@ -1415,9 +1500,32 @@ function renderSteps(){
       <div class="step-head"><span class="step-n">${n}.</span>${ico(s.id,"lg")}
         <span class="step-title">${s.name}</span>
         <span class="who">${profLabel(s.p)}</span>
-        <span class="step-count">${s.batches ? s.batches + "× gyártás" : "raktárból"}</span></div>
+        ${rec && rec.t ? `<span class="lock">${lockLabel(rec.t)}</span>` : ""}
+        <span class="step-count">${s.batches ? s.batches + "× gyártás" : "raktárból"}</span>
+        ${s.batches ? `<button class="done-btn" data-done="${s.id}" ${canCraftNow(rec) ? "" : "disabled"}
+           title="${canCraftNow(rec) ? "Levonja a hozzávalókat és hozzáadja a terméket a raktárhoz"
+                                     : "Nincs meg minden hozzávaló a raktárban"}">✓ Legyártottam</button>` : ""}</div>
       <div class="ings">${ings}</div></li>`;
   }).join("") || `<li class="step done"><div class="step-head"><span class="step-title">Nincs mit gyártani — minden megvan a raktárban.</span></div></li>`;
+  ul.querySelectorAll("[data-done]").forEach(btn => {
+    btn.onclick = () => logCraft(btn.dataset.done);
+  });
+}
+
+/* egy gyártás lekönyvelése: hozzávalók le, termék fel */
+function logCraft(id){
+  const r = recipeMap.get(id);
+  if(!r || !canCraftNow(r)) return;
+  r.g.forEach(([gid, q]) => {
+    const left = (stock[gid] || 0) - q;
+    if(left > 0) stock[gid] = left; else delete stock[gid];
+  });
+  stock[id] = (stock[id] || 0) + 1;
+  renderPlan(); renderRecipes(); save();
+  const el = $("saved");
+  el.textContent = `${r.n} legyártva`;
+  el.style.opacity = 1;
+  setTimeout(() => { el.style.opacity = 0; el.textContent = "Mentve"; }, 2500);
 }
 function renderNeeds(){
   $("needCount").textContent = plan.base.length + " tétel";
@@ -1442,7 +1550,7 @@ function renderNeeds(){
   refreshNumbers();
 }
 function refreshNumbers(){
-  plan = compute(sel.recipe, sel.qty);
+  plan = compute(targets());
   const arc = 2 * Math.PI * 38;
   $("ringArc").setAttribute("stroke-dashoffset", arc * (1 - plan.pct / 100));
   $("ringPct").textContent = plan.pct + "%";
@@ -1640,6 +1748,30 @@ function buildBookmarklet(){
     "catch(e){prompt('Masold ki ezt:',d)}})()";
   $("bmLink").setAttribute("href", code);
 }
+$("share").onclick = async () => {
+  const code = targets().map(t => (Number(t.i)/1000) + "x" + t.q).join(",");
+  const url = location.origin + location.pathname + "#terv=" + code;
+  const ok = await copyText(url);
+  $("share").textContent = ok ? "✓ Link a vágólapon" : "Nem sikerült";
+  setTimeout(() => $("share").textContent = "🔗 Terv megosztása", 1800);
+};
+function planFromHash(){
+  const m = location.hash.match(/^#terv=(.+)$/);
+  if(!m) return false;
+  const list = [];
+  decodeURIComponent(m[1]).split(",").forEach(part => {
+    const x = part.match(/^(\d+)x(\d+)$/);
+    if(!x) return;
+    const id = x[1] + "000";
+    if(recipeMap.has(id)) list.push({ i:id, q:Math.min(999, Math.max(1, parseInt(x[2]))) });
+  });
+  history.replaceState(null, "", location.pathname);
+  if(!list.length) return false;
+  setTargets(list);
+  sel.prof = profIds(recipeMap.get(list[0].i).p)[0];
+  return true;
+}
+
 function importFromHash(){
   const m = location.hash.match(/^#imp=(.+)$/);
   if(!m) return;
@@ -1662,9 +1794,14 @@ $("lvl").oninput = () => {
   if(v === "") delete levels[sel.prof]; else levels[sel.prof] = Number(v);
   renderRecipes(); save();
 };
-$("qtyMinus").onclick = () => { sel.qty = Math.max(1, sel.qty - 1); renderPlan(); save(); };
-$("qtyPlus").onclick  = () => { sel.qty = Math.min(999, sel.qty + 1); renderPlan(); save(); };
-$("qty").oninput = () => { sel.qty = Math.min(999, Math.max(1, parseInt($("qty").value) || 1)); renderPlan(); save(); };
+const setQty = v => {
+  sel.qty = Math.min(999, Math.max(1, v || 1));
+  if(sel.targets.length === 1) sel.targets[0].q = sel.qty;
+  renderPlan(); save();
+};
+$("qtyMinus").onclick = () => setQty(sel.qty - 1);
+$("qtyPlus").onclick  = () => setQty(sel.qty + 1);
+$("qty").oninput = () => setQty(parseInt($("qty").value));
 $("seg").querySelectorAll("[data-mode]").forEach(b => {
   b.onclick = () => {
     sel.mode = b.dataset.mode;
@@ -1766,7 +1903,9 @@ $("dataDownload").onclick = () => {
 
 /* ======================= indulás ======================= */
 load();
-if(!sel.recipe) sel.recipe = RECIPES.find(r => r.p === sel.prof).i;
+const fromLink = planFromHash();
+if(!sel.recipe) sel.recipe = RECIPES.find(r => profIds(r.p).includes(sel.prof)).i;
+if(!sel.targets.length) setTargets([{ i:sel.recipe, q:sel.qty || 1 }]);
 $("theme").textContent = document.documentElement.dataset.theme === "light" ? "☀" : "☾";
 $("icons").style.opacity = document.documentElement.dataset.icons === "0" ? .45 : 1;
 $("seg").querySelectorAll("[data-mode]").forEach(x =>
