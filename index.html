@@ -260,6 +260,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <button role="tab" id="tabCalc" aria-selected="true">Számolás</button>
     <button role="tab" id="tabStock" aria-selected="false">Raktár</button>
   </div>
+  <button class="icon" id="undo" title="Utolsó raktárművelet visszavonása" aria-label="Visszavonás" style="opacity:.35">↶</button>
   <button class="icon" id="icons" title="Ikonok ki- és bekapcsolása" aria-label="Ikonok ki- és bekapcsolása">🖼</button>
   <button class="icon" id="theme" title="Világos / sötét mód" aria-label="Világos / sötét mód">☾</button>
 </div>
@@ -269,6 +270,8 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <p class="eyebrow">Recept <span id="recipeCount"></span></p>
     <input class="search" id="search" placeholder="Keresés név szerint…" aria-label="Recept keresése">
     <div class="chips" id="chips"></div>
+    <label class="lvl" style="margin-bottom:8px"><input type="checkbox" id="onlyReady" style="width:auto">
+      csak amit most tudok gyártani</label>
     <label class="lvl">Mesterségszintem <input type="number" id="lvl" min="0" step="1" placeholder="—"></label>
     <ul class="rlist" id="rlist"></ul>
     <p class="legend">
@@ -313,6 +316,12 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
       <button role="tab" data-mode="raw" aria-selected="false">Csak alapanyag</button>
       </div>
       <button class="done-btn" id="share" title="Link másolása ehhez a tervhez">🔗 Terv megosztása</button>
+      <select id="planSel" title="Mentett tervek"
+        style="width:auto;padding:5px 8px;font-size:13px;border-radius:5px;background:var(--bg)">
+        <option value="">Mentett tervek…</option>
+      </select>
+      <button class="done-btn" id="planSave" title="A mostani terv mentése névvel">💾 Mentés</button>
+      <button class="done-btn" id="planDel" title="A kiválasztott mentett terv törlése" hidden>Törlés</button>
     </div>
 
     <ul class="steps" id="steps"></ul>
@@ -342,6 +351,13 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
   Receptek és nevek: a játék saját adatából · A raktárad ebben a böngészőben marad meg.
   <button id="openData">Mentés fájlba vagy visszatöltés</button>
 </footer>
+
+<dialog id="useDlg">
+  <h3 id="useTitle">Hol használható?</h3>
+  <p id="useSub"></p>
+  <div id="useList" style="max-height:50vh;overflow:auto"></div>
+  <div class="drow"><button id="useClose">Bezárás</button></div>
+</dialog>
 
 <dialog id="impDlg">
   <h3>Raktár beolvasása</h3>
@@ -1215,7 +1231,7 @@ function save(){
       localStorage.setItem(STORE, JSON.stringify({
         stock, names:custom, levels, theme:document.documentElement.dataset.theme,
         icons:document.documentElement.dataset.icons === "0" ? 0 : 1,
-        recipe:sel.recipe, prof:sel.prof, qty:sel.qty, mode:sel.mode, targets:sel.targets
+        recipe:sel.recipe, prof:sel.prof, qty:sel.qty, mode:sel.mode, targets:sel.targets, plans
       }));
       const el = $("saved"); el.style.opacity = 1; setTimeout(() => el.style.opacity = 0, 1200);
     }catch(e){}
@@ -1234,7 +1250,37 @@ function load(){
     if(p.mode) sel.mode = p.mode === "todo" ? "all" : p.mode;
     if(p.recipe && RECIPES.some(r => r.i === p.recipe)) sel.recipe = p.recipe;
     if(Array.isArray(p.targets)) setTargets(p.targets);
+    if(Array.isArray(p.plans)) plans = p.plans.filter(x => x && x.name && Array.isArray(x.targets));
   }catch(e){}
+}
+
+/* ---- visszavonás: raktár-pillanatképek ---- */
+const undoStack = [];
+function snapshot(label){
+  undoStack.push({ stock:JSON.parse(JSON.stringify(stock)), label });
+  if(undoStack.length > 20) undoStack.shift();
+  refreshUndo();
+}
+function refreshUndo(){
+  const b = $("undo");
+  if(!b) return;
+  b.style.opacity = undoStack.length ? 1 : .35;
+  b.title = undoStack.length
+    ? `Visszavonás: ${undoStack[undoStack.length-1].label}`
+    : "Nincs mit visszavonni";
+}
+function undo(){
+  const prev = undoStack.pop();
+  if(!prev) return;
+  stock = prev.stock;
+  refreshUndo(); renderPlan(); renderRecipes(); save();
+  if(!$("stockView").hidden) renderStock();
+  flashSaved(`Visszavonva: ${prev.label}`);
+}
+function flashSaved(txt){
+  const el = $("saved");
+  el.textContent = txt; el.style.opacity = 1;
+  setTimeout(() => { el.style.opacity = 0; el.textContent = "Mentve"; }, 2500);
 }
 
 /* ======================= számolás ======================= */
@@ -1297,10 +1343,17 @@ const canCraftNow = r => r.g.every(([id, q]) => (stock[id] || 0) >= q);
 /* ======================= receptlista ======================= */
 function renderRecipes(){
   const q = $("search").value.trim().toLowerCase();
+  const ready = $("onlyReady").checked;
   const list = RECIPES
     .filter(r => q ? r.n.toLowerCase().includes(q) : profIds(r.p).includes(sel.prof))
+    .filter(r => !ready || canCraftNow(r))
     .sort((a,b) => minLvl(a) - minLvl(b) || a.n.localeCompare(b.n,"hu"));
   $("recipeCount").textContent = list.length + " db";
+  if(!list.length && ready){
+    $("recipeCount").textContent = "0 db";
+    $("rlist").innerHTML = `<p class="empty">Ebből a mesterségből most egyet sem tudsz legyártani a készletedből.</p>`;
+    return;
+  }
   $("rlist").innerHTML = list.map(r => {
     const lv = levels[r.p];
     const locked = lv != null && lv !== "" && minLvl(r) > Number(lv);
@@ -1517,16 +1570,14 @@ function renderSteps(){
 function logCraft(id){
   const r = recipeMap.get(id);
   if(!r || !canCraftNow(r)) return;
+  snapshot(`${r.n} legyártása`);
   r.g.forEach(([gid, q]) => {
     const left = (stock[gid] || 0) - q;
     if(left > 0) stock[gid] = left; else delete stock[gid];
   });
   stock[id] = (stock[id] || 0) + 1;
   renderPlan(); renderRecipes(); save();
-  const el = $("saved");
-  el.textContent = `${r.n} legyártva`;
-  el.style.opacity = 1;
-  setTimeout(() => { el.style.opacity = 0; el.textContent = "Mentve"; }, 2500);
+  flashSaved(`${r.n} legyártva`);
 }
 function renderNeeds(){
   $("needCount").textContent = plan.base.length + " tétel";
@@ -1617,7 +1668,8 @@ function renderStock(){
     list.sort((a,b) => a.name.localeCompare(b.name,"hu"));
     html += `<h3 class="whgroup"><span>${g}</span><span>${list.length} tétel</span></h3><ul class="whrows">` +
       list.map(it => `<li class="${stock[it.id] ? "owned" : ""}" data-wrow="${it.id}">
-        <span class="nmwrap">${ico(it.id)}<span class="nm">${it.name}${it.sub ? `<small>${it.sub}</small>` : ""}</span></span>
+        <span class="nmwrap" data-use-item="${it.id}" title="Mely receptekben szerepel?"
+          style="cursor:pointer">${ico(it.id)}<span class="nm">${it.name}${it.sub ? `<small>${it.sub}</small>` : ""}</span></span>
         <input data-wh="${it.id}" inputmode="numeric" value="${stock[it.id] || 0}" aria-label="${it.name} mennyiség">
         <button class="wipe" data-wipe="${it.id}" title="Nullázás">×</button></li>`).join("") + `</ul>`;
   });
@@ -1632,6 +1684,9 @@ function renderStock(){
       inp.closest("li").classList.toggle("owned", !!v);
       stockMeta(); save();
     };
+  });
+  $("stockGroups").querySelectorAll("[data-use-item]").forEach(el => {
+    el.onclick = () => showUses(el.dataset.useItem);
   });
   $("stockGroups").querySelectorAll("[data-wipe]").forEach(b => {
     b.onclick = () => { delete stock[b.dataset.wipe]; renderStock(); save(); };
@@ -1788,8 +1843,77 @@ function importFromHash(){
   setTimeout(() => { el.style.opacity = 0; el.textContent = "Mentve"; }, 4000);
 }
 
+/* ---- mentett tervek ---- */
+let plans = [];
+function renderPlanList(){
+  $("planSel").innerHTML = `<option value="">Mentett tervek…</option>` +
+    plans.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
+  $("planDel").hidden = true;
+}
+function loadPlan(i){
+  const p = plans[Number(i)];
+  if(!p) return;
+  setTargets(p.targets.map(t => ({ ...t })));
+  sel.prof = profIds(recipeMap.get(sel.targets[0].i).p)[0];
+  renderChips(); syncLevel(); renderRecipes(); renderPlan(); save();
+}
+$("planSave").onclick = () => {
+  const ts = targets();
+  if(!ts.length) return;
+  const def = ts.length === 1 ? recipeMap.get(ts[0].i).n : `${ts.length} termék`;
+  const name = (prompt("A terv neve:", def) || "").trim();
+  if(!name) return;
+  const at = plans.findIndex(p => p.name === name);
+  const entry = { name, targets:ts.map(t => ({ i:t.i, q:t.q })) };
+  if(at >= 0) plans[at] = entry; else plans.push(entry);
+  renderPlanList(); save();
+  flashSaved(`Terv mentve: ${name}`);
+};
+$("planSel").onchange = () => {
+  const i = $("planSel").value;
+  $("planDel").hidden = i === "";
+  if(i !== "") loadPlan(i);
+};
+$("planDel").onclick = () => {
+  const i = $("planSel").value;
+  if(i === "") return;
+  if(!confirm(`Törlöd ezt a mentett tervet: ${plans[Number(i)].name}?`)) return;
+  plans.splice(Number(i), 1);
+  renderPlanList(); save();
+};
+
+/* ---- mire jó egy alapanyag ---- */
+function showUses(id){
+  const uses = RECIPES.filter(r => r.g.some(([gid]) => gid === id))
+    .sort((a,b) => minLvl(a) - minLvl(b));
+  $("useTitle").innerHTML = `${ico(id,"lg")} ${nameOf(id)}`;
+  $("useSub").textContent = uses.length
+    ? `${uses.length} receptben szerepel. Kattints egyre, és megnyílik a munkalapon.`
+    : "Ez a tétel egyetlen receptben sem hozzávaló — végtermék.";
+  $("useList").innerHTML = uses.map(r => {
+    const q = r.g.find(([gid]) => gid === id)[1];
+    return `<button class="trow" data-use="${r.i}" style="width:100%;background:none;border:0;
+      border-bottom:1px dotted var(--line);cursor:pointer;text-align:left">
+      ${ico(r.i,"lg")}
+      <div class="tname">${r.n}<small>${profLabel(r.p)} · ${r.l}</small></div>
+      <div style="font-family:'Space Mono',monospace;font-size:13px;color:var(--brass)">${q} db</div>
+      <span></span></button>`;
+  }).join("");
+  $("useList").querySelectorAll("[data-use]").forEach(b => {
+    b.onclick = () => {
+      setTargets([{ i:b.dataset.use, q:1 }]);
+      sel.prof = profIds(recipeMap.get(b.dataset.use).p)[0];
+      $("useDlg").close(); showView(false);
+      renderChips(); syncLevel(); renderRecipes(); renderPlan(); save();
+    };
+  });
+  $("useDlg").showModal();
+}
+$("useClose").onclick = () => $("useDlg").close();
+
 /* ======================= vezérlők ======================= */
 $("search").oninput = renderRecipes;
+$("onlyReady").onchange = renderRecipes;
 $("lvl").oninput = () => {
   const v = $("lvl").value.trim();
   if(v === "") delete levels[sel.prof]; else levels[sel.prof] = Number(v);
@@ -1830,6 +1954,7 @@ $("stockSearch").oninput = renderStock;
 $("onlyOwned").onchange = renderStock;
 $("stockClear").onclick = () => {
   if(!confirm("Biztosan törlöd a teljes raktárkészletet?")) return;
+  snapshot("raktár nullázása");
   stock = {}; renderStock(); save();
 };
 $("icons").onclick = () => {
@@ -1838,6 +1963,7 @@ $("icons").onclick = () => {
   $("icons").style.opacity = on ? .45 : 1;
   save();
 };
+$("undo").onclick = undo;
 $("theme").onclick = () => {
   const dark = document.documentElement.dataset.theme !== "light";
   document.documentElement.dataset.theme = dark ? "light" : "dark";
@@ -1868,6 +1994,7 @@ $("impText").oninput = () => { $("impApply").disabled = true; $("impMsg").textCo
 $("impApply").onclick = () => {
   const found = window.__imp || {};
   const mode = document.querySelector('input[name=impMode]:checked').value;
+  snapshot("raktár importálása");
   if(mode === "replace") stock = {};
   Object.entries(found).forEach(([id, q]) => { stock[id] = (stock[id] || 0) + q; });
   renderStock(); save();
@@ -1909,6 +2036,7 @@ if(!sel.recipe) sel.recipe = RECIPES.find(r => profIds(r.p).includes(sel.prof)).
 if(!sel.targets.length) setTargets([{ i:sel.recipe, q:sel.qty || 1 }]);
 $("theme").textContent = document.documentElement.dataset.theme === "light" ? "☀" : "☾";
 $("icons").style.opacity = document.documentElement.dataset.icons === "0" ? .45 : 1;
+renderPlanList(); refreshUndo();
 $("seg").querySelectorAll("[data-mode]").forEach(x =>
   x.setAttribute("aria-selected", x.dataset.mode === sel.mode));
 renderChips(); syncLevel(); renderRecipes(); renderPlan();
