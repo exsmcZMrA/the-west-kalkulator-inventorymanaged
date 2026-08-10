@@ -28,7 +28,7 @@
    A kalkulátor címe. Csak akkor kell hozzányúlni, ha a repó neve vagy a
    GitHub Pages beállítása változik.
    ======================================================================= */
-const CALC_URL = "https://exsmczmra.github.io/the-west-kalkulator-inventorymanaged/";
+const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymanaged/";
 
 (function () {
     "use strict";
