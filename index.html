@@ -118,6 +118,13 @@ html[data-icons="0"] .ico{display:none}
 .tname small{display:block;font-family:"Space Mono",monospace;font-size:10px;
   font-weight:400;color:var(--dim)}
 .trow .miniset{margin:0}
+select.done-btn{-webkit-appearance:none;appearance:none;width:auto;
+  padding:4px 26px 4px 10px;font-family:inherit;line-height:1.35;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),
+                   linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 14px) 52%, calc(100% - 9px) 52%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+select.done-btn:hover{border-color:var(--brass);color:var(--brass)}
 .done-btn{background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:5px;
   padding:4px 10px;font-size:12px;cursor:pointer;margin-left:8px;white-space:nowrap}
 .done-btn:hover{border-color:var(--green);color:var(--green)}
@@ -316,11 +323,10 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
       <button role="tab" data-mode="raw" aria-selected="false">Csak alapanyag</button>
       </div>
       <button class="done-btn" id="share" title="Link másolása ehhez a tervhez">🔗 Terv megosztása</button>
-      <select id="planSel" title="Mentett tervek"
-        style="width:auto;padding:5px 8px;font-size:13px;border-radius:5px;background:var(--bg)">
-        <option value="">Mentett tervek…</option>
+      <select class="done-btn" id="planSel" title="Mentett tervek">
+        <option value="">🔖 Mentett tervek…</option>
       </select>
-      <button class="done-btn" id="planSave" title="A mostani terv mentése névvel">💾 Mentés</button>
+      <button class="done-btn" id="planSave" title="A mostani terv mentése névvel">🔖 Terv mentése</button>
       <button class="done-btn" id="planDel" title="A kiválasztott mentett terv törlése" hidden>Törlés</button>
     </div>
 
@@ -1338,6 +1344,14 @@ function addTarget(id){
   renderRecipes(); renderPlan(); save();
 }
 
+/* szint fölötti-e: ha bármelyik szakmájához megadott szint elég, akkor nem az */
+function overLevel(r){
+  const ps = profIds(r.p);
+  const given = ps.map(x => levels[x]).filter(v => v !== undefined && v !== "");
+  if(!given.length) return false;
+  return !given.some(v => minLvl(r) <= Number(v));
+}
+
 const canCraftNow = r => r.g.every(([id, q]) => (stock[id] || 0) >= q);
 
 /* ======================= receptlista ======================= */
@@ -1346,17 +1360,16 @@ function renderRecipes(){
   const ready = $("onlyReady").checked;
   const list = RECIPES
     .filter(r => q ? r.n.toLowerCase().includes(q) : profIds(r.p).includes(sel.prof))
-    .filter(r => !ready || canCraftNow(r))
+    .filter(r => !ready || (canCraftNow(r) && !overLevel(r)))
     .sort((a,b) => minLvl(a) - minLvl(b) || a.n.localeCompare(b.n,"hu"));
   $("recipeCount").textContent = list.length + " db";
   if(!list.length && ready){
     $("recipeCount").textContent = "0 db";
-    $("rlist").innerHTML = `<p class="empty">Ebből a mesterségből most egyet sem tudsz legyártani a készletedből.</p>`;
+    $("rlist").innerHTML = `<p class="empty">Ebből a mesterségből most egyet sem tudsz legyártani — vagy hiányzik hozzávaló, vagy magasabb szint kell.</p>`;
     return;
   }
   $("rlist").innerHTML = list.map(r => {
-    const lv = levels[r.p];
-    const locked = lv != null && lv !== "" && minLvl(r) > Number(lv);
+    const locked = overLevel(r);
     const state = locked ? "" : canCraftNow(r) ? "ready" : "close";
     const inPlan = sel.targets.some(t => t.i === r.i);
     return `<li style="display:grid;grid-template-columns:1fr auto;align-items:center">
@@ -1846,7 +1859,7 @@ function importFromHash(){
 /* ---- mentett tervek ---- */
 let plans = [];
 function renderPlanList(){
-  $("planSel").innerHTML = `<option value="">Mentett tervek…</option>` +
+  $("planSel").innerHTML = `<option value="">🔖 Mentett tervek…</option>` +
     plans.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
   $("planDel").hidden = true;
 }
