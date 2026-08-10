@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mesterség-kalkulátor — raktár import
 // @namespace    the-west-kalkulator
-// @version      1.0
+// @version      1.1
 // @description  Egy gomb a játékban, ami átküldi a raktárkészletet a mesterség-kalkulátorba.
 // @author       —
 // @match        https://*.the-west.hu/game.php*
