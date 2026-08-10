@@ -325,6 +325,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
       <button class="done-btn" id="share" title="Link másolása ehhez a tervhez">🔗 Terv megosztása</button>
       <select class="done-btn" id="planSel" title="Mentett tervek">
         <option value="" disabled>🔖 Mentett tervek…</option>
+        <option value="clear">🧹 Terv ürítése</option>
       </select>
       <button class="done-btn" id="planSave" title="A mostani terv mentése névvel">🔖 Terv mentése</button>
       <button class="done-btn" id="planDel" title="A kiválasztott mentett terv törlése" hidden>Törlés</button>
@@ -1862,7 +1863,7 @@ function importFromHash(){
 /* ---- mentett tervek ---- */
 let plans = [];
 function renderPlanList(){
-  $("planSel").innerHTML = `<option value="" disabled>🔖 Mentett tervek…</option>` +
+  $("planSel").innerHTML = `<option value="" disabled>🔖 Mentett tervek…</option><option value="clear">🧹 Terv ürítése</option>` +
     plans.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
   $("planDel").hidden = true;
 }
@@ -1890,9 +1891,20 @@ $("planSave").onclick = () => {
   flashSaved(`Terv mentve: ${name}`);
 };
 $("planSel").onchange = () => {
-  const i = $("planSel").value;
-  $("planDel").hidden = i === "";
-  if(i !== "") loadPlan(i);
+  const v = $("planSel").value;
+  if(v === "clear"){
+    if(sel.targets.length > 1 && !confirm(`Kiüríted a tervet? ${sel.targets.length} termék kerül le róla.`)){
+      $("planSel").value = ""; return;
+    }
+    const keep = sel.recipe || sel.targets[0]?.i || RECIPES[0].i;
+    setTargets([{ i:keep, q:1 }]);
+    $("planSel").value = ""; $("planDel").hidden = true;
+    renderRecipes(); renderPlan(); save();
+    flashSaved("Terv kiürítve");
+    return;
+  }
+  $("planDel").hidden = v === "";
+  if(v !== "") loadPlan(v);
 };
 $("planDel").onclick = () => {
   const i = $("planSel").value;
