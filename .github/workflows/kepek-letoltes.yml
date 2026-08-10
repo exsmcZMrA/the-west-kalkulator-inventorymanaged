@@ -1,3 +1,5 @@
+# Tárgyikonok letöltése és commitolása — a GitHub gépén fut, nem a tiéden.
+# Indítás: a repó "Actions" fülén, bal oldalt ez a munkafolyamat, majd "Run workflow".
 name: Tárgyikonok letöltése
 
 on:
@@ -7,31 +9,43 @@ permissions:
   contents: write
 
 jobs:
-  letoltes:
+  kepek:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Repó letöltése
+        uses: actions/checkout@v5
 
       - name: Képek letöltése
         run: |
+          set -u
+          base="https://westzz.innogamescdn.com/images/items/yield"
           mkdir -p kepek
-          uj=0
-          while read -r f; do
+          ok=0; skip=0; fail=0; hibas=""
+          while IFS= read -r f; do
             [ -z "$f" ] && continue
-            if [ -f "kepek/$f" ]; then continue; fi
-            if curl -sfL "https://westzz.innogamescdn.com/images/items/yield/$f" -o "kepek/$f"; then
-              uj=$((uj+1))
+            if [ -s "kepek/$f" ]; then
+              skip=$((skip+1)); continue
+            fi
+            if curl -fsSL --retry 3 --retry-delay 2 --max-time 30 \
+                 -o "kepek/$f" "$base/$f"; then
+              ok=$((ok+1))
             else
-              echo "nem sikerült: $f"
+              rm -f "kepek/$f"
+              fail=$((fail+1)); hibas="$hibas $f"
             fi
           done < kepek-lista.txt
-          echo "letöltve: $uj új kép"
-          ls kepek | wc -l
+          echo "Letöltve: $ok · Kihagyva: $skip · Sikertelen: $fail"
+          [ -n "$hibas" ] && echo "Nem sikerült:$hibas"
+          echo "Fájl a kepek/ mappában: $(ls -1 kepek | wc -l)"
 
-      - name: Commit
+      - name: Commitolás
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add kepek
-          git diff --staged --quiet || git commit -m "Tárgyikonok letöltése"
-          git push
+          if git diff --cached --quiet; then
+            echo "Nincs új kép, nincs mit commitolni."
+          else
+            git commit -m "Tárgyikonok letöltése"
+            git push
+          fi
