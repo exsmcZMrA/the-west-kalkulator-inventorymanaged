@@ -324,7 +324,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
       </div>
       <button class="done-btn" id="share" title="Link másolása ehhez a tervhez">🔗 Terv megosztása</button>
       <select class="done-btn" id="planSel" title="Mentett tervek">
-        <option value="">🔖 Mentett tervek…</option>
+        <option value="" disabled>🔖 Mentett tervek…</option>
       </select>
       <button class="done-btn" id="planSave" title="A mostani terv mentése névvel">🔖 Terv mentése</button>
       <button class="done-btn" id="planDel" title="A kiválasztott mentett terv törlése" hidden>Törlés</button>
@@ -1337,6 +1337,7 @@ function setTargets(list){
   if(sel.targets.length){ sel.recipe = sel.targets[0].i; sel.qty = sel.targets[0].q; }
 }
 function addTarget(id){
+  planDirty();
   const t = sel.targets.find(x => x.i === id);
   if(t) t.q++;
   else sel.targets.push({ i:id, q:1 });
@@ -1385,6 +1386,7 @@ function renderRecipes(){
   });
   $("rlist").querySelectorAll("[data-pick]").forEach(b => {
     b.onclick = () => { sel.recipe = b.dataset.pick;
+      planDirty();
       setTargets([{ i:sel.recipe, q:1 }]);
       const ps = profIds(recipeMap.get(sel.recipe).p);
       if(!ps.includes(sel.prof)) sel.prof = ps[0];
@@ -1431,14 +1433,15 @@ function renderPlan(){
     $("orderMulti").querySelectorAll("[data-tq]").forEach(inp => {
       inp.oninput = () => {
         const t = sel.targets.find(x => x.i === inp.dataset.tq);
-        if(t){ t.q = Math.max(1, parseInt(inp.value) || 1); refreshNumbers(); save(); }
+        if(t){ planDirty(); t.q = Math.max(1, parseInt(inp.value) || 1); refreshNumbers(); save(); }
       };
     });
     $("orderMulti").querySelectorAll("[data-tinc]").forEach(b2 => b2.onclick = () => {
-      const t = sel.targets.find(x => x.i === b2.dataset.tinc); if(t){ t.q++; renderPlan(); save(); } });
+      const t = sel.targets.find(x => x.i === b2.dataset.tinc); if(t){ planDirty(); t.q++; renderPlan(); save(); } });
     $("orderMulti").querySelectorAll("[data-tdec]").forEach(b2 => b2.onclick = () => {
-      const t = sel.targets.find(x => x.i === b2.dataset.tdec); if(t && t.q > 1){ t.q--; renderPlan(); save(); } });
+      const t = sel.targets.find(x => x.i === b2.dataset.tdec); if(t && t.q > 1){ planDirty(); t.q--; renderPlan(); save(); } });
     $("orderMulti").querySelectorAll("[data-tdel]").forEach(b2 => b2.onclick = () => {
+      planDirty();
       setTargets(sel.targets.filter(x => x.i !== b2.dataset.tdel));
       renderRecipes(); renderPlan(); save(); });
   }
@@ -1859,9 +1862,13 @@ function importFromHash(){
 /* ---- mentett tervek ---- */
 let plans = [];
 function renderPlanList(){
-  $("planSel").innerHTML = `<option value="">🔖 Mentett tervek…</option>` +
+  $("planSel").innerHTML = `<option value="" disabled>🔖 Mentett tervek…</option>` +
     plans.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
   $("planDel").hidden = true;
+}
+function planDirty(){
+  const sl = $("planSel");
+  if(sl && sl.value !== ""){ sl.value = ""; $("planDel").hidden = true; }
 }
 function loadPlan(i){
   const p = plans[Number(i)];
@@ -1933,6 +1940,7 @@ $("lvl").oninput = () => {
   renderRecipes(); save();
 };
 const setQty = v => {
+  planDirty();
   sel.qty = Math.min(999, Math.max(1, v || 1));
   if(sel.targets.length === 1) sel.targets[0].q = sel.qty;
   renderPlan(); save();
