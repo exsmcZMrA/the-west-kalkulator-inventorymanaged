@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mesterség-kalkulátor — raktár import
 // @namespace    the-west-kalkulator
-// @version      1.1
+// @version      1.3
 // @description  Egy gomb a játékban, ami átküldi a raktárkészletet a mesterség-kalkulátorba.
 // @author       —
 // @match        https://*.the-west.hu/game.php*
@@ -22,6 +22,7 @@
 // @grant        GM_setClipboard
 // @grant        GM_openInTab
 // @run-at       document-idle
+// @priority     100
 // ==/UserScript==
 
 /* =======================================================================
@@ -48,7 +49,9 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
     }, 1000);
 
     function game() {
-        return (typeof unsafeWindow !== "undefined" && unsafeWindow.Bag) ? unsafeWindow : window;
+        const U = (typeof unsafeWindow !== "undefined") ? unsafeWindow : null;
+        if (U && (U.Bag || U.Crafting || U.Character)) return U;
+        return window;
     }
 
     /* a raktár teljes tartalma: azonosító/1000 : darabszám
@@ -72,6 +75,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
     const POS_KEY = "mk-import-pos";
 
     function addButton() {
+        if (!document.body) { setTimeout(addButton, 200); return; }
         if (document.getElementById("mk-import-btn")) return;
         const b = document.createElement("div");
         b.id = "mk-import-btn";
@@ -132,12 +136,115 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
         document.body.appendChild(b);
     }
 
+    /* karakteradatok: név, mesterség, szint */
+    function readCharacter() {
+        const C = game().Character;
+        if (!C || !C.name) return null;
+        return C.name + "|" + (C.professionId || 0) + "|" + (C.professionSkill || 0);
+    }
+
+    /* ---- megtanult receptek folyamatos gyűjtése ----
+       A last_craft mezős adat a szervertől jön; más kiegészítők később felülírhatják
+       a listát. Ezért amint meglátjuk, eltesszük, és onnantól megmarad. */
+    const learnedSet = new Set();
+
+    function collectLearned() {
+        const C = game().Crafting;
+        if (!C || !C.recipes) return;
+        Object.keys(C.recipes).forEach(k => {
+            const r = C.recipes[k];
+            if (r && Object.prototype.hasOwnProperty.call(r, "last_craft") && r.craftitem)
+                learnedSet.add(r.craftitem / 1000);
+        });
+    }
+
+    /* Amint a Crafting objektum megjelenik, azonnal ráülünk — még azelőtt,
+       hogy más kiegészítő hozzáférne. A recipes tulajdonságot figyeljük:
+       minden beírt értékből kimentjük a last_craft mezős recepteket. */
+    function guardCrafting() {
+        const W = game();
+        if (W.__mkGuard) return;
+        let target = W.Crafting;
+
+        const grab = obj => {
+            if (!obj) return;
+            try {
+                Object.keys(obj).forEach(k => {
+                    const r = obj[k];
+                    if (r && Object.prototype.hasOwnProperty.call(r, "last_craft") && r.craftitem)
+                        learnedSet.add(r.craftitem / 1000);
+                });
+            } catch (e) { /* nem baj */ }
+        };
+
+        const hook = C => {
+            if (!C || C.__mkHooked) return;
+            let store = C.recipes;
+            grab(store);
+            try {
+                Object.defineProperty(C, "recipes", {
+                    configurable: true,
+                    enumerable: true,
+                    get() { return store; },
+                    set(v) { grab(v); store = v; }
+                });
+                C.__mkHooked = true;
+            } catch (e) { /* ha nem megy, marad az időzített gyűjtés */ }
+        };
+
+        if (target) { hook(target); }
+        try {
+            Object.defineProperty(W, "Crafting", {
+                configurable: true,
+                enumerable: true,
+                get() { return target; },
+                set(v) { target = v; hook(v); }
+            });
+            W.__mkGuard = true;
+        } catch (e) { /* ha nem megy, marad az időzített gyűjtés */ }
+    }
+    guardCrafting();
+
+    function watchCrafting() {
+        guardCrafting();
+        /* az addRecipe hívásait is elkapjuk, így a legkorábbi állapotot látjuk */
+        const C = game().Crafting;
+        if (C && typeof C.addRecipe === "function" && !C.__mkWrapped) {
+            const orig = C.addRecipe;
+            C.addRecipe = function (r) {
+                try {
+                    if (r && Object.prototype.hasOwnProperty.call(r, "last_craft") && r.craftitem)
+                        learnedSet.add(r.craftitem / 1000);
+                } catch (e) { /* nem baj */ }
+                return orig.apply(this, arguments);
+            };
+            C.__mkWrapped = true;
+        }
+        collectLearned();
+    }
+    /* a lehető legkorábban kezdjük figyelni, hogy a last_craft mezős
+       eredeti listát még más kiegészítők előtt lássuk */
+    watchCrafting();
+    setInterval(watchCrafting, 250);
+
+    /* megtanult receptek — csak azok, amiken ott a last_craft mező.
+       Ha más kiegészítő tölti fel a listát, ez üresen marad, és akkor nem küldünk semmit. */
+    function readLearned() {
+        collectLearned();                       /* hátha most is látunk újat */
+        return learnedSet.size ? [...learnedSet] : null;
+    }
+
     function sendInventory(b) {
         const data = readInventory();
         if (!data.length) { flash(b, "?"); return; }
         const payload = data.join(",");
         try { GM_setClipboard(payload); } catch (e) { /* az URL úgyis viszi */ }
-        const url = CALC_URL.replace(/\/+$/, "/") + "#imp=" + payload;
+        let q = "imp=" + payload;
+        const k = readCharacter();
+        if (k) q += "&k=" + encodeURIComponent(k);
+        const t = readLearned();
+        if (t) q += "&t=" + t.join(",");
+        const url = CALC_URL.replace(/\/+$/, "/") + "#" + q;
         try {
             GM_openInTab(url, { active: true, insert: true });
         } catch (e) {

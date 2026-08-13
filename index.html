@@ -69,6 +69,15 @@ button,input{font-family:inherit;color:inherit;font-size:inherit}
 .rlist button:hover{background:var(--panel)}
 .rlist button[aria-current=true]{background:var(--raised);box-shadow:inset 2px 0 0 var(--brass)}
 .rlist button.locked{opacity:.42}
+.rlist button.unlearned{opacity:.55}
+.rlist button.unlearned .rname{font-style:italic}
+.charbar{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);
+  border-radius:6px;padding:8px 10px;margin-bottom:10px}
+.charbar b{font-size:14.5px;line-height:1.15}
+.charbar small{display:block;font-family:"Space Mono",monospace;font-size:10px;color:var(--dim)}
+.charbar .badge{width:26px;height:26px;border-radius:50%;background:var(--raised);
+  display:grid;place-items:center;font-family:"Space Mono",monospace;font-size:11px;color:var(--brass);
+  border:1px solid var(--line);flex:0 0 auto}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
 .dot.ready{background:var(--green)} .dot.close{background:var(--brass)}
 .rname{font-size:14.5px;line-height:1.2;min-width:0}
@@ -276,6 +285,9 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <p class="eyebrow">Recept <span id="recipeCount"></span></p>
     <input class="search" id="search" placeholder="Keresés név szerint…" aria-label="Recept keresése">
     <div class="chips" id="chips"></div>
+    <div id="charBar" hidden></div>
+    <label class="lvl" style="margin-bottom:8px" id="mineWrap" hidden><input type="checkbox" id="onlyMine" style="width:auto">
+      <span id="mineTxt">csak amihez megvan a receptem</span></label>
     <label class="lvl" style="margin-bottom:8px"><input type="checkbox" id="onlyReady" style="width:auto">
       csak amit most tudok gyártani</label>
     <label class="lvl">Mesterségszintem <input type="number" id="lvl" min="0" step="1" placeholder="—"></label>
@@ -283,7 +295,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <p class="legend">
       <i style="background:var(--green)"></i>Most legyártható a készletedből<br>
       <i style="background:var(--brass)"></i>Hiányzik hozzá valami<br>
-      <i style="background:var(--line)"></i>Magasabb szint kell
+      <i style="background:var(--line)"></i>Magasabb szint kell, vagy nincs meg a recepted
     </p>
   </aside>
 
@@ -1191,6 +1203,7 @@ const RECIPES = [
 const $ = id => document.getElementById(id);
 const STORE = "twcalc.v2";
 let stock = {}, names = Object.assign({}, BASE_NAMES), levels = {};
+let char = null, learned = null;   /* a játékból beolvasott karakter és megtanult receptjei */
 let recipeMap = new Map(), baseIds = [];
 let sel = { prof:1, recipe:null, qty:1, mode:"tree", targets:[] };
 let plan = null, needOrder = [];
@@ -1228,7 +1241,7 @@ function save(){
       const custom = {};
       Object.keys(names).forEach(k => { if(names[k] !== BASE_NAMES[k]) custom[k] = names[k]; });
       localStorage.setItem(STORE, JSON.stringify({
-        stock, names:custom, levels, theme:document.documentElement.dataset.theme,
+        stock, names:custom, levels, char, learned, theme:document.documentElement.dataset.theme,
         icons:document.documentElement.dataset.icons === "0" ? 0 : 1,
         recipe:sel.recipe, prof:sel.prof, qty:sel.qty, mode:sel.mode, targets:sel.targets
       }));
@@ -1242,6 +1255,8 @@ function load(){
     if(p.stock) stock = p.stock;
     if(p.names) names = Object.assign({}, BASE_NAMES, p.names);
     if(p.levels) levels = p.levels;
+    if(p.char) char = p.char;
+    if(Array.isArray(p.learned)) learned = p.learned;
     if(p.theme) document.documentElement.dataset.theme = p.theme;
     if(p.icons === 0) document.documentElement.dataset.icons = "0";
     if(p.prof) sel.prof = p.prof;
@@ -1344,27 +1359,39 @@ function overLevel(r){
   return !given.some(v => minLvl(r) <= Number(v));
 }
 
+/* nincs meg a recepted — csak akkor tudjuk, ha a játékból beolvastuk */
+/* a megtanultság csak arra a mesterségre értelmes, amit a karakter visz;
+   a több szakmához tartozó (esemény-) recepteket kihagyjuk */
+const unlearned = r => !!learned && !!char
+  && !Array.isArray(r.p) && r.p === char.prof
+  && !learned.includes(r.i);
+
 const canCraftNow = r => r.g.every(([id, q]) => (stock[id] || 0) >= q);
 
 /* ======================= receptlista ======================= */
 function renderRecipes(){
   const q = $("search").value.trim().toLowerCase();
   const ready = $("onlyReady").checked;
+  const mine = char && $("onlyMine").checked;
   const list = RECIPES
     .filter(r => q ? r.n.toLowerCase().includes(q) : profIds(r.p).includes(sel.prof))
-    .filter(r => !ready || (canCraftNow(r) && !overLevel(r)))
+    .filter(r => !mine || !unlearned(r))
+    .filter(r => !ready || (canCraftNow(r) && !overLevel(r) && !unlearned(r)))
     .sort((a,b) => minLvl(a) - minLvl(b) || a.n.localeCompare(b.n,"hu"));
   $("recipeCount").textContent = list.length + " db";
-  if(!list.length && ready){
+  if(!list.length && (ready || mine)){
     $("recipeCount").textContent = "0 db";
-    $("rlist").innerHTML = `<p class="empty">Ebből a mesterségből most egyet sem tudsz legyártani — vagy hiányzik hozzávaló, vagy magasabb szint kell.</p>`;
+    $("rlist").innerHTML = `<p class="empty">Nincs a szűrésnek megfelelő recept.</p>`;
     return;
   }
   $("rlist").innerHTML = list.map(r => {
     const locked = overLevel(r);
-    const state = locked ? "" : canCraftNow(r) ? "ready" : "close";
+    const nolearn = unlearned(r);
+    const state = (locked || nolearn) ? "" : canCraftNow(r) ? "ready" : "close";
     return `<li>
-      <button data-pick="${r.i}" class="${locked ? "locked" : ""}" ${r.i === sel.recipe ? 'aria-current="true"' : ""}>
+      <button data-pick="${r.i}" class="${locked ? "locked" : nolearn ? "unlearned" : ""}"
+        title="${locked ? "Magasabb mesterségszint kell hozzá" : nolearn ? "Nincs meg a recepted" : ""}"
+        ${r.i === sel.recipe ? 'aria-current="true"' : ""}>
         <i class="dot ${state}"></i>
         <span class="nmwrap">${ico(r.i)}<span class="rname">${r.n}<small>${
           q ? profLabel(r.p) + " · " : ""}${minLvl(r)}. szint</small></span></span></button>
@@ -1385,6 +1412,18 @@ function renderChips(){
     b.onclick = () => { sel.prof = Number(b.dataset.prof); $("search").value = "";
       renderChips(); renderRecipes(); syncLevel(); save(); };
   });
+}
+function renderChar(){
+  const bar = $("charBar"), wrap = $("mineWrap");
+  if(!char){ bar.hidden = true; wrap.hidden = true; return; }
+  bar.hidden = false; wrap.hidden = !learned;
+  bar.className = "charbar";
+  bar.innerHTML = `<span class="badge">${char.name.slice(0,2).toUpperCase()}</span>
+    <span><b>${char.name}</b><small>${profOf(char.prof)} ${char.skill}${
+      learned ? ` · ${learned.length} recept` : ""}</small></span>`;
+  const t = $("mineTxt");
+  if(t) t.textContent = "csak amihez megvan a receptem";
+
 }
 function syncLevel(){ $("lvl").value = levels[sel.prof] ?? ""; }
 
@@ -1782,27 +1821,52 @@ function buildBookmarklet(){
   const target = location.origin + location.pathname;
   const code =
     "javascript:(function(){var W=window;if(!W.Bag){for(var i=0;i<W.frames.length;i++){try{if(W.frames[i].Bag){W=W.frames[i];break}}catch(e){}}}" +
-    "var B=W.Bag;if(!B||!B.getItemCount){alert('Ezt a gombot a futó The West játékablakban kell megnyomni.');return}" +
+    "var B=W.Bag;if(!B||!B.getItemCount){alert('Ezt a gombot a futo The West jatekablakban kell megnyomni.');return}" +
     "var I=[" + ids.join(",") + "],o=[];for(var j=0;j<I.length;j++){var c=0;try{c=B.getItemCount(I[j]*1000)||0}catch(e){}if(c>0)o.push(I[j]+':'+c)}" +
-    "if(!o.length){alert('Nem talaltam egyetlen ismert tetelt sem a raktarban.');return}" +
-    "var d=o.join(',');var m='Kimasolva: '+o.length+' tetel. Valts at a kalkulator fulere, Raktar > Importalas > Beolvasas vagolaprol.';" +
-    "try{navigator.clipboard.writeText(d).then(function(){alert(m)},function(){prompt('Masold ki ezt:',d)})}" +
-    "catch(e){prompt('Masold ki ezt:',d)}})()";
+    "var q='imp='+o.join(',');" +
+    "try{var C=W.Character;if(C&&C.name)q+='&k='+encodeURIComponent(C.name+'|'+(C.professionId||0)+'|'+(C.professionSkill||0))}catch(e){}" +
+    "try{var R=W.Crafting&&W.Crafting.recipes;if(R){var t=[],all=0;for(var k in R){var r=R[k];if(!r)continue;all++;" +
+    "if(Object.prototype.hasOwnProperty.call(r,'last_craft')&&r.craftitem)t.push(r.craftitem/1000)}" +
+    "if(t.length)q+='&t='+t.join(',')}}catch(e){}" +
+    "var u='" + target + "#'+q;var w=window.open(u,'_blank');" +
+    "if(!w){try{navigator.clipboard.writeText(u)}catch(e){}prompt('A megnyitas le lett tiltva. Masold ki ezt a cimet:',u)}})()";
   $("bmLink").setAttribute("href", code);
 }
 function importFromHash(){
-  const m = location.hash.match(/^#imp=(.+)$/);
-  if(!m) return;
-  const found = parseShort(decodeURIComponent(m[1]));
-  const n = Object.keys(found).length;
+  const h = location.hash.replace(/^#/, "");
+  if(!h) return;
+  const parts = {};
+  h.split("&").forEach(seg => {
+    const i = seg.indexOf("=");
+    if(i > 0) parts[seg.slice(0, i)] = decodeURIComponent(seg.slice(i + 1));
+  });
+  if(!parts.imp && !parts.k) return;
   history.replaceState(null, "", location.pathname);
-  if(!n) return;
-  stock = found; save();
-  showView(true); renderStock();
-  const el = $("saved");
-  el.textContent = `${n} tétel beolvasva a játékból`;
-  el.style.opacity = 1;
-  setTimeout(() => { el.style.opacity = 0; el.textContent = "Mentve"; }, 4000);
+  const msg = [];
+
+  if(parts.imp){
+    const found = parseShort(parts.imp);
+    const n = Object.keys(found).length;
+    if(n){ stock = found; msg.push(`${n} tétel`); }
+  }
+  if(parts.k){
+    const bits = parts.k.split("|");
+    const pid = Number(bits[1]);
+    if(bits[0] && PROFS.some(x => x.id === pid)){
+      char = { name:bits[0], prof:pid, skill:Number(bits[2]) || 0 };
+      levels[pid] = char.skill;
+      sel.prof = pid;
+      msg.push(`${char.name} · ${profOf(pid)} ${char.skill}`);
+    }
+  }
+  if(parts.t !== undefined){
+    learned = parts.t ? parts.t.split(",").map(x => x + "000").filter(x => recipeMap.has(x)) : null;
+    if(learned && learned.length) msg.push(`${learned.length} megtanult recept`);
+  }
+  save();
+  renderChar(); renderChips(); syncLevel(); renderRecipes(); renderPlan();
+  if(parts.imp){ showView(true); renderStock(); }
+  if(msg.length) flashSaved("Beolvasva: " + msg.join(" · "));
 }
 
 
@@ -1838,6 +1902,7 @@ $("useClose").onclick = () => $("useDlg").close();
 /* ======================= vezérlők ======================= */
 $("search").oninput = renderRecipes;
 $("onlyReady").onchange = renderRecipes;
+$("onlyMine").onchange = renderRecipes;
 $("lvl").oninput = () => {
   const v = $("lvl").value.trim();
   if(v === "") delete levels[sel.prof]; else levels[sel.prof] = Number(v);
@@ -1967,6 +2032,7 @@ if(!sel.recipe) sel.recipe = RECIPES.find(r => profIds(r.p).includes(sel.prof)).
 if(!sel.targets.length) setTargets([{ i:sel.recipe, q:sel.qty || 1 }]);
 $("theme").textContent = document.documentElement.dataset.theme === "light" ? "☀" : "☾";
 $("icons").style.opacity = document.documentElement.dataset.icons === "0" ? .45 : 1;
+renderChar();
 refreshUndo();
 $("seg").querySelectorAll("[data-mode]").forEach(x =>
   x.setAttribute("aria-selected", x.dataset.mode === sel.mode));
