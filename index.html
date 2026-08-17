@@ -404,6 +404,9 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 
 <dialog id="impDlg">
   <h3>Raktár beolvasása</h3>
+  <p style="color:var(--dim);font-size:13px;margin:0 0 12px">Három út közül választhatsz: kézi
+  beillesztés lentebb, egy gomb a játékban, vagy az egész kalkulátor a játék felületén.
+  A szkriptes megoldások használata mindenkinek a saját döntése és felelőssége.</p>
   <p><b>A legegyszerűbb út:</b> nyisd meg a tw-calc raktáradat, nyomj <span class="mono">Ctrl+U</span>-t
   (oldal forrása), ott <span class="mono">Ctrl+A</span> és <span class="mono">Ctrl+C</span>, majd illeszd be ide.
   A darabszámokat magától kiolvassa. Emellett ezeket is felismeri:
@@ -426,6 +429,21 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
        style="display:inline-block;background:var(--raised);border:1px solid var(--line);
        color:var(--ink);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px">
        ⬇ Játékbeli gomb telepítése</a>
+  </div>
+
+  <div style="border:1px solid var(--brass);border-radius:6px;padding:12px 14px;margin-bottom:12px">
+    <b style="font-size:14.5px">Vagy az egész kalkulátor a játékban</b>
+    <p style="margin:6px 0 8px">Ha nem akarsz oldalak között váltogatni, van egy külön kiegészítő,
+    ami <b>magát a kalkulátort</b> nyitja meg a játék felületén, mozgatható ablakban. A raktárat
+    élőben olvassa, tehát beolvasni sem kell semmit. Ehhez is a
+    <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener"
+      style="color:var(--brass)">Tampermonkey</a> kell.</p>
+    <a id="panelLink" href="the-west-panel.user.js" target="_blank" rel="noopener"
+       style="display:inline-block;background:var(--raised);border:1px solid var(--brass);
+       color:var(--brass);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px">
+       ⬇ Játékbeli panel telepítése</a>
+    <p style="margin:8px 0 0;font-size:12px;color:var(--dim)">Fejlesztés alatt: a teljes gyártási
+    lánc lebontása még hiányzik belőle, arra egyelőre ez az oldal való.</p>
   </div>
   <textarea id="impText" spellcheck="false" placeholder="Ide illeszd be…"></textarea>
   <div class="drow">
@@ -2147,7 +2165,7 @@ $("dataDownload").onclick = () => {
 /* ---- verziófigyelés ----
    Csak a fájl fejléceit kéri le, és az ETag / Last-Modified értéket veti össze
    a betöltéskorival. Ha változott, felajánlja a frissítést. */
-const APP_VER = "2026.08.18";
+const APP_VER = "2026.08.19";
 let selfTag = null;
 
 async function fetchTag(){
