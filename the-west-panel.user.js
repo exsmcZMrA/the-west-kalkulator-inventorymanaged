@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mesterség-kalkulátor — játékbeli panel
 // @namespace    the-west-kalkulator-ingame
-// @version      1.6.3
+// @version      1.6.5
 // @description  A mesterség-kalkulátor a játék felületén, mozgatható ablakban. Csak a már betöltött adatot olvassa.
 // @author       —
 // @match        https://*.the-west.hu/game.php*
@@ -827,7 +827,7 @@ const RECIPES = [
 (function () {
     "use strict";
 
-    const VERZIO = "1.6.3";
+    const VERZIO = "1.6.5";
 
     /* ===================================================================
        1. Segédek és a játék adatai
@@ -1238,6 +1238,24 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 .enyem input{ width:auto }
 .enyem.tehetetlen{ opacity:.55 }
 .enyem.tehetetlen input{ cursor:not-allowed }
+
+/* ---- Csak alapanyag: két másolható blokk ---- */
+.blokk{ border:1px solid var(--line); border-radius:5px; padding:9px 11px; margin-bottom:9px }
+.bfej{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:7px }
+.bfej b{ font-size:13.5px }
+.mind{ border:1px solid var(--line); background:transparent; color:var(--dim); cursor:pointer;
+  border-radius:20px; padding:2px 10px; font:inherit; font-size:11.5px }
+.mind:hover{ background:var(--raised); color:var(--ink) }
+.mind.hi{ color:var(--red); border-color:var(--red) }
+.chips-wrap{ display:flex; flex-wrap:wrap; gap:5px }
+.chip-item{ display:inline-flex; align-items:center; gap:5px; cursor:pointer;
+  border:1px solid var(--line); background:transparent; color:var(--ink);
+  border-radius:20px; padding:2px 10px; font:inherit; font-size:12px }
+.chip-item:hover{ background:var(--raised) }
+.chip-item b{ font-family:"Space Mono",monospace; font-size:11.5px; color:var(--green) }
+.chip-item.hi{ border-color:var(--red) }
+.chip-item.hi b{ color:var(--red) }
+.sugo{ margin-top:7px; font-size:11px; color:var(--faint) }
 `;
 
     /* ===================================================================
@@ -1704,6 +1722,14 @@ li.collapsed > .node > .toggle::before{ content:"+" }
           ${gy ? `<ul>${csp.gyerekek.map(x => faHTML(x)).join("")}</ul>` : ""}</li>`;
     }
 
+    /* Összes anyagszükséglet, név szerint — ahogy a weboldalon. */
+    const teljesLista = () => (terv ? terv.alap.filter(b => b.kell > 0) : [])
+        .slice().sort((a, b) => a.nev.localeCompare(b.nev, "hu"));
+
+    /* Ami még hiányzik, csökkenő darabszám szerint: elöl a legnagyobb tétel. */
+    const hianyLista = () => (terv ? terv.alap.filter(b => b.marad > 0) : [])
+        .slice().sort((a, b) => b.marad - a.marad || a.nev.localeCompare(b.nev, "hu"));
+
     const zarCimke = t => !t ? ""
         : (t >= 86400 ? (t / 86400) + " napos zárolás" : (t / 3600) + " órás zárolás");
 
@@ -1800,20 +1826,34 @@ li.collapsed > .node > .toggle::before{ content:"+" }
               <ul class="tree">${erdo.map(n => faHTML(n, true)).join("")}</ul>`;
         };
 
-        /* Csak alapanyag: a lánc legalja, gyártás nélkül */
+        /* Csak alapanyag: két blokk, ahogy a weboldalon — a teljes
+           anyagszükséglet és a még hiányzó mennyiség. Mindkettő másolható
+           a játék [item=ID] hivatkozásformátumában. */
+        const chipek = (lista, mezo, hianyos) => lista.map(b =>
+            `<button class="chip-item${hianyos ? " hi" : ""}" data-copy1="${b.id}" data-copyn="${b[mezo]}"
+               title="Kattints a másoláshoz">
+               <b>${b[mezo]}</b> <span>${esc(b.nev)}</span></button>`).join("");
+
         const nyersTorzs = () => {
-            /* a 0 igényű tételek kimaradnak: azok teljesen fedezve vannak
-               egy köztes termék raktárkészletéből, nem kell gyűjteni őket */
-            const lista = terv.alap.filter(b => b.kell > 0);
-            return lista.length
-            ? `<ul class="cards">` + lista.map(b => {
-                const megvan = b.marad === 0;
-                return `<li class="card ${megvan ? "megvan" : "hiany"}">
-                  ${ico(b.id, "lg") || '<i class="ico lg"></i>'}
-                  <div><b>${esc(b.nev)}</b></div>
-                  <span class="kell">${b.van} / ${b.kell}</span></li>`;
-              }).join("") + `</ul>`
-            : `<p class="ures">Ehhez nem kell alapanyag.</p>`;
+            const mind = teljesLista(), hiany = hianyLista();
+            if (!mind.length) return `<p class="ures">Ehhez nem kell alapanyag.</p>`;
+            const osszDb = hiany.reduce((a, b) => a + b.marad, 0);
+            return `
+              <div class="blokk">
+                <div class="bfej"><b>Összesen kell a gyártáshoz</b>
+                  <button class="mind" data-copyall="teljes">${mind.length} tétel</button></div>
+                <div class="chips-wrap">${chipek(mind, "kell", false)}</div>
+              </div>
+              <div class="blokk">
+                <div class="bfej"><b>Még ennyit gyűjts</b>
+                  <button class="mind ${osszDb ? "hi" : ""}" data-copyall="hiany">${osszDb} db</button></div>
+                ${hiany.length
+                    ? `<div class="chips-wrap">${chipek(hiany, "marad", true)}</div>
+                       <p class="sugo">Kattints egy tételre a másoláshoz, vagy a jobb felső
+                          darabszámra, és mind a ${hiany.length} tétel egyszerre kerül a
+                          vágólapra, soronként egy.</p>`
+                    : `<p class="ures">Minden alapanyag megvan.</p>`}
+              </div>`;
         };
 
         const NEZETEK = [["tree", "Robbantott ábra"], ["all", "Lépéskártyák"], ["raw", "Csak alapanyag"]];
@@ -1821,8 +1861,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             `<button role="tab" data-nezet="${m}" aria-selected="${nezet === m}">${cimke}</button>`
         ).join("") + `</div>`;
 
-        const fejCimke = nezet === "raw"
-            ? `<p class="eyebrow">Összes alapanyag <span class="kicsi">${terv.alap.filter(b => b.kell > 0).length} tétel</span></p>`
+        const fejCimke = nezet === "raw" ? ""
             : `<p class="eyebrow">Gyártási lépések <span class="kicsi">${terv.gyartas} gyártás</span></p>`;
 
         const torzs = nezet === "tree" ? faTorzs()
@@ -1839,8 +1878,9 @@ li.collapsed > .node > .toggle::before{ content:"+" }
           ${torzs}`;
 
         /* --- MIT GYŰJTS: az összesített alapanyagigény --- */
-        const hianyzo = terv.alap.filter(b => b.marad > 0);
-        $("ncount").textContent = hianyzo.length || "";
+        const hianyzo = hianyLista();
+        const hianyDb = hianyzo.reduce((a, b) => a + b.marad, 0);
+        $("ncount").textContent = hianyzo.length ? `${hianyzo.length} tétel · ${hianyDb} db` : "";
         $("gyujts").innerHTML = hianyzo.length
             ? `<ul class="needlist">` + hianyzo.map(b => {
                 const szaz = Math.round(Math.min(1, b.van / b.kell) * 100);
@@ -1853,6 +1893,46 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
         kotesekTerv();
     }
+
+    /* A modern vágólap-API több esetben visszautasít: ha az oldal nincs
+       fókuszban, vagy a játék kontextusában nincs engedély. Ilyenkor a régi,
+       rejtett textarea + execCommand úton próbálkozunk. */
+    function vagolapra(txt) {
+        return new Promise(kesz => {
+            const tartalek = () => {
+                let ok = false;
+                try {
+                    const ta = document.createElement("textarea");
+                    ta.value = txt;
+                    ta.setAttribute("readonly", "");
+                    ta.style.cssText = "position:fixed;top:-1000px;left:-1000px;opacity:0";
+                    document.body.appendChild(ta);
+                    ta.select();
+                    ta.setSelectionRange(0, txt.length);
+                    ok = document.execCommand("copy");
+                    document.body.removeChild(ta);
+                } catch (e) { ok = false; }
+                kesz(ok);
+            };
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText)
+                    navigator.clipboard.writeText(txt).then(() => kesz(true), tartalek);
+                else tartalek();
+            } catch (e) { tartalek(); }
+        });
+    }
+
+    /* A gomb feliratát a .cimke rétegen írjuk, különben a textContent
+       kitörölné a fa hátterét adó .kozep elemet, és a szöveg a
+       háttérrétegek mögé kerülne. */
+    function gombJelez(b, szoveg, eredeti, ido) {
+        const cel = b.querySelector(".cimke") || b;
+        cel.textContent = szoveg;
+        setTimeout(() => { cel.textContent = eredeti; }, ido || 1500);
+    }
+
+    /* A játék saját tételhivatkozása: chatbe és fórumra beilleszthető. */
+    const itemSor = (db, id) => `${db} [item=${id}]`;
 
     /* A tervsorok kezelői. A munkalap minden rajzoláskor újraépül, ezért a
        kötés is itt történik — új globális listener nem keletkezik. */
@@ -1918,6 +1998,30 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         /* a fa ágainak nyitása és zárása */
         fo.querySelectorAll(".toggle").forEach(t =>
             t.addEventListener("click", () => t.closest("li").classList.toggle("collapsed")));
+        /* tételenkénti másolás */
+        fo.querySelectorAll("[data-copy1]").forEach(b =>
+            b.addEventListener("click", () => {
+                const eredeti = b.innerHTML;
+                vagolapra(itemSor(b.dataset.copyn, b.dataset.copy1)).then(jo => {
+                    b.innerHTML = jo ? "<b>✓</b> <span>másolva</span>"
+                                     : "<b>!</b> <span>nem sikerült</span>";
+                    setTimeout(() => { b.innerHTML = eredeti; }, 1100);
+                });
+            }));
+
+        /* a teljes lista másolása, soronként egy tétel */
+        fo.querySelectorAll("[data-copyall]").forEach(b =>
+            b.addEventListener("click", () => {
+                const hiany = b.dataset.copyall === "hiany";
+                const lista = hiany ? hianyLista() : teljesLista();
+                const txt = lista.map(x => itemSor(hiany ? x.marad : x.kell, x.id)).join("\n");
+                const eredeti = b.textContent;
+                vagolapra(txt).then(jo => {
+                    b.textContent = jo ? `✓ ${lista.length} sor` : "nem sikerült";
+                    setTimeout(() => { b.textContent = eredeti; }, 1400);
+                });
+            }));
+
         fo.querySelectorAll("[data-tb]").forEach(b =>
             b.addEventListener("click", () => fo.querySelectorAll("li.has-kids")
                 .forEach(li => li.classList.toggle("collapsed", b.dataset.tb === "close"))));
@@ -5000,17 +5104,12 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                     b.title = "Kinyitás";
                 }
             }
-            if (mit === "masol" && valasztott) {
-                const r = recipeMap.get(valasztott);
-                const txt = r.g.filter(([id, q]) => (raktar[id] || 0) < q)
-                    .map(([id, q]) => `${q - (raktar[id] || 0)} × ${nameOf(id)}`).join("\n");
-                navigator.clipboard.writeText(txt).then(() => {
-                    b.textContent = "Másolva";
-                    setTimeout(() => b.textContent = "Hiánylista másolása", 1400);
-                }).catch(() => {
-                    b.textContent = "Nem sikerült";
-                    setTimeout(() => b.textContent = "Hiánylista másolása", 1400);
-                });
+            if (mit === "masol" && terv) {
+                /* a TELJES lánc hiánya, a darabszámmal szorozva — nem a
+                   recept közvetlen hozzávalói */
+                const txt = hianyLista().map(x => itemSor(x.marad, x.id)).join("\n");
+                vagolapra(txt).then(jo =>
+                    gombJelez(b, jo ? "Másolva" : "Nem sikerült", "Hiánylista másolása", 1400));
             }
         });
 
@@ -5188,6 +5287,92 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     }
 
     /* ===================================================================
+       9b. Frissítésjelzés a játék saját ablakában
+       =================================================================== */
+
+    /* A saját verzió NEM külön konstans: a VERZIO az egyetlen forrás, hogy
+       a fejléc, a @version és a frissítésellenőrzés ne csúszhasson szét. */
+    const SAJAT_VER = VERZIO;
+    const SZKRIPT_URL = ADAT_URL + "the-west-panel.user.js";
+
+    /* a fent lévő fájl @version sorát olvassuk ki */
+    async function ujVerzio() {
+        const txt = await letolt(SZKRIPT_URL + "?v=" + Date.now(), "text");
+        if (!txt) return null;
+        const m = txt.match(/@version\s+([^\s]+)/);
+        if (!m) return null;
+        return m[1] !== SAJAT_VER ? m[1] : null;
+    }
+
+    /* a játék saját ablakstílusában jelenít meg egy értesítőt */
+    function frissitesAblak(ver) {
+        const W = jatek();
+        const szoveg =
+            "Új verzió érhető el a mesterség-kalkulátor paneljéből.<br><br>" +
+            "<b>Jelenlegi:</b> " + SAJAT_VER + " &nbsp; <b>Elérhető:</b> " + ver + "<br><br>" +
+            "A gombra kattintva megnyílik a Tampermonkey telepítő ablaka, ott elég a " +
+            "<b>Frissítés</b> gombot megnyomni.";
+
+        const tart = document.createElement("div");
+        tart.style.cssText = "padding:14px 16px;font:14px/1.5 Arial,sans-serif;color:#f2e9d8";
+        tart.innerHTML = "<div style='margin-bottom:12px'>" + szoveg + "</div>";
+
+        const gomb = document.createElement("button");
+        gomb.textContent = "Frissítés megnyitása";
+        gomb.style.cssText = "padding:7px 14px;cursor:pointer;font:600 13px Arial,sans-serif;" +
+            "background:#2f261d;color:#e0a844;border:1px solid #e0a844;border-radius:5px";
+        gomb.onclick = () => { window.open(SZKRIPT_URL, "_blank"); };
+
+        const kesobb = document.createElement("button");
+        kesobb.textContent = "Később";
+        kesobb.style.cssText = "padding:7px 14px;cursor:pointer;margin-left:8px;" +
+            "font:13px Arial,sans-serif;background:#241d16;color:#a2917a;" +
+            "border:1px solid #3d3125;border-radius:5px";
+
+        tart.appendChild(gomb);
+        tart.appendChild(kesobb);
+
+        /* elsőként a játék saját ablakát próbáljuk */
+        try {
+            if (typeof W.west?.gui?.Window === "function") {
+                const abl = new W.west.gui.Window("mk-frissites", "Mesterség-kalkulátor — frissítés");
+                const bel = abl.getMainDiv ? abl.getMainDiv() : null;
+                if (bel) {
+                    (bel.appendChild ? bel : bel[0]).appendChild(tart);
+                    kesobb.onclick = () => { try { abl.close(); } catch (e) { W.wman && W.wman.close("mk-frissites"); } };
+                    if (W.wman && W.wman.open) W.wman.open("mk-frissites");
+                    return;
+                }
+            }
+        } catch (e) { /* megyünk tovább a tartalékra */ }
+
+        /* tartalék: saját, a játék stílusához igazított doboz */
+        const box = document.createElement("div");
+        box.style.cssText = "position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:99999;" +
+            "width:360px;background:#241d16;border:2px solid #e0a844;border-radius:8px;" +
+            "box-shadow:0 6px 20px rgba(0,0,0,.6)";
+        const fej = document.createElement("div");
+        fej.textContent = "Mesterség-kalkulátor — frissítés";
+        fej.style.cssText = "padding:8px 14px;background:#2f261d;color:#e0a844;border-bottom:1px solid #3d3125;" +
+            "font:600 14px Arial,sans-serif;border-radius:6px 6px 0 0";
+        box.appendChild(fej);
+        box.appendChild(tart);
+        kesobb.onclick = () => box.remove();
+        document.body.appendChild(box);
+    }
+
+    async function frissitestNez() {
+        try {
+            const ma = new Date().toISOString().slice(0, 10);
+            if (GM_getValue("mk-upd-nap", "") === ma) return;   /* naponta egyszer */
+            const ver = await ujVerzio();
+            if (!ver) return;
+            GM_setValue("mk-upd-nap", ma);
+            frissitesAblak(ver);
+        } catch (e) { /* csendben elengedjük */ }
+    }
+
+    /* ===================================================================
        10. Indulás
        =================================================================== */
 
@@ -5209,6 +5394,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             betuk();
             epit();
             gombKi();
+            setTimeout(frissitestNez, 4000);   /* a játék betöltése után nézünk rá */
         }
     }, 1000);
 })();
