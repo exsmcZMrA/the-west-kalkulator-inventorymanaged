@@ -249,6 +249,14 @@ li.has-kids > .node .toggle::after{content:"–"}
 .wipe:hover{color:var(--rust)}
 
 /* ---------- lábléc ---------- */
+#updBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;
+  display:flex;align-items:center;gap:10px;background:var(--panel);color:var(--ink);
+  border:1px solid var(--brass);border-radius:8px;padding:9px 12px;font-size:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.35)}
+#updBar button{background:var(--raised);border:1px solid var(--line);border-radius:5px;
+  padding:5px 11px;font-size:13px;cursor:pointer;color:inherit}
+#updBar #updBtn:hover{border-color:var(--brass);color:var(--brass)}
+#updBar #updClose{padding:5px 9px;color:var(--dim)}
 footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 20px;color:var(--faint);font-size:12.5px}
 footer button{background:none;border:0;color:var(--dim);cursor:pointer;text-decoration:underline;padding:0;font-size:12.5px}
 footer button:hover{color:var(--brass)}
@@ -370,8 +378,15 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
   <div id="stockGroups"></div>
 </section>
 
+<div id="updBar" hidden>
+  <span>Új verzió érhető el.</span>
+  <button id="updBtn">Frissítés most</button>
+  <button id="updClose" title="Elrejtés">×</button>
+</div>
+
 <footer>
   Receptek és nevek: a játék saját adatából · A raktárad ebben a böngészőben marad meg.
+  · <span class="mono" id="verTxt"></span>
   <button id="openData">Mentés fájlba vagy visszatöltés</button>
 </footer>
 
@@ -2116,6 +2131,34 @@ $("dataDownload").onclick = () => {
   URL.revokeObjectURL(a.href);
 };
 
+/* ---- verziófigyelés ----
+   Csak a fájl fejléceit kéri le, és az ETag / Last-Modified értéket veti össze
+   a betöltéskorival. Ha változott, felajánlja a frissítést. */
+const APP_VER = "2026.08.18";
+let selfTag = null;
+
+async function fetchTag(){
+  try{
+    const r = await fetch(location.pathname + "?v=" + Date.now(), { method:"HEAD", cache:"no-store" });
+    return r.headers.get("etag") || r.headers.get("last-modified") || null;
+  }catch(e){ return null; }
+}
+async function checkUpdate(){
+  if(!selfTag){ selfTag = await fetchTag(); return; }
+  const now = await fetchTag();
+  if(now && now !== selfTag) $("updBar").hidden = false;
+}
+async function initUpdateCheck(){
+  $("verTxt").textContent = "v" + APP_VER;
+  selfTag = await fetchTag();
+  setInterval(checkUpdate, 15 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) checkUpdate(); });
+}
+$("updBtn").onclick = () => location.replace(location.pathname + "?v=" + Date.now());
+$("updClose").onclick = () => { $("updBar").hidden = true; };
+if(location.search.indexOf("?v=") === 0)
+  history.replaceState(null, "", location.pathname + location.hash);
+
 /* ======================= indulás ======================= */
 load();
 if(!sel.recipe) sel.recipe = RECIPES.find(r => profIds(r.p).includes(sel.prof)).i;
@@ -2123,6 +2166,7 @@ if(!sel.targets.length) setTargets([{ i:sel.recipe, q:sel.qty || 1 }]);
 $("theme").textContent = document.documentElement.dataset.theme === "light" ? "☀" : "☾";
 $("icons").style.opacity = document.documentElement.dataset.icons === "0" ? .45 : 1;
 renderChar();
+initUpdateCheck();
 refreshUndo();
 $("seg").querySelectorAll("[data-mode]").forEach(x =>
   x.setAttribute("aria-selected", x.dataset.mode === sel.mode));
