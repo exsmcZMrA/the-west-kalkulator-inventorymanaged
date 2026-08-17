@@ -1494,10 +1494,12 @@ function renderPlan(){
         if(t){ t.q = Math.max(1, parseInt(inp.value) || 1); refreshNumbers(); save(); }
       };
     });
-    $("orderMulti").querySelectorAll("[data-tinc]").forEach(b2 => b2.onclick = () => {
-      const t = sel.targets.find(x => x.i === b2.dataset.tinc); if(t){ t.q++; renderPlan(); save(); } });
-    $("orderMulti").querySelectorAll("[data-tdec]").forEach(b2 => b2.onclick = () => {
-      const t = sel.targets.find(x => x.i === b2.dataset.tdec); if(t && t.q > 1){ t.q--; renderPlan(); save(); } });
+    $("orderMulti").querySelectorAll("[data-tinc]").forEach(b2 => holdable(b2, n => {
+      const t = sel.targets.find(x => x.i === b2.dataset.tinc);
+      if(t){ t.q = Math.min(999, t.q + n); renderPlan(); save(); } }));
+    $("orderMulti").querySelectorAll("[data-tdec]").forEach(b2 => holdable(b2, n => {
+      const t = sel.targets.find(x => x.i === b2.dataset.tdec);
+      if(t && t.q > 1){ t.q = Math.max(1, t.q - n); renderPlan(); save(); } }));
     $("orderMulti").querySelectorAll("[data-tx]").forEach(cb => cb.onchange = () => {
       const t = sel.targets.find(x => x.i === cb.dataset.tx);
       if(t){ t.x = cb.checked; renderPlan(); save(); } });
@@ -1680,10 +1682,10 @@ function renderNeeds(){
     inp.oninput = () => setStock(inp.dataset.in, parseInt(inp.value) || 0, false);
   });
   $("needs").querySelectorAll("[data-inc]").forEach(b => {
-    b.onclick = () => setStock(b.dataset.inc, (stock[b.dataset.inc] || 0) + 1, true);
+    holdable(b, n => setStock(b.dataset.inc, (stock[b.dataset.inc] || 0) + n, true));
   });
   $("needs").querySelectorAll("[data-dec]").forEach(b => {
-    b.onclick = () => setStock(b.dataset.dec, (stock[b.dataset.dec] || 0) - 1, true);
+    holdable(b, n => setStock(b.dataset.dec, (stock[b.dataset.dec] || 0) - n, true));
   });
   refreshNumbers();
 }
@@ -1716,6 +1718,33 @@ function setStock(id, val, writeBack){
     if(inp) inp.value = v;
   }
   refreshNumbers(); renderRecipes(); save();
+}
+
+/* ---- nyomva tartható gomb: kattintásra egy, tartásra folyamatosan ----
+   Az első lépés azonnal fut, majd rövid szünet után gyorsulva ismétlődik. */
+function holdable(btn, step){
+  let t1 = null, t2 = null, fired = false;
+  const start = e => {
+    if(e.type === "mousedown" && e.button !== 0) return;
+    e.preventDefault();
+    fired = false;
+    step(1);
+    t1 = setTimeout(() => {
+      let n = 0;
+      t2 = setInterval(() => {
+        fired = true;
+        n++;
+        step(n > 20 ? 5 : 1);        /* hosszabb tartásnál ötösével */
+      }, 80);
+    }, 400);
+  };
+  const stop = () => { clearTimeout(t1); clearInterval(t2); t1 = t2 = null; };
+  btn.addEventListener("mousedown", start);
+  btn.addEventListener("touchstart", start, { passive:false });
+  ["mouseup","mouseleave","touchend","touchcancel","blur"].forEach(ev =>
+    btn.addEventListener(ev, stop));
+  window.addEventListener("mouseup", stop);
+  btn.addEventListener("click", e => { if(fired) e.preventDefault(); });
 }
 
 /* ---- vágólap, régebbi böngészőkre is ---- */
@@ -1926,7 +1955,7 @@ function importFromHash(){
   }
   save();
   renderChar(); renderChips(); syncLevel(); renderRecipes(); renderPlan();
-  if(parts.imp){ showView(true); renderStock(); }
+  showView(false);
   if(msg.length) flashSaved("Beolvasva: " + msg.join(" · "));
 }
 
@@ -1982,8 +2011,8 @@ $("excl").onchange = () => {
     renderPlan(); save();
   }
 };
-$("qtyMinus").onclick = () => setQty(sel.qty - 1);
-$("qtyPlus").onclick  = () => setQty(sel.qty + 1);
+holdable($("qtyMinus"), n => setQty(sel.qty - n));
+holdable($("qtyPlus"),  n => setQty(sel.qty + n));
 $("qty").oninput = () => setQty(parseInt($("qty").value));
 $("seg").querySelectorAll("[data-mode]").forEach(b => {
   b.onclick = () => {
