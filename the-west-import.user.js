@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mesterség-kalkulátor — raktár import
 // @namespace    the-west-kalkulator
-// @version      1.3
+// @version      1.4
 // @description  Egy gomb a játékban, ami átküldi a raktárkészletet a mesterség-kalkulátorba.
 // @author       —
 // @match        https://*.the-west.hu/game.php*
@@ -22,6 +22,8 @@
 // @grant        GM_setClipboard
 // @grant        GM_openInTab
 // @run-at       document-idle
+// @updateURL    https://kiszamolja.github.io/the-west-kalkulator-inventorymanaged/the-west-import.user.js
+// @downloadURL  https://kiszamolja.github.io/the-west-kalkulator-inventorymanaged/the-west-import.user.js
 // @priority     100
 // ==/UserScript==
 
@@ -130,10 +132,104 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
 
         b.addEventListener("click", () => {
             if (moved) { moved = false; return; }   /* húzás volt, nem kattintás */
+            if (b.dataset.update) {
+                if (confirm("Új szkriptverzió érhető el. Megnyitod a telepítéshez?")) {
+                    try { GM_openInTab(b.dataset.update, { active: true }); }
+                    catch (e) { window.open(b.dataset.update, "_blank"); }
+                    return;
+                }
+                delete b.dataset.update;
+            }
             sendInventory(b);
         });
 
+        checkScriptUpdate(b);
+
         document.body.appendChild(b);
+    }
+
+    /* ---- frissítésfigyelés ----
+       A Tampermonkey ritkán keres frissítést, ezért magunk is megnézzük:
+       a fent lévő fájl @version sorát hasonlítjuk a futóéhoz. */
+    const MY_VER = "1.4";
+
+    function checkScriptUpdate(btn) {
+        const url = CALC_URL.replace(/\/+$/, "/") + "the-west-import.user.js?v=" + Date.now();
+        fetch(url, { cache: "no-store" })
+            .then(r => r.text())
+            .then(txt => {
+                const m = txt.match(/@version\s+([^\s]+)/);
+                if (!m || m[1] === MY_VER) return;
+                btn.style.borderColor = "#7fb08a";
+                btn.title = "Új szkriptverzió érhető el: " + m[1] +
+                            " — kattints ide a telepítéshez (a futó: " + MY_VER + ")";
+                const dot = document.createElement("span");
+                dot.textContent = "•";
+                dot.style.cssText = "position:absolute;right:-3px;top:-6px;color:#7fb08a;font-size:20px;line-height:1";
+                btn.appendChild(dot);
+                btn.dataset.update = url.split("?")[0];
+            })
+            .catch(() => { /* nem baj, ha nem megy */ });
+    }
+
+    /* ---- avatar ----
+       A játék saját rajzolójával (tw2widget.avatarPicture) kirajzoltatjuk egy rejtett
+       dobozba, majd a kész szerkezetet a lényeges stílusokkal együtt kimentjük.
+       Így a kalkulátorban nem kell semmilyen idegen kódot futtatni. */
+    const AV_PROPS = ["position","left","top","width","height","overflow",
+                      "background-image","background-position-x","background-position-y",
+                      "background-size","background-repeat","background-color",
+                      "z-index","display","max-width"];
+
+    /* mely tulajdonságoknál számít a 0px is */
+    const AV_KEEP_ZERO = ["left","top","background-position-x","background-position-y"];
+
+    function inlineStyles(node, base) {
+        const cs = getComputedStyle(node);
+        const out = [];
+        AV_PROPS.forEach(k => {
+            let v = cs.getPropertyValue(k);
+            if (!v) return;
+            if (v === "none" || v === "auto" || v === "normal" || v === "static" ||
+                v === "visible" || v === "rgba(0, 0, 0, 0)") return;
+            if (v === "0px" && AV_KEEP_ZERO.indexOf(k) < 0) return;
+            if (k === "background-image")
+                v = v.replace(/url\((["']?)\//g, "url($1" + base + "/");
+            /* az idézőjel szétvágná a style attribútumot — url("…") helyett url(…) */
+            v = v.replace(/["']/g, "");
+            out.push(k + ":" + v);
+        });
+        const tag = node.tagName.toLowerCase();
+        const cls = (node.className || "").replace(/["<>]/g, "");
+        let attrs = (cls ? ` class="${cls}"` : "") + ` style="${out.join(";")}"`;
+        if (tag === "img") {
+            let src = node.getAttribute("src") || "";
+            if (src.startsWith("/")) src = base + src;
+            attrs += ` src="${src}" alt=""`;
+        }
+        const kids = [...node.children].map(c => inlineStyles(c, base)).join("");
+        return `<${tag}${attrs}>${kids}</${tag}>`;
+    }
+
+    async function readAvatar() {
+        const W = game();
+        const tw = W.tw2widget, C = W.Character;
+        if (!tw || typeof tw.avatarPicture !== "function" || !C || !C.avatarConfig) return null;
+        const host = document.createElement("div");
+        host.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden";
+        document.body.appendChild(host);
+        try {
+            await tw.avatarPicture(host, "small", C.avatarConfig);
+            await new Promise(r => setTimeout(r, 400));      /* várunk a képekre */
+            const box = host.firstElementChild;
+            if (!box) throw new Error("üres");
+            const html = inlineStyles(box, location.origin);
+            return html.length < 12000 ? html : null;
+        } catch (e) {
+            return null;
+        } finally {
+            host.remove();
+        }
     }
 
     /* karakteradatok: név, mesterség, szint */
@@ -234,7 +330,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
         return learnedSet.size ? [...learnedSet] : null;
     }
 
-    function sendInventory(b) {
+    async function sendInventory(b) {
         const data = readInventory();
         if (!data.length) { flash(b, "?"); return; }
         const payload = data.join(",");
@@ -244,6 +340,10 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
         if (k) q += "&k=" + encodeURIComponent(k);
         const t = readLearned();
         if (t) q += "&t=" + t.join(",");
+        try {
+            const av = await readAvatar();
+            if (av) q += "&av=" + encodeURIComponent(av);
+        } catch (e) { /* kép nélkül is megy tovább */ }
         const url = CALC_URL.replace(/\/+$/, "/") + "#" + q;
         try {
             GM_openInTab(url, { active: true, insert: true });
