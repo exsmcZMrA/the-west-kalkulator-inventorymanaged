@@ -137,9 +137,20 @@ select.done-btn:hover{border-color:var(--brass);color:var(--brass)}
 /* a visszakereső ablak sorai */
 .trow{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;
   padding:7px 0;border-bottom:1px dotted var(--line)}
+.trow:last-child{border-bottom:0}
+.trow .miniset{margin:0}
 .tname{font-size:15.5px;font-weight:600;line-height:1.2;min-width:0;color:var(--ink)}
 .tname small{display:block;font-family:"Space Mono",monospace;font-size:10px;
   font-weight:400;color:var(--dim)}
+.tname{font-size:15.5px;font-weight:600;line-height:1.2;min-width:0;color:var(--ink)}
+.tname small{display:block;font-family:"Space Mono",monospace;font-size:10px;
+  font-weight:400;color:var(--dim)}
+.texcl{display:flex;align-items:center;gap:5px;font-family:"Space Mono",monospace;font-size:10px;
+  color:var(--dim);margin-top:3px;cursor:pointer;font-weight:400}
+.texcl input{width:auto;margin:0;cursor:pointer}
+.addbtn{background:none;border:0;color:var(--faint);cursor:pointer;font-size:16px;
+  padding:0 6px;line-height:1;align-self:stretch}
+.addbtn:hover{color:var(--brass)}
 .excl{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:13px;color:var(--dim);cursor:pointer}
 .excl input{width:auto;cursor:pointer}
 .needmain{display:flex;align-items:center;gap:10px;min-width:0}
@@ -303,7 +314,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <p class="eyebrow">Munkalap</p>
     <div class="order">
       <div style="min-width:0">
-        <div>
+        <div id="orderSingle">
           <div style="display:flex;align-items:center;gap:12px">
             <img id="orderIco" class="ico xl" alt="" hidden>
             <h1 id="orderName">—</h1>
@@ -316,6 +327,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
           </div>
           <label class="excl"><input type="checkbox" id="excl" checked><span id="exclTxt"></span></label>
         </div>
+        <div id="orderMulti" hidden></div>
       </div>
       <div class="ring">
         <svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true">
@@ -1345,6 +1357,13 @@ function targets(){
   if(!sel.targets.length && sel.recipe) return [{ i:sel.recipe, q:sel.qty }];
   return sel.targets;
 }
+function addTarget(id){
+  const t = sel.targets.find(x => x.i === id);
+  if(t) t.q++;
+  else sel.targets.push({ i:id, q:1, x:true });
+  sel.recipe = id;
+  renderRecipes(); renderPlan(); save();
+}
 function setTargets(list){
   sel.targets = list.filter(t => recipeMap.has(t.i) && t.q >= 0)
                     .map(t => ({ i:t.i, q:t.q, x:t.x !== false }));
@@ -1388,15 +1407,22 @@ function renderRecipes(){
     const locked = overLevel(r);
     const nolearn = unlearned(r);
     const state = (locked || nolearn) ? "" : canCraftNow(r) ? "ready" : "close";
-    return `<li>
+    const inPlan = sel.targets.some(t => t.i === r.i);
+    return `<li style="display:grid;grid-template-columns:1fr auto;align-items:stretch">
       <button data-pick="${r.i}" class="${locked ? "locked" : nolearn ? "unlearned" : ""}"
         title="${locked ? "Magasabb mesterségszint kell hozzá" : nolearn ? "Nincs meg a recepted" : ""}"
         ${r.i === sel.recipe ? 'aria-current="true"' : ""}>
         <i class="dot ${state}"></i>
         <span class="nmwrap">${ico(r.i)}<span class="rname">${r.n}<small>${
           q ? profLabel(r.p) + " · " : ""}${minLvl(r)}. szint</small></span></span></button>
+      <button class="addbtn" data-add="${r.i}"
+        title="${inPlan ? "Még egy darab a tervbe" : "Hozzáadás a tervhez"}"
+        style="${inPlan ? "color:var(--brass)" : ""}">+</button>
       </li>`;
   }).join("") || `<p class="empty">Nincs ilyen nevű recept.</p>`;
+  $("rlist").querySelectorAll("[data-add]").forEach(b => {
+    b.onclick = () => addTarget(b.dataset.add);
+  });
   $("rlist").querySelectorAll("[data-pick]").forEach(b => {
     b.onclick = () => { sel.recipe = b.dataset.pick;
           setTargets([{ i:sel.recipe, q:1 }]);
@@ -1432,18 +1458,53 @@ function renderPlan(){
   const ts = targets();
   if(!ts.length) return;
   plan = compute(ts);
-  const r = recipeMap.get(ts[0].i);
-  $("orderName").textContent = r.n;
-  const oi = $("orderIco");
-  if(ITEM_IMG[r.i]){ oi.src = IMG_BASE + ITEM_IMG[r.i]; oi.hidden = false; } else oi.hidden = true;
-  $("orderMeta").innerHTML = `${profLabel(r.p)} · ${r.l}` +
-    (r.t ? ` · <span style="color:var(--brass)">${lockLabel(r.t)}</span>` : "");
-  $("qty").value = ts[0].q;
-  const have = stock[r.i] || 0;
-  $("excl").checked = ts[0].x !== false;
-  $("exclTxt").textContent = have
-    ? `A raktáradban lévő ${have} db nem számít bele`
-    : "A meglévő készlet nem számít bele";
+  const multi = ts.length > 1;
+  $("orderSingle").hidden = multi;
+  $("orderMulti").hidden = !multi;
+
+  if(!multi){
+    const r = recipeMap.get(ts[0].i);
+    $("orderName").textContent = r.n;
+    const oi = $("orderIco");
+    if(ITEM_IMG[r.i]){ oi.src = IMG_BASE + ITEM_IMG[r.i]; oi.hidden = false; } else oi.hidden = true;
+    $("orderMeta").innerHTML = `${profLabel(r.p)} · ${r.l}` +
+      (r.t ? ` · <span style="color:var(--brass)">${lockLabel(r.t)}</span>` : "");
+    $("qty").value = ts[0].q;
+    const have = stock[r.i] || 0;
+    $("excl").checked = ts[0].x !== false;
+    $("exclTxt").textContent = have
+      ? `A raktáradban lévő ${have} db nem számít bele`
+      : "A meglévő készlet nem számít bele";
+  }else{
+    $("orderMulti").innerHTML = ts.map(t => {
+      const r = recipeMap.get(t.i);
+      const have = stock[t.i] || 0;
+      return `<div class="trow">${ico(t.i,"lg")}
+        <div class="tname">${r.n}<small>${profLabel(r.p)} · ${r.l}</small>
+          <label class="texcl"><input type="checkbox" data-tx="${t.i}" ${t.x !== false ? "checked" : ""}>
+            meglévő ${have} db nem számít</label></div>
+        <div class="miniset"><button data-tdec="${t.i}">−</button>
+          <input data-tq="${t.i}" inputmode="numeric" value="${t.q}" aria-label="${r.n} darabszám">
+          <button data-tinc="${t.i}">+</button></div>
+        <button class="wipe" data-tdel="${t.i}" title="Eltávolítás a tervből">×</button></div>`;
+    }).join("");
+    $("orderMulti").querySelectorAll("[data-tq]").forEach(inp => {
+      inp.oninput = () => {
+        const t = sel.targets.find(x => x.i === inp.dataset.tq);
+        if(t){ t.q = Math.max(1, parseInt(inp.value) || 1); refreshNumbers(); save(); }
+      };
+    });
+    $("orderMulti").querySelectorAll("[data-tinc]").forEach(b2 => b2.onclick = () => {
+      const t = sel.targets.find(x => x.i === b2.dataset.tinc); if(t){ t.q++; renderPlan(); save(); } });
+    $("orderMulti").querySelectorAll("[data-tdec]").forEach(b2 => b2.onclick = () => {
+      const t = sel.targets.find(x => x.i === b2.dataset.tdec); if(t && t.q > 1){ t.q--; renderPlan(); save(); } });
+    $("orderMulti").querySelectorAll("[data-tx]").forEach(cb => cb.onchange = () => {
+      const t = sel.targets.find(x => x.i === cb.dataset.tx);
+      if(t){ t.x = cb.checked; renderPlan(); save(); } });
+    $("orderMulti").querySelectorAll("[data-tdel]").forEach(b2 => b2.onclick = () => {
+      setTargets(sel.targets.filter(x => x.i !== b2.dataset.tdel));
+      renderRecipes(); renderPlan(); save(); });
+  }
 
   const arc = 2 * Math.PI * 38;
   $("ringArc").setAttribute("stroke-dashoffset", arc * (1 - plan.pct / 100));
