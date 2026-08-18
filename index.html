@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mesterség-kalkulátor — The West</title>
+<title>Mesterség-kalkulátor - The West</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rye&family=Alegreya+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -314,7 +314,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
       <span id="mineTxt">csak amihez megvan a receptem</span></label>
     <label class="lvl" style="margin-bottom:8px"><input type="checkbox" id="onlyReady" style="width:auto">
       csak amit most tudok gyártani</label>
-    <label class="lvl">Mesterségszintem <input type="number" id="lvl" min="0" step="1" placeholder="—"></label>
+    <label class="lvl">Mesterségszintem <input type="number" id="lvl" min="0" step="1" placeholder="-"></label>
     <ul class="rlist" id="rlist"></ul>
     <p class="legend">
       <i style="background:var(--green)"></i>Most legyártható a készletedből<br>
@@ -330,7 +330,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
         <div id="orderSingle">
           <div style="display:flex;align-items:center;gap:12px">
             <img id="orderIco" class="ico xl" alt="" hidden>
-            <h1 id="orderName">—</h1>
+            <h1 id="orderName">-</h1>
           </div>
           <p class="meta" id="orderMeta"></p>
           <div class="stepper">
@@ -373,9 +373,9 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 
 <section id="stockView" hidden>
   <p class="eyebrow">Teljes raktár <span id="stockMeta"></span></p>
-  <p style="color:var(--dim);font-size:13.5px;margin:0">Minden tétel szerepel itt, ami bármelyik receptben előfordul — alapanyagok és más mesterségek termékei is. Kereséssel bármit felvehetsz, akkor is, ha épp egyik recepthez sem tartozik.</p>
+  <p style="color:var(--dim);font-size:13.5px;margin:0">Minden tétel szerepel itt, ami bármelyik receptben előfordul - alapanyagok és más mesterségek termékei is. Kereséssel bármit felvehetsz, akkor is, ha épp egyik recepthez sem tartozik.</p>
   <div class="stockbar" style="grid-template-columns:1fr auto auto auto">
-    <input class="search" type="search" id="stockSearch" placeholder="Keresés név szerint — így vehetsz fel új tételt…">
+    <input class="search" type="search" id="stockSearch" placeholder="Keresés név szerint - így vehetsz fel új tételt…">
     <label><input type="checkbox" id="onlyOwned" checked> csak amiből van</label>
     <button class="icon" id="openImp" style="width:auto;padding:0 14px" title="Készlet beolvasása szövegből">Importálás</button>
     <button class="icon" id="stockClear" style="width:auto;padding:0 14px" title="Teljes raktár nullázása">Mindent nulláz</button>
@@ -415,7 +415,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
   <div style="border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:12px">
     <b style="font-size:14.5px">Egy kattintással, a játékból</b>
     <p style="margin:6px 0 8px">Húzd ezt a gombot a könyvjelzősávodra, majd a <b>futó játékablakban</b> kattints rá.
-    A raktárad a vágólapra kerül — utána itt elég a <b>Beolvasás vágólapról</b> gomb.</p>
+    A raktárad a vágólapra kerül - utána itt elég a <b>Beolvasás vágólapról</b> gomb.</p>
     <a id="bmLink" href="#" style="display:inline-block;background:var(--raised);border:1px solid var(--brass);
        color:var(--brass);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px"
        onclick="return false">📦 Raktár → kalkulátor</a>
@@ -424,7 +424,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <b style="font-size:14.5px">Vagy gomb magában a játékban</b>
     <p style="margin:6px 0 8px">Ehhez kell a <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener"
       style="color:var(--brass)">Tampermonkey</a> bővítmény. Telepítés után a játék bal alsó sarkában megjelenik
-      egy gomb — egy kattintás, és a kalkulátor máris a friss készlettel nyílik meg.</p>
+      egy gomb - egy kattintás, és a kalkulátor máris a friss készlettel nyílik meg.</p>
     <a id="usLink" href="the-west-import.user.js" target="_blank" rel="noopener"
        style="display:inline-block;background:var(--raised);border:1px solid var(--line);
        color:var(--ink);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px">
@@ -442,8 +442,8 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
        style="display:inline-block;background:var(--raised);border:1px solid var(--brass);
        color:var(--brass);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px">
        ⬇ Játékbeli panel telepítése</a>
-    <p style="margin:8px 0 0;font-size:12px;color:var(--dim)">Fejlesztés alatt: a teljes gyártási
-    lánc lebontása még hiányzik belőle, arra egyelőre ez az oldal való.</p>
+    <p style="margin:8px 0 0;font-size:12px;color:var(--dim)">Ugyanazt számolja, mint ez az oldal:
+    a teljes gyártási láncot, darabszámmal, több céllal - csak élő raktáradatból, beolvasás nélkül.</p>
   </div>
   <textarea id="impText" spellcheck="false" placeholder="Ide illeszd be…"></textarea>
   <div class="drow">
@@ -483,7 +483,7 @@ const PROFS = [
   { id:4, name:"Istállómester" }
 ];
 
-/* alapanyagok — hivatalos magyar nevek a játék adatbázisából */
+/* alapanyagok - hivatalos magyar nevek a játék adatbázisából */
 const BASE_NAMES = {
 "700000":"Sonka",
 "701000":"Gabona",
@@ -1359,7 +1359,7 @@ function chain(rootIds){
   rootIds.forEach(id => walk(id, 0, []));
   return [...depth.entries()].sort((a,b) => a[1] - b[1]).map(e => e[0]);
 }
-/* targets: [{i, q}] — egyszerre több végtermék is tervezhető */
+/* targets: [{i, q}] - egyszerre több végtermék is tervezhető */
 /* a célként megjelölt termékek saját készlete alapból nem számít bele */
 function planPool(ts){
   const pool = Object.assign({}, stock);
@@ -1417,7 +1417,7 @@ function overLevel(r){
   return !given.some(v => minLvl(r) <= Number(v));
 }
 
-/* nincs meg a recepted — csak akkor tudjuk, ha a játékból beolvastuk */
+/* nincs meg a recepted - csak akkor tudjuk, ha a játékból beolvastuk */
 /* a megtanultság csak arra a mesterségre értelmes, amit a karakter visz;
    a több szakmához tartozó (esemény-) recepteket kihagyjuk */
 const unlearned = r => !!learned && !!char
@@ -1682,7 +1682,7 @@ function renderSteps(){
            title="${canCraftNow(rec) ? "Levonja a hozzávalókat és hozzáadja a terméket a raktárhoz"
                                      : "Nincs meg minden hozzávaló a raktárban"}">✓ Legyártottam</button>` : ""}</div>
       <div class="ings">${ings}</div></li>`;
-  }).join("") || `<li class="step done"><div class="step-head"><span class="step-title">Nincs mit gyártani — minden megvan a raktárban.</span></div></li>`;
+  }).join("") || `<li class="step done"><div class="step-head"><span class="step-title">Nincs mit gyártani - minden megvan a raktárban.</span></div></li>`;
   ul.querySelectorAll("[data-done]").forEach(btn => {
     btn.onclick = () => logCraft(btn.dataset.done);
   });
@@ -1914,7 +1914,7 @@ function parseInventory(text){
     if(m && nameIndex.has(norm(m[2]))){ add(nameIndex.get(norm(m[2])), parseInt(m[1])); return; }
     m = line.match(/^(.+?)[\s\t:.\-–]+(\d+)\s*(?:db|x|×)?$/i);
     if(m && nameIndex.has(norm(m[1]))){ add(nameIndex.get(norm(m[1])), parseInt(m[2])); return; }
-    if(nameIndex.has(norm(line))) return;      /* név mennyiség nélkül — kihagyjuk, de nem hiba */
+    if(nameIndex.has(norm(line))) return;      /* név mennyiség nélkül - kihagyjuk, de nem hiba */
     unknown.push(line);
   });
   return { found, unknown };
@@ -2013,7 +2013,7 @@ function showUses(id){
   $("useTitle").innerHTML = `${ico(id,"lg")} ${nameOf(id)}`;
   $("useSub").textContent = uses.length
     ? `${uses.length} receptben szerepel. Kattints egyre, és megnyílik a munkalapon.`
-    : "Ez a tétel egyetlen receptben sem hozzávaló — végtermék.";
+    : "Ez a tétel egyetlen receptben sem hozzávaló - végtermék.";
   $("useList").innerHTML = uses.map(r => {
     const q = r.g.find(([gid]) => gid === id)[1];
     return `<button class="trow" data-use="${r.i}" style="width:100%;background:none;border:0;
@@ -2117,10 +2117,10 @@ $("impPaste").onclick = async () => {
     if(!t.trim()){ $("impMsg").className = "msg err"; $("impMsg").textContent = "A vágólap üres."; return; }
     $("impText").value = t;
     renderImportPreview();
-    $("impMsg").className = "msg"; $("impMsg").textContent = "Vágólapról beolvasva — ellenőrizd, majd Beolvasás.";
+    $("impMsg").className = "msg"; $("impMsg").textContent = "Vágólapról beolvasva - ellenőrizd, majd Beolvasás.";
   }catch(e){
     $("impMsg").className = "msg err";
-    $("impMsg").textContent = "A böngésző nem engedte a vágólapot — illeszd be kézzel (Ctrl+V).";
+    $("impMsg").textContent = "A böngésző nem engedte a vágólapot - illeszd be kézzel (Ctrl+V).";
   }
 };
 $("impText").oninput = () => { $("impApply").disabled = true; $("impMsg").textContent = ""; };

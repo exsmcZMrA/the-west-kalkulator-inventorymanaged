@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mesterség-kalkulátor — játékbeli panel
 // @namespace    the-west-kalkulator-ingame
-// @version      1.6.5
+// @version      1.7.5
 // @description  A mesterség-kalkulátor a játék felületén, mozgatható ablakban. Csak a már betöltött adatot olvassa.
 // @author       —
 // @match        https://*.the-west.hu/game.php*
@@ -824,10 +824,126 @@ const RECIPES = [
 {i:"54479000",n:"Mobil sátor",p:4,l:"950/?/1000",g:[["52962000",5],["52966000",4],["52942000",3],["1917000",2],["2730000",2]]}
 ];
 
+/* Tárgy- és receptnevek a The West adatbázisából: [EN, DE, PL].
+   A magyar a BASE_NAMES és a RECIPES .n mezőjében marad.
+   Fordítás nem történt, csak azonosító szerinti párosítás. */
+const NEVEK_TOBB = {"700000":["Ham","Schinken","Szynka"],"701000":["Grain","Getreide","Zboże"],"702000":["Tobacco","Tabakblätter","Liście tytoniu"],"703000":["Sugar","Zucker","Cukier"],"704000":["Cotton","Baumwolle","Bawełna"],"705000":["Trout","Forelle","Pstrąg"],"706000":["Berries","Beeren","Jagody"],"707000":["Wool","Wolle","Wełna"],"708000":["Fool's gold","Katzengold","Piryt"],"709000":["Turkey","Truthahn","Indyk"],"710000":["T-Bone-Steak","T-Bone-Steak","Stek"],"711000":["Wood","Holz","Drewno"],"712000":["Leather","Leder","Skóra"],"714000":["Beaver skin","Biberfell","Skóra z bobra"],"715000":["Roll of cloth","Tuchballen","Sukno"],"716000":["Granite blocks","Steine","Kamienie"],"717000":["Salmon","Lachs","Łosoś"],"718000":["Coyote tooth","Kojotenzahn","Ząb kojota"],"719000":["Cigars","Zigarren","Cygara"],"720000":["Semi-precious stones","Halbedelsteine","Kamienie półszlachetne"],"721000":["Coal","Kohle","Węgiel"],"722000":["Warm meal","Warme Mahlzeit","Ciepły posiłek"],"724000":["Buffalo skin","Büffelfell","Skóra z bizona"],"725000":["Silver","Silber","Srebro"],"728000":["Pocket watch","Taschenuhr","Zegarek kieszonkowy"],"733000":["Parcel","Paket","Paczka"],"737000":["Dynamite","Dynamit","Dynamit"],"739000":["Barbed wire","Stacheldraht","Drut kolczasty"],"740000":["Horn of a cow","Kuhhorn","Krowi róg"],"741000":["Jug","Krug","Dzban"],"742000":["Saw","Säge","Piła"],"743000":["Poster","Plakat","Plakat"],"744000":["Newspaper 'The Western Star'","Zeitung","Gazeta"],"745000":["Flour","Mehl","Mąka"],"746000":["Beans","Bohnen","Fasola"],"747000":["Hammer","Hammer","Młotek"],"748000":["Corn","Mais","Kukurydza"],"749000":["Lasso","Lasso","Lasso"],"751000":["Calumet","Friedenspfeife","Fajka pokoju"],"752000":["Oil","Öl","Ropa"],"754000":["Horseshoe","Hufeisen","Podkowa"],"756000":["Tool box","Werkzeugkasten","Skrzynka z narzędziami"],"757000":["Raven feather","Rabenfeder","Pióro kruka"],"761000":["Sledge hammer","Vorschlaghammer","Młot kowalski"],"763000":["Tooth bracelet","Zahnarmband","Bransoleta z zębem"],"764000":["Shackle","Fußfessel","Okowy"],"765000":["Sickle","Sichel","Sierp"],"766000":["Glass of water","Glas Wasser","Szklanka wody"],"767000":["Roll of wire","Drahtrolle","Szpulka drutu"],"771000":["Beaver trap","Biberfalle","Pułapka na bobry"],"778000":["Cooking pot","Kochtopf","Garnek do gotowania"],"779000":["Post horn","Posthorn","Trąbka pocztyliona"],"782000":["Fishing rod","Angel","Wędka"],"784000":["Nails","Nägel","Gwoździe"],"787000":["Saddle","Sattel","Siodło"],"789000":["Quarter","Quarter","Ćwierćdolarówka"],"790000":["Iron rod","Eisenstangen","Pręty metalowe"],"791000":["Oranges","Orangen","Pomarańcza"],"792000":["Tequila","Tequila","Tequila"],"793000":["Tomato","Tomate","Pomidor"],"794000":["Elixir","Elixier","Eliksir"],"795000":["Spike","Holzpflock","Pal drewniany"],"797000":["Pitchfork","Mistgabel","Widły"],"1708000":["Whiskey","Whiskey","Whiskey"],"1791000":["Gold dust","Goldstaub","Złoty pył"],"1807000":["Broken spur","Kaputte Spore","Zniszczona ostroga"],"1808000":["Potato","Kartoffel","Ziemniak"],"1809000":["Hay","Heu","Siano"],"1810000":["Pumpkin","Kürbis","Dynia"],"1811000":["Blueberries","Blaubeeren","Borówki"],"1812000":["Seeds","Kerne","Nasiona"],"1813000":["Eagle feather","Adlerfeder","Orle pióro"],"1814000":["Lotus blossom","Lotusblüte","Kwiat lotosu"],"1815000":["Crab meat","Krebsfleisch","Mięso kraba"],"1816000":["Chalk","Kreide","Kreda"],"1818000":["Sulfuric rock","Schwefelgestein","Ruda siarki"],"1820000":["Snake skin","Schlangenhaut","Skóra węża"],"1821000":["Saltpeter","Salpetersalz","Saletra"],"1822000":["Cigarettes","Zigaretten","Papierosy"],"1824000":["Puma skin","Pumafell","Skóra pumy"],"1825000":["Indigo","Indigo","Indygo"],"1826000":["Rum","Rum","Rum"],"1827000":["Lead","Blei","Ołów"],"1832000":["Metal chip","Metallchip","Metalowy żeton"],"1833000":["Death sentence","Todesurteil","Wyrok śmierci"],"1834000":["Peace flower","Friedensblume","Kwiat pokoju"],"1835000":["Rose","Rose","Róża"],"1855000":["Charcoal","Holzkohle","Węgiel drzewny"],"1856000":["Jug of water","Krug voll Wasser","Dzban wody"],"1857000":["Canteen","Feldflasche","Manierka"],"1858000":["Knife","Messer","Nóż"],"1859000":["Pan","Pfanne","Patelnia"],"1860000":["Chopping Board","Schneidbrett","Deska do krojenia"],"1861000":["Tinderbox","Zunderzeug","Krzesiwo"],"1862000":["Corn flour","Maismehl","Mąka kukurydziana"],"1863000":["Stewed beans with bacon","Bohnen mit Speck","Fasola z bekonem"],"1864000":["Jam","Marmelade","Dżem"],"1865000":["Mash","Maische","Zacier"],"1866000":["Dough","Teig","Ciasto"],"1867000":["Marinated steak","Mariniertes Steak","Marynowany stek"],"1868000":["Liquor","Likör","Trunek"],"1869000":["Cake","Torte","Tort"],"1870000":["Fish stock","Fischfond","Bulion rybny"],"1871000":["Roast Turkey","Gebratener Truthahn","Pieczony indyk"],"1872000":["Fish Soup","Fischsuppe","Zupa rybna"],"1873000":["Vegetable dumpling","Gemüsetasche","Pieróg z warzywami"],"1874000":["Mince","Hackfleisch","Siekane mięso"],"1875000":["Dried Cod","Stockfisch","Dorsz"],"1876000":["Incense","Räucherwerk","Kadzidło"],"1877000":["Sauce","Soße","Sos"],"1878000":["A fish wrapped in newspaper.","In Zeitungspapier eingeschlagener Fisch","Ryba zawinięta w gazetę"],"1879000":["Gentleman's Dinner","Gentlemans Dinner","Obiad dżentelmena"],"1880000":["Resin","Harz","Żywica"],"1881000":["Sulfur","Schwefel","Siarka"],"1882000":["Pipe Brush","Rohrbürste","Wycior"],"1883000":["Stomach Medicine","Magenmittel","Lek na żołądek"],"1884000":["Sulfuric Acid","Schweflige Säure","Kwas siarkowy"],"1885000":["Ink","Tinte","Atrament"],"1886000":["Petroleum","Petroleum","Nafta"],"1887000":["Idol","Idol","Bożek"],"1888000":["Distillate","Destillat","Destylat"],"1889000":["Moonshine","Feuerwasser","Bimber"],"1890000":["Tea","Tee","Herbata"],"1891000":["Chewing Tobacco","Kautabak","Prymka"],"1892000":["Fruit liqueur","Fruchtlikör","Nalewka"],"1893000":["Battery","Batterie","Bateria"],"1894000":["Lye","Lauge","Ług"],"1895000":["Herb liqueur","Kräutersud","Likier ziołowy"],"1896000":["Paper","Papier","Papier"],"1897000":["Pair of compasses","Mathematische Zeichenvorrichtung","Cyrkiel"],"1898000":["Rose Water","Rosenwasser","Woda różana"],"1899000":["Molten Iron","Geschmolzenes Eisen","Stopione żelazo"],"1900000":["Bayonet","Bajonett","Bagnet"],"1901000":["Weightstone","Gewichtsstein","Odważnik"],"1902000":["Steel","Stahl","Stal"],"1903000":["Molten Lead","Geschmolzenes Blei","Stopiony ołów"],"1904000":["Anvil","Amboss","Kowadło"],"1905000":["Lead figurine","Bleifigur","Ołowiana figurka"],"1906000":["Soft Marble","Noch weiche Murmel","Niezastygnięta kulka"],"1907000":["Rivets","Nieten","Nity"],"1908000":["Hilt","Griffschutz","Kabłąk"],"1909000":["Cooling Cloth","Kühltuch","Chusta do chłodzenia"],"1910000":["Weapon Chain","Waffenkette","Łańcuch do broni"],"1911000":["Handle","Griffstück","Rękojeść"],"1912000":["Revolver mould","Revolverrohling","Kształtownik rewolweru"],"1913000":["Steel Blade","Stahlklinge","Stalowe ostrze"],"1914000":["Weapon ornament","Waffenverzierung","Ozdoba broni"],"1915000":["Unopened geode","Noch nicht geöffnete Druse","Nierozłupana geoda"],"1916000":["Polishing stone","Polierstein","Kamień polerski"],"1917000":["Leather Strap","Lederriemen","Rzemień"],"1918000":["Shoed hooves","Beschlagene Hufe","Podkucie kopyt"],"1919000":["Concentrate","Kraftfutter","Pasza treściwa"],"1920000":["Stripped saddle","Abgezogener Sattel","Obdarte siodło"],"1921000":["Filling","Füllstoff","Wypełniacz"],"1922000":["Leather covering","Lederbezug","Skórzane pokrycie"],"1923000":["Branding iron","Brandeisen","Znakownik"],"1924000":["Unaligned compass","Noch nicht ausgerichteter Kompass","Niewyregulowany kompas"],"1925000":["Stirrup","Steigbügel","Strzemię"],"1926000":["Spurs","Sporen","Ostrogi"],"1927000":["Bridle","Zaumzeug","Uzda"],"1928000":["Sleeping Bag","Feldlager","Śpiwór"],"1929000":["Horse blanket","Pferdedecke","Dera"],"1930000":["Ornament","Verzierung","Ozdoba"],"1931000":["Coach part","Kutschteil","Część powozu"],"1932000":["Wagon wheel","Wagenrad","Koło powozu"],"1933000":["Aiming Elixir","Zielwasser","Eliksir celności"],"1934000":["Saddle pommel","Edelsteinsattelknauf","Łęk siodła"],"1937000":["Travel bag","Reisetasche","Torba podróżna"],"1938000":["Sharpened weapon","Geschliffene Waffe","Zaostrzenie broni"],"1939000":["Filtered cigarette","Filterzigarette","Papieros z filtrem"],"1940000":["Slice of cake","Stück Torte","Kawałek tortu"],"1941000":["Tomato puree","Tomatenbrei","Puree pomidorowe"],"1942000":["Tomato sauce","Tomatensoße","Sos pomidorowy"],"1943000":["Baked beans","Gebackene Bohnen","Zapieczone fasolki"],"1944000":["Uncut pyrite","Rohpyrit","Nieoszlifowany piryt"],"1945000":["Pyrite disc","Pyritsonne","Dysk z pirytu"],"1946000":["Amulet","Amulett","Amulet"],"1947000":["Graphite","Graphit","Grafit"],"1948000":["Graphite powder","Graphitpulver","Sproszkowany grafit"],"1949000":["Graphite lubricant","Graphitschmiermittel","Smar grafitowy"],"1950000":["Tanned leather","Bearbeitetes Leder","Wygarbowana skóra"],"1951000":["Leather bag","Lederbeutel","Skórzana torba"],"1952000":["Feed bag","Futterbeutel","Torba z paszą"],"1980000":["Jerky","Dörrfleisch","Suszone mięso"],"1981000":["Goulash","Gulasch","Gulasz"],"1982000":["Spare ribs","Spare Ribs","Żeberka"],"1983000":["Snake oil","Schlangenöl","Panaceum"],"1984000":["Hair lotion","Haarwuchsmittel","Odżywka do włosów"],"1985000":["Exquisite Liquor","Erlesener Tropfen","Znakomity trunek"],"1986000":["Fine dubbin","Erlesenes Lederfett","Wykwintny impregnat"],"1987000":["Robust reins","Stabile Zügel","Wytrzymałe lejce"],"1988000":["Robust holster","Stabiles Holster","Wytrzymała kabura"],"1989000":["Rust-proof bolts","Rostfreier Bolzen","Nierdzewne śruby"],"1990000":["Hip flask","Versilberter Flachmann","Piersiówka"],"1991000":["Modern armour","Moderne Panzerung","Nowoczesna zbroja"],"1999000":["Canned beans","Dosenbohnen","Fasola w puszce"],"2000000":["Habanero chilis","Habanero-Chilis","Papryczki Habanero"],"2001000":["The hottest chili in the West","Das schärfste Chili im Westen","Najostrzejsze chili na zachodzie"],"2002000":["Glowing mixture","Glühendes Gemisch","Błyszcząca mikstura"],"2003000":["Cobra teeth","Schlangenzähne","Ząb kobry"],"2004000":["Fabled antidote","Sagenhaftes Gegengift","Legendarne antidotum"],"2005000":["Weightless leather","Federleichtes Leder","Leciutka skóra"],"2006000":["Cossack saddle blanket","Kosakische Satteldecke","Kozacki czaprak"],"2007000":["Pony express saddlery","Pony-Express-Sattelzeug","Siodło Pony-Express"],"2008000":["Watchmaker's tools","Uhrmacherwerkzeug","Narzędzia zegarmistrzowskie"],"2009000":["Gold-plated cogwheels","Vergoldete Zahnräder","Pozłacane tryby"],"2010000":["Golden music box","Goldene Spieluhr","Złota pozytywka"],"2162000":["Ground coffee","Portion gemahlener Kaffee","Mielona kawa"],"2163000":["Lamb wool","Lammwolle","Jagnięca wełna"],"2430000":["Large caliber bullets","Großkalibrige Kugeln","Kule dużego kalibru"],"2431000":["Emblem","Emblem","Godło"],"2432000":["Bottle of milk","Milchflasche","Butelka mleka"],"2433000":["Tongs","Zange","Szczypce"],"2435000":["Bandages","Bandagen","Bandaże"],"2436000":["Music sheet","Notenblatt","Nuty"],"2437000":["Pinkerton emblem","Pinkerton-Emblem","Godło Pinkerton"],"2439000":["Drill trumpet","Exerziertrompete","Trąbka do musztry"],"2442000":["Border stone","Grenzstein","Kamień graniczny"],"2443000":["Public documents","Öffentliche Dokumente","Dokumenty publiczne"],"2444000":["Ceremonial staff","Zeremonienstab","Laska ceremonialna"],"2445000":["Pocket knife","Taschenmesser","Scyzoryk"],"2446000":["Bullet casings","Patronenhülsen","Łuska"],"2447000":["Green peppers","Rote Chilischote","Ostre papryki"],"2450000":["Raw egg jar","Einmachglas mit rohen Eiern","Surowe jajka"],"2451000":["Blasting machine","Sprengmaschine","Detonator"],"2452000":["Skull","Schädel","Czaszka"],"2453000":["White gloves","Weiße Handschuhe","Białe rękawiczki"],"2454000":["Dogma","Dogma","Dogmat"],"2455000":["Alligator skin","Alligatorhaut","Skóra aligatora"],"2456000":["Vodka","Wodka","Wódka"],"2457000":["Horse reins","Pferdezügel","Lejce"],"2458000":["Record","Aufzeichnung","Pismo"],"2516000":["Hushpuppy","Hushpuppy","Ciasteczko kukurydziane"],"2517000":["Chewing Gum","Kaugummi","Guma do żucia"],"2518000":["Grog","Grog","Grog"],"2519000":["Racing Coach","Rennkutsche","Powóz wyścigowy"],"2520000":["Repaired Saddle","Reparierter Sattel","Naprawione siodło"],"2521000":["Tapestry","Wandteppich","Arras"],"2522000":["The Westerner","Der Westerner","Westerner"],"2523000":["Utility knife","Allzweckmesser","Szwajcarski scyzoryk"],"2524000":["Wells Fargo saddle","Wells Fargo Sattel","Siodło Wells Fargo"],"2525000":["Disappearing ink","Zaubertinte","Atrament sympatyczny"],"2526000":["Illuminating ammo","Brandmunition","Proch strzelniczy"],"2527000":["Potency remedy","Potenzmittel","Remedium siły"],"2730000":["Flax fiber","Flachsfasern","Włókno lnu"],"2731000":["Health puppet","Lebenskraft-Puppe","Uzdrawiająca marionetka"],"2732000":["Ghostly music","Gespenstische Musik","Duchowa muzyka"],"2733000":["Glass","Glas","Szkło"],"2734000":["Lantern","Laterne","Latarnia"],"2735000":["Honey press","Honigpresse","Prasa do miodu"],"2736000":["Cactus juice","Kaktussaft","Sok z kaktusa"],"2737000":["Honey","Honig","Miód"],"2738000":["Honey wine","Met","Miód pitny"],"2739000":["Notebook","Notizbuch","Notes"],"2740000":["Traveling carriage","Reisekutsche","Wędrowny powóz"],"2741000":["Ammunition slide","Munitionsgurt","Schowek na amunicję"],"51576000":["Cocktail","Cocktail","Drink"],"51577000":["Flavored Bubble Gum Pack","Aromatisierte Kaugummi-Packung","Paczka smakowych gum balonowych"],"51578000":["Miners' Burger","Burger der Minenarbeiter","Burger górnika"],"51579000":["Fruit Cocktail","Fruchtcocktail","Owocowy koktail"],"51580000":["Fertilizer","Dünger","Nawóz"],"51581000":["Castello Cheese","Castellokäse","Ser Castello"],"51582000":["Maria Roalstad's Stagecoach","Maria Roalstads Reisekutsche","Dyliżans Marii Roalstad"],"51583000":["Songs of The West","Songs von The-West","Pieśń Dzikiego Zachodu"],"51584000":["Cloth Crate","Kleidungskiste","Płócienna skrzynka"],"51585000":["Belt with Straps","Gürtel mit Riemen","Pas z rzemieni"],"51586000":["Armor for the Mount","Rüstung für das Pferd","Zbroja dla wierzchowca"],"51587000":["Leather Coat","Ledermantel","Skórzany płaszcz"],"51588000":["Booby Trap","Sprengfalle","Bomba - pułapka"],"51589000":["Tailor's Dummy","Schneiderpuppe","Manekin krawiecki"],"51590000":["Advanced Toolbox","Verbesserter Werkzeugkasten","Zaawansowana skrzynka na narzędzia"],"51591000":["Hardened Steel","Gehärteter Stahl","Hartowana stal"],"51592000":["Viewfinder","Fernglas","Wizjer"],"51593000":["Cavalry Saber","Kavalleriesäbel","Kawaleryjska szabla"],"51594000":["Wonder Tincture","Wundertinktur","Cudotwórcza nalewka"],"51595000":["Metal Skull","Metallschädel","Metalowa czaszka"],"51596000":["Strong Acid and Lye","Starke Säure und Lauge","Silny kwas siarkowy z ługiem"],"51597000":["Remedy against Torments","Heilmittel gegen Qualen","Remedium przeciw cierpieniu"],"51598000":["Import Tax Certificate","Steuerbescheinigung","Certyfikat podatku importowego"],"51599000":["Dream-Catcher","Traumfänger","Łapacz snów"],"52027000":["Baking Mold","Backform","Forma do pieczenia"],"52028000":["Citrus Extract","Zitrusextrakt","Ekstrakt z cytrusów"],"52029000":["Butter","Butter","Masło"],"52030000":["Wooden Whisk","Holz Schneebesen","Drewniana rózga"],"52497000":["Improved spurs","Verbesserte Sporen","Ulepszone ostrogi"],"52499000":["An empty jar","Ein leeres Gefäß","Pusty słoik"],"52500000":["A metal straw and a dessert spoon","Ein Metallstrohhalm und ein Dessertlöffel","Metalowa słomka i łyżeczka deserowa"],"52501000":["A wooden cake plateau","Eine hölzerne Tortenplatte","Drewniana patera"],"52502000":["Leather saddlebags","Satteltaschen aus Leder","Skórzane sakwy"],"52503000":["French breakfast","Französisches Frühstück","Francuskie śniadanie"],"52504000":[" Dessert Decoration ","Dessert Dekoration","Dekoracja deserowa"],"52505000":["Red fruit aroma","Aroma von roten Früchten","Aromat z czerwonych owoców"],"52506000":["A fever medicine","Ein Fiebermittel","Lek na gorączkę"],"52518000":[" Innovative dessert in a jar ","Innovatives Dessert im Glas","Innowacyjny deser w słoiku"],"52868000":["Sweet base","Süße Basis","Słodka baza"],"52869000":["Fruit juice","Fruchtsaft","Sok owocowy"],"52870000":["Bottle cover","Flaschenhalter","Pokrowiec na butelkę "],"52871000":["Metal bottle plug","Flaschenverschluss aus Metall","Metalowa zatyczka do butelki"],"52932000":["Herbs","Kräuter","Zioła"],"52933000":["Carrots","Karotten","Marchewki"],"52934000":["Reporter's notebook","Notizheft der TWTimes","Notatnik reportera"],"52935000":["Puncher","Locher","Dziurkacz"],"52936000":["Fabric","Stoff","Tkanina"],"52937000":["Tailor's tape measure","Maßband für Schneider","Miarka krawiecka"],"52938000":["Used gun","Gebrauchte Waffe","Używany pistolet"],"52939000":["Glasses","Brille","Okulary"],"52941000":["Razor blade","Rasierklinge","Brzytwa do golenia "],"52942000":["Rabbit skin","Hasenfell","Królicza skóra"],"52943000":["Atlas of Wild West History","Atlas der Geschichte des Wilden Westens","Atlas Historii Dzikiego Zachodu"],"52945000":["Capture net","Fangnetz","Sieć"],"52946000":["Maple syrup","Ahornsirup","Syrop klonowy"],"52947000":["Wig","Perücke","Peruka"],"52949000":["Wrench","Schraubenschlüssel","Klucz płaski"],"52950000":["A ladle","Eine Schöpfkelle","Chochla"],"52951000":["Food supplies","Lebensmittel","Zapasy jedzenia"],"52952000":["Horse saddle bags","Satteltaschen aus Leder","Skórzane juki"],"52953000":["Chest","Kisten","Kufer"],"52954000":["Nickel","Nickel","Nikiel"],"52956000":["Property letter","Eigentumsurkunde","Akt własności"],"52958000":["Syringe","Spritze","Strzykawka"],"52959000":["Beeswax","Bienenwachs","Wosk pszczeli"],"52961000":["Truffle","Trüffel","Trufla"],"52962000":["Tipi frame","Tipi-Rahmen","Szkielet Tipi"],"52963000":["Animal bones","Tierknochen","Kości zwierząt"],"52964000":["Tar","Teer","Smoła"],"52965000":["Ice","Eis","Lód"],"52966000":["Fur","Pelz","Futro"],"52967000":["Fire","Feuer","Ogień"],"52969000":["Gold","Gold","Złoto"],"52970000":["Protractor","Winkelmesser","Kątomierz"],"52971000":["Antelope's antlers","Antilopengeweih","Poroże antylopy"],"52972000":["Stock of cartridges","Vorrat an Patronen","Zapas nabojów"],"52974000":["Death certificate","Totenschein","Certyfikat zgonu "],"52975000":["Fox tail","Fuchsschwanz","Lisia kita"],"53336000":["Cake dough","Kuchenteig","Biszkopt"],"53337000":["Food coloring","Lebensmittelfarbe","Barwnik spożywczy"],"53338000":["15th Birthday topper","Tortenstecker zum 15. Geburtstag","Topper na 15 urodziny"],"53339000":["Cake decorations","Kuchendekorationen","Dekoracje do ciast"],"53340000":["15th birthday cake","Kuchen zum 15. Geburtstag","Tort na 15 urodziny"],"53938000":["Cowboy stew","Cowboy Stew","Kowbojska potrawka"],"53939000":["Metal mug","Metallbecher","Metalowy kubek"],"53940000":["Saddle seat","Sattelsitz","Siedzisko"],"53941000":["Modern medicine","Moderne Medizin","Nowoczesny medykament"],"54379000":["Firewater","Feueressenz","Woda ognista"],"54380000":["Decorative cactus","Dekorativer Kaktus","Kaktus ozdobny"],"54381000":["Leather chest","Lederkiste","Skórzana skrzynia"],"54382000":["Fort medicine","Fortkampf-Medizin","Lekarstwo fortowe"],"54471000":["Spare elements","Ersatzteile","Elementy zapasowe"],"54472000":["Animal atlas","Tieratlas","Atlas zwierząt"],"54473000":["Toy-gun","Spielzeugpistole","Zabawkowy pistolet"],"54474000":["Truffle salad","Trüffelsalat","Sałatka z truflami"],"54475000":["Winter food supplies","Lebensmittelvorräte für den Winter","Zapasy jedzenia na zimę"],"54476000":["Herb bread","Kräuterbrot","Chleb ziołowy"],"54477000":["Horse equipment","Pferdeausrüstung","Wyposażenie konia"],"54478000":["Stirrup leather","Steigbügelleder","Skóra strzemiona"],"54479000":["Portable tent","Tragbares Zelt","Przenośny namiot"],"54480000":["Beeswax candle","Bienenwachskerze","Świeca z wosku pszczelego"],"54481000":["Healing wig","Heilende Perücke","Peruka lecznicza"],"54482000":["Fire kit","Feuerbohrer","Zestaw przeciwpożarowy"],"54487000":["Blacksmith's anvil","Amboss des Schmieds","Kowadło kowala"],"54488000":["White bowl","Weiße Schale","Biała miska"],"54489000":["Package with a canvas","Paket mit einem Gemälde","Pakunek z płótnem"],"54490000":["Saloon menu","Saloon-Speisekarte","Menu Saloonu"],"54531000":["Bucket","Eimer","Wiadro"],"54532000":["Warm drink","Warmes Getränk","Ciepły napój"],"54533000":["Yarn","Garn","Przędza"],"54534000":["Herbs mix","Kräutermischung","Mieszanka ziół"],"54598000":["Blacksmith's memories","Erinnerungen des Schmieds","Wspomnienia kowala"],"54599000":["Field Cook's memories","Erinnerungen des Feldkochs","Wspomnienia kucharza"],"54600000":["Master Saddler's memories","Erinnerungen des Sattlermeisters","Wspomnienia rymarza"],"54601000":["Tonic Peddler's memories","Erinnerungen des Quacksalbers","Wspomnienia znachora"],"54824000":["Flatbreads","Fladenbrote","Płaski chlebek"],"54825000":["Fish hook","Angelhaken","Haczyk wędkarski"],"54826000":["Knife pocket","Messertasche","Kieszeń na nóż"],"54827000":["Medicine bottle","Medizinflasche","Butelka na lekarstwa"]};
+
+
+/* A felület szövegei: [HU, EN, DE, PL].
+   A tárgy-, recept- és mesterségnevek NEM itt vannak, azok a játék
+   adatbázisából jönnek. */
+const SZOVEG = {
+  ablak_cim: ["Mesterség-kalkulátor","Crafting Calculator","Handwerksrechner","Kalkulator rzemiosła"],
+  allapot_elerheto: ["elérhető","available","verfügbar","dostępne"],
+  allapot_nem_elerheto: ["nem érhető el","not available","nicht verfügbar","niedostępne"],
+  allapot_nem_sikerult: ["nem sikerült","failed","fehlgeschlagen","nie udało się"],
+  allapot_sikerult: ["sikerült","succeeded","erfolgreich","udało się"],
+  beall_allapot: ["Állapot","Status","Status","Stan"],
+  beall_cim: ["Beállítások","Settings","Einstellungen","Ustawienia"],
+  beall_forras: ["Forrás","Source","Quelle","Źródło"],
+  beall_frissites_hiba: ["A frissítés ellenőrzése nem sikerült: {ok}","Update check failed: {ok}","Update-Prüfung fehlgeschlagen: {ok}","Sprawdzanie aktualizacji nie powiodło się: {ok}"],
+  beall_frissites_keres: ["Frissítés keresése","Check for updates","Nach Updates suchen","Sprawdź aktualizacje"],
+  beall_frissites_naprakesz: ["A legfrissebb változat fut.","You are running the latest version.","Du nutzt die neueste Version.","Używasz najnowszej wersji."],
+  beall_frissites_utoljara: ["Utolsó ellenőrzés: {ido}","Last checked: {ido}","Zuletzt geprüft: {ido}","Ostatnie sprawdzenie: {ido}"],
+  beall_frissites_van_uj: ["Új verzió érhető el: {ver}","A new version is available: {ver}","Eine neue Version ist verfügbar: {ver}","Dostępna jest nowa wersja: {ver}"],
+  beall_honlap: ["A kalkulátor a böngészőben is elérhető","The calculator is also available in your browser","Der Rechner ist auch im Browser verfügbar","Kalkulator jest dostępny także w przeglądarce"],
+  beall_honlap_link: ["Honlap megnyitása","Open website","Website öffnen","Otwórz stronę"],
+  beall_karakter: ["Karakter","Character","Charakter","Postać"],
+  beall_megtanult: ["Megtanult receptek","Learned recipes","Gelernte Rezepte","Poznane receptury"],
+  beall_megtanult_hiba: ["Megtanult receptek: nem olvashatók ki","Learned recipes: cannot be read","Gelernte Rezepte: nicht auslesbar","Poznane receptury: nie można odczytać"],
+  beall_megtanult_ok: ["{n} felismerve","{n} detected","{n} erkannt","wykryto {n}"],
+  beall_nyelv: ["Nyelv","Language","Sprache","Język"],
+  beall_nyelv_auto: ["Automatikus (a szerver nyelve)","Automatic (server language)","Automatisch (Sprache des Servers)","Automatycznie (język serwera)"],
+  beall_nyelv_megj: ["A tárgy- és receptneveket a játék saját adatbázisa adja, nem fordítás.","Item and recipe names come from the game's own database, not from translation.","Die Gegenstands- und Rezeptnamen stammen aus der Datenbank des Spiels, nicht aus einer Übersetzung.","Nazwy przedmiotów i receptur pochodzą z bazy danych gry, nie z tłumaczenia."],
+  beall_nyelv_most: ["Most használt","In use","Verwendet","Używany"],
+  beall_raktar: ["Kiolvasott raktártételek","Inventory items read","Ausgelesene Inventarposten","Odczytane pozycje ekwipunku"],
+  beall_raktar_var: ["A hátizsák még nem töltött be, nyisd meg a mesterség ablakot","The inventory has not loaded yet, open the crafting window","Der Rucksack ist noch nicht geladen, öffne das Handwerksfenster","Ekwipunek jeszcze się nie wczytał, otwórz okno rzemiosła"],
+  beall_receptek: ["Betöltött receptek","Recipes loaded","Geladene Rezepte","Wczytane receptury"],
+  beall_verzio: ["Verzió","Version","Version","Wersja"],
+  blokk_db: ["{n} db","{n} pcs","{n} Stk.","{n} szt."],
+  blokk_meg_gyujts: ["Még ennyit gyűjts","Still to collect","Noch zu sammeln","Jeszcze do zebrania"],
+  blokk_osszesen: ["Összesen kell a gyártáshoz","Total needed for crafting","Insgesamt für die Herstellung nötig","Łącznie potrzebne do wytworzenia"],
+  blokk_sor: ["✓ {n} sor","✓ Lines: {n}","✓ Zeilen: {n}","✓ Liczba wierszy: {n}"],
+  blokk_sugo: ["Kattints egy tételre a másoláshoz, vagy a jobb felső darabszámra, és a teljes lista ({n}) egyszerre kerül a vágólapra, soronként egy tétel.","Click an item to copy it, or the count in the top right corner to copy the entire list ({n}) at once, one item per line.","Klicke auf einen Posten, um ihn zu kopieren, oder oben rechts auf die Anzahl, um die gesamte Liste ({n}) auf einmal zu kopieren, jeweils einen Posten pro Zeile.","Kliknij pozycję, aby ją skopiować, albo liczbę w prawym górnym rogu, aby skopiować całą listę ({n}) naraz, po jednej pozycji w każdym wierszu."],
+  blokk_tetel: ["{n} tétel","Items: {n}","Posten: {n}","Liczba pozycji: {n}"],
+  chip_cim: ["Kattints a másoláshoz","Click to copy","Zum Kopieren klicken","Kliknij, aby skopiować"],
+  chip_masolva: ["másolva","copied","kopiert","skopiowano"],
+  chip_nem_sikerult: ["nem sikerült","failed","fehlgeschlagen","nie udało się"],
+  darabszam_aria: ["${nev} darabszám","${nev} quantity","Stückzahl für ${nev}","${nev}: liczba sztuk"],
+  eyebrow_gyujts: ["Mit gyűjts","What to collect","Was zu sammeln ist","Co zbierać"],
+  eyebrow_lepesek: ["Gyártási lépések","Crafting steps","Herstellungsschritte","Kroki wytwarzania"],
+  eyebrow_munkalap: ["Munkalap","Worksheet","Arbeitsblatt","Arkusz"],
+  eyebrow_recept: ["Receptek","Recipes","Rezepte","Receptury"],
+  fa_ag_aria: ["Ág nyitása és zárása","Expand or collapse branch","Zweig auf- oder zuklappen","Rozwiń lub zwiń gałąź"],
+  fa_gyartas: ["{n}× gyártás","craft {n}×","{n}× herstellen","wytwórz {n}×"],
+  fa_korkoros: ["körkörös recept","circular recipe","zyklisches Rezept","receptura cykliczna"],
+  fa_meg_kell: ["még {n} kell","{n} still needed","{n} noch nötig","potrzeba jeszcze {n}"],
+  fa_megvan: ["{n} raktárból · megvan","{n} from stock · in stock","{n} aus dem Bestand · vorhanden","{n} z zapasów · dostępne"],
+  fa_mind_bezar: ["Mind bezár","Collapse all","Alle einklappen","Zwiń wszystkie"],
+  fa_mind_kinyit: ["Mind kinyit","Expand all","Alle ausklappen","Rozwiń wszystkie"],
+  fa_raktarbol: ["{n} raktárból","{n} from stock","{n} aus dem Bestand","{n} z zapasów"],
+  fa_raktarbol_fedezve: ["raktárból fedezve","covered from stock","aus dem Bestand gedeckt","pokryto z zapasów"],
+  frissites_ablak_cim: ["Mesterség-kalkulátor - frissítés","Crafting Calculator - update","Handwerksrechner - Update","Kalkulator rzemiosła - aktualizacja"],
+  frissites_bevezeto: ["Új verzió érhető el a mesterség-kalkulátor paneljéből.","A new version of the crafting calculator panel is available.","Eine neue Version des Handwerksrechner-Panels ist verfügbar.","Dostępna jest nowa wersja panelu kalkulatora rzemiosła."],
+  frissites_elerheto: ["Elérhető:","Available:","Verfügbar:","Dostępna:"],
+  frissites_gomb_kesobb: ["Később","Later","Später","Później"],
+  frissites_gomb_megnyit: ["Frissítés megnyitása","Open update","Update öffnen","Otwórz aktualizację"],
+  frissites_jelenlegi: ["Jelenlegi:","Current:","Aktuell:","Obecna:"],
+  frissites_magyarazat: ["A gombra kattintva megnyílik a Tampermonkey telepítő ablaka, ott elég a Frissítés gombot megnyomni.","Clicking the button opens the Tampermonkey installer window, where you only need to press the Update button.","Ein Klick auf die Schaltfläche öffnet das Tampermonkey-Installationsfenster, dort genügt es, auf Aktualisieren zu klicken.","Kliknięcie przycisku otwiera okno instalatora Tampermonkey, gdzie wystarczy nacisnąć przycisk Aktualizuj."],
+  gomb_beallitasok_cim: ["Beállítások","Settings","Einstellungen","Ustawienia"],
+  gomb_beallitasok_megnyit: ["Beállítások megnyitása","Open settings","Einstellungen öffnen","Otwórz ustawienia"],
+  gomb_beallitasok_vissza: ["Vissza a Számolás nézetre","Back to the calculator","Zurück zur Berechnung","Powrót do obliczeń"],
+  gomb_bezaras: ["Bezárás","Close","Schließen","Zamknij"],
+  gomb_frissites: ["Frissítés","Refresh","Aktualisieren","Odśwież"],
+  gomb_frissites_cim: ["Raktár és receptek újraolvasása a játékból","Reload inventory and recipes from the game","Inventar und Rezepte erneut aus dem Spiel laden","Ponowne wczytanie ekwipunku i receptur z gry"],
+  gomb_hianylista: ["Hiánylista másolása","Copy what's missing","Fehlende Materialien kopieren","Kopiuj listę braków"],
+  gomb_masolva: ["Másolva","Copied","Kopiert","Skopiowano"],
+  gomb_nem_sikerult: ["Nem sikerült","Failed","Fehlgeschlagen","Nie udało się"],
+  gomb_osszecsukas: ["Összecsukás","Collapse","Einklappen","Zwiń"],
+  gyartas_szam: ["{n} gyártás","Crafts: {n}","Herstellungsvorgänge: {n}","Liczba wytworzeń: {n}"],
+  gyujts_fejlec: ["{tetel} tétel · {db} db","{tetel} items · {db} pcs","{tetel} Posten · {db} Stk.","{tetel} poz. · {db} szt."],
+  gyujts_minden_megvan: ["Minden hozzávaló megvan.","You have every ingredient.","Du hast alle Zutaten.","Masz wszystkie składniki."],
+  gyuru_keszen: ["készen áll","ready","bereit","gotowe"],
+  jelmagy_sarga: ["Hiányzik hozzá valami","Something is still missing","Es fehlt noch etwas","Czegoś jeszcze brakuje"],
+  jelmagy_szurke: ["Magasabb szint vagy hiányzó recept","Needs higher level or recipe","Höhere Stufe oder Rezept fehlt","Wyższy poziom lub brak receptury"],
+  jelmagy_zold: ["Most legyártható a készletedből","Can be crafted from your stock","Aus dem Bestand herstellbar","Można wytworzyć z zapasów"],
+  kereso_aria: ["Recept keresése","Search recipes","Rezepte suchen","Wyszukiwanie receptur"],
+  kereso_helyorzo: ["Keresés név szerint…","Search by name…","Nach Namen suchen…","Szukaj po nazwie…"],
+  kizaras_nincs: ["Nincs belőle a raktáradban: {nev}","None in your inventory: {nev}","Kein fertiges Exemplar im Inventar: {nev}","Brak gotowego egzemplarza w ekwipunku: {nev}"],
+  kizaras_van: ["A raktáradban lévő {n} db {nev} nem számít bele","Not counted from inventory: {n} × {nev}","Nicht aus dem Inventar mitgezählt: {n} × {nev}","Nie uwzględniono z ekwipunku: {n} × {nev}"],
+  lepes_db_gyartas: ["{n} db gyártás","craft {n}","{n} herstellen","wytwórz {n}"],
+  lepes_megvan: ["megvan","in stock","vorhanden","jest"],
+  leptető_kevesebb: ["Kevesebb","Less","Weniger","Mniej"],
+  leptető_tobb: ["Több","More","Mehr","Więcej"],
+  nezet_fa: ["Robbantott ábra","Exploded view","Explosionsansicht","Widok rozstrzelony"],
+  nezet_kartyak: ["Lépéskártyák","Step cards","Schrittkarten","Karty kroków"],
+  nezet_nyers: ["Csak alapanyag","Raw materials only","Nur Rohstoffe","Tylko surowce"],
+  nincs_mesterseg: ["nincs mesterség","no profession","kein Beruf","brak profesji"],
+  nyers_nincs_gyartas: ["Ez a tétel alapanyag, nem kell gyártani.","This item is a raw material, no crafting needed.","Dieser Gegenstand ist ein Rohstoff und muss nicht hergestellt werden.","Ten przedmiot to surowiec, nie trzeba go wytwarzać."],
+  nyers_ures: ["Ehhez nem kell alapanyag.","This needs no raw materials.","Dafür werden keine Rohstoffe benötigt.","To nie wymaga surowców."],
+  plusz_aria: ["${nev} hozzáadása a tervhez","Add ${nev} to the plan","${nev} zum Plan hinzufügen","Dodaj ${nev} do planu"],
+  plusz_cim: ["Hozzáadás a tervhez","Add to plan","Zum Plan hinzufügen","Dodaj do planu"],
+  szintsav_aria: ["Mesterségszint: ${ertek} / ${max}, ${szazalek} százalék","Profession level: ${ertek} / ${max}, ${szazalek} percent","Berufsstufe: ${ertek} / ${max}, ${szazalek} Prozent","Poziom profesji: ${ertek} / ${max}, ${szazalek} procent"],
+  szuro_megtanult: ["Csak a megtanult receptjeim ({n})","Only recipes I have learned ({n})","Nur von mir gelernte Rezepte ({n})","Tylko poznane przeze mnie receptury ({n})"],
+  szuro_megtanult_ok: ["A játék Crafting.recipes objektumában nincs last_craft mező. Ezt más futó szkript (például a TW-Calc) is okozhatja.","The game's Crafting.recipes object has no last_craft field. Another running script (for example TW-Calc) may cause this.","Im Crafting.recipes-Objekt des Spiels fehlt das Feld last_craft. Ein anderes laufendes Skript (zum Beispiel TW-Calc) kann die Ursache sein.","W obiekcie Crafting.recipes gry brakuje pola last_craft. Przyczyną może być inny działający skrypt (na przykład TW-Calc)."],
+  szuro_megtanult_tiltva: ["A megtanult receptek nem olvashatók ki","Learned recipes cannot be read","Gelernte Rezepte sind nicht auslesbar","Nie można odczytać poznanych receptur"],
+  szuro_mind: ["Mind","All","Alle","Wszystkie"],
+  terv_kizaras_nincs: ["nincs belőle raktáron","none in stock","nicht im Bestand","brak w zapasie"],
+  terv_kizaras_van: ["meglévő {n} db nem számít","{n} in stock not counted","{n} Stück im Bestand nicht berücksichtigt","Nie uwzględniono {n} szt. z zapasów"],
+  terv_torles: ["Eltávolítás a tervből","Remove from plan","Aus dem Plan entfernen","Usuń z planu"],
+  terv_torles_aria: ["${nev} eltávolítása a tervből","Remove ${nev} from the plan","${nev} aus dem Plan entfernen","Usuń ${nev} z planu"],
+  ures_valassz: ["Válassz egy receptet a listából.","Pick a recipe from the list.","Wähle ein Rezept aus der Liste.","Wybierz recepturę z listy."],
+  zarolas_nap_egy: ["1 napos zárolás","1-day lockout","1-tägige Sperre","blokada na 1 dzień"],
+  zarolas_nap_tobb: ["{n} napos zárolás","{n}-day lockout","{n}-tägige Sperre","blokada na {n} dni"],
+  zarolas_ora: ["{n} órás zárolás","{n}-hour lockout","{n}-stündige Sperre","blokada na {n} godz."]
+};
+
+
 (function () {
     "use strict";
 
-    const VERZIO = "1.6.5";
+    const VERZIO = "1.7.5";
 
     /* ===================================================================
        1. Segédek és a játék adatai
@@ -840,8 +956,75 @@ const RECIPES = [
         return [...s];
     })();
 
-    const nameOf = id => recipeMap.get(id)?.n || BASE_NAMES[id] || "#" + id;
-    const profOf = p => PROFS.find(x => x.id === p)?.name || "";
+    /* ===================================================================
+       NYELV
+       A szerver címéből adódik: .hu magyar, .de német, .pl lengyel,
+       minden más angol. A felhasználó felülírhatja a Beállítások fülön.
+       A tárgy- és receptnevek a játék adatbázisából jönnek, nem fordításból.
+       =================================================================== */
+
+    const NYELVEK = [
+        { kod: "hu", nev: "Magyar" },
+        { kod: "en", nev: "English" },
+        { kod: "de", nev: "Deutsch" },
+        { kod: "pl", nev: "Polski" }
+    ];
+    const NEV_OSZLOP = { en: 0, de: 1, pl: 2 };   /* a NEVEK_TOBB tömbjében */
+
+    function szerverNyelve() {
+        let h = "";
+        try { h = String(location.hostname || "").toLowerCase(); } catch (e) { h = ""; }
+        if (/\.the-west\.hu$/.test(h)) return "hu";
+        if (/\.the-west\.de$/.test(h)) return "de";
+        if (/\.the-west\.pl$/.test(h)) return "pl";
+        return "en";   /* .net, .com és minden más */
+    }
+
+    /* A beall később áll fel, ezért a nyelv első használatkor dől el. */
+    let nyelv = null;
+    function nyelvBeallit() {
+        nyelv = (beall && beall.nyelv && NYELVEK.some(x => x.kod === beall.nyelv))
+            ? beall.nyelv : szerverNyelve();
+        return nyelv;
+    }
+
+    const SZOVEG_OSZLOP = { hu: 0, en: 1, de: 2, pl: 3 };
+
+    /* Felületszöveg kulcs szerint, a helyőrzők behelyettesítésével.
+       Ismeretlen kulcsnál a kulcs neve jön vissza, hogy szemmel látható legyen. */
+    function T(kulcs, cserek) {
+        if (nyelv === null) nyelvBeallit();
+        const t = SZOVEG[kulcs];
+        let sz = t ? (t[SZOVEG_OSZLOP[nyelv]] || t[0]) : ("[" + kulcs + "]");
+        if (cserek) Object.keys(cserek).forEach(k => {
+            sz = sz.split("{" + k + "}").join(String(cserek[k]));
+        });
+        return sz;
+    }
+
+    /* A magyar név a saját adatunkból, a többi a NEVEK_TOBB táblából. */
+    function nevSzerint(id) {
+        if (nyelv === null) nyelvBeallit();
+        if (nyelv === "hu") return null;
+        const t = (typeof NEVEK_TOBB !== "undefined") ? NEVEK_TOBB[id] : null;
+        if (!t) return null;
+        const v = t[NEV_OSZLOP[nyelv]];
+        return v || null;
+    }
+
+    const nameOf = id => nevSzerint(id)
+        || recipeMap.get(id)?.n || BASE_NAMES[id] || "#" + id;
+
+    /* A négy mesterség neve a játék felületéről megerősítve. */
+    const PROF_NEVEK = {
+        1: { en: "Field Cook", de: "Feldkoch", pl: "Kucharz polowy" },
+        2: { en: "Tonic Peddler", de: "Quacksalber", pl: "Znachor" },
+        3: { en: "Blacksmith", de: "Schmied", pl: "Kowal" },
+        4: { en: "Master Saddler", de: "Sattlermeister", pl: "Rymarz" }
+    };
+    const profOf = p => ((nyelv === null ? nyelvBeallit() : nyelv) !== "hu"
+        && PROF_NEVEK[p] && PROF_NEVEK[p][nyelv])
+        || PROFS.find(x => x.id === p)?.name || "";
     const profIds = p => Array.isArray(p) ? p : [p];
     const profLabel = p => Array.isArray(p)
         ? (p.length >= PROFS.length ? "Minden mesterség" : p.map(profOf).join(" / "))
@@ -924,10 +1107,10 @@ const RECIPES = [
 
     const HATTER = "#f0e6d1";
     const ABLAK_ID = "mk-kalkulator";
-    const ABLAK_CIM = "Mesterség-kalkulátor";
+    const ABLAK_CIM = "Mesterség-kalkulátor";   /* a natív ablak címét a keszitNativ írja felül */
 
     const ALAP = {
-        nezet: "tree", prof: undefined, enyem: false, left: null, top: 90, width: 880, height: 620,
+        nezet: "tree", prof: undefined, enyem: false, nyelv: undefined, left: null, top: 90, width: 880, height: 620,
         tab: "calc", sajat: false };
     let beall = Object.assign({}, ALAP);
     try {
@@ -952,6 +1135,12 @@ const RECIPES = [
     let szuroProf = (beall.prof === undefined) ? null : beall.prof;
     let profBeallt = beall.prof !== undefined;
     let csakEnyem = !!beall.enyem;   /* csak a megtanult receptek */
+
+    /* Az utolsó frissítésellenőrzés eredménye, hogy a Beállítások fülön
+       látszódjon. Enélkül nem lehet megkülönböztetni azt, hogy nincs új
+       verzió, attól, hogy a letöltés elakadt.
+       statusz: nincs | fut | naprakesz | van-uj | hiba */
+    let frissAllapot = { statusz: "nincs", ido: null, ver: null, ok: null };
 
     /* A karakter mesterségére állunk, ha a felhasználó még sosem választott.
        Csak egyszer fut le, és a felhasználó döntését soha nem írja felül. */
@@ -1256,29 +1445,33 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 .chip-item.hi{ border-color:var(--red) }
 .chip-item.hi b{ color:var(--red) }
 .sugo{ margin-top:7px; font-size:11px; color:var(--faint) }
+
+/* a jobb oszlop fejléce egy sorban: a felirat és a szám egymás mellett */
+.col.jobb .eyebrow{ display:flex; align-items:baseline; gap:8px; white-space:nowrap }
+.col.jobb .eyebrow > span{ margin-left:auto; letter-spacing:0; font-size:10px }
 `;
 
     /* ===================================================================
        4. A panel felépítése
        =================================================================== */
 
-    const VAZ = `
+    const VAZ = () => `
 <div class="frame">
   <header class="bar">
-    <span class="mark">Mesterség-kalkulátor</span>
+    <span class="mark">${T("ablak_cim")}</span>
     <span class="ver">v${VERZIO} TERV</span>
-    <button class="icon" data-mit="kicsi" title="Összecsukás">–</button>
-    <button class="icon" data-mit="bezar" title="Bezárás">✕</button>
+    <button class="icon" data-mit="kicsi" title="${T("gomb_osszecsukas")}">–</button>
+    <button class="icon" data-mit="bezar" title="${T("gomb_bezaras")}">✕</button>
   </header>
 
   <!-- 1.5.2 SINGLE-VIEW: egyetlen felső vezérlősor a főfülek helyett -->
   <nav class="topbar" data-mez="topbar">
     <span class="proftabs" data-mez="chips"></span>
     <span class="utility">
-      <button class="icon" data-mit="frissit" title="Raktár és receptek újraolvasása a játékból"><i class="kozep"></i><span class="cimke">Frissítés</span></button>
+      <button class="icon" data-mit="frissit" title="${T("gomb_frissites_cim")}"><i class="kozep"></i><span class="cimke">${T("gomb_frissites")}</span></button>
       <button class="icon fogas" data-mit="diagvalt" data-mez="fogas"
-              aria-pressed="false" aria-label="Diagnosztika megnyitása"
-              title="Diagnosztika"><i class="kozep"></i><span class="cimke">⚙</span></button>
+              aria-pressed="false" aria-label="${T("gomb_beallitasok_megnyit")}"
+              title="${T("gomb_beallitasok_cim")}"><i class="kozep"></i><span class="cimke">⚙</span></button>
     </span>
   </nav>
 
@@ -1286,56 +1479,49 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     <section data-lap="calc" class="wrap">
       <aside class="col bal side">
         <div data-mez="charbar"></div>
-        <p class="eyebrow">Recept <span data-mez="rcount"></span></p>
+        <p class="eyebrow">${T("eyebrow_recept")} <span data-mez="rcount"></span></p>
         <span class="tfwrap"><span class="tfcap"><span class="tfbody">
-          <input class="search" data-mez="kereso" placeholder="Keresés név szerint…" aria-label="Recept keresése">
+          <input class="search" data-mez="kereso" placeholder="${T("kereso_helyorzo")}" aria-label="${T("kereso_aria")}">
         </span></span></span>
         <label class="enyem" data-mez="enyemsor">
-          <input type="checkbox" data-mez="enyem"> <span data-mez="enyemcimke">Csak a megtanult receptjeim</span>
+          <input type="checkbox" data-mez="enyem"> <span data-mez="enyemcimke"></span>
         </label>
         <ul class="rlist" data-mez="rlist"></ul>
         <p class="legend">
-          <i style="background:var(--green)"></i>Most legyártható a készletedből<br>
-          <i style="background:var(--brass)"></i>Hiányzik hozzá valami<br>
-          <i style="background:var(--line)"></i>Magasabb szint kell, vagy nincs meg a recepted
+          <i style="background:var(--green)"></i>${T("jelmagy_zold")}<br>
+          <i style="background:var(--brass)"></i>${T("jelmagy_sarga")}<br>
+          <i style="background:var(--line)"></i>${T("jelmagy_szurke")}
         </p>
       </aside>
 
       <main class="col">
         <button class="fiokgomb" data-mit="fiok">☰ Receptek</button>
-        <p class="eyebrow">Munkalap</p>
+        <p class="eyebrow">${T("eyebrow_munkalap")}</p>
         <div data-mez="munkalap"></div>
       </main>
 
       <aside class="col jobb side">
-        <p class="eyebrow">Mit gyűjts <span data-mez="ncount"></span></p>
+        <p class="eyebrow">${T("eyebrow_gyujts")} <span data-mez="ncount"></span></p>
         <div data-mez="gyujts"></div>
       </aside>
     </section>
 
     <section data-lap="stock" class="diag" hidden>
-      <p class="eyebrow">Élő raktár <span data-mez="smeta"></span></p>
+      <p class="eyebrow">${T("eyebrow_gyujts")} <span data-mez="smeta"></span></p>
       <p class="note">Ez közvetlenül a játékból jön, minden megnyitáskor frissül. Nincs eltárolva, és nem is szerkeszthető — amit a játékban látsz, azt látod itt.</p>
       <p class="note" data-mez="smegj"></p>
       <ul class="whrows" data-mez="stocklist"></ul>
     </section>
 
     <section data-lap="diag" class="diag" hidden>
-      <h2>A játék objektumai</h2>
-      <ul class="drows" data-mez="dgame"></ul>
-      <h2>A játék ablakrendszere</h2>
-      <ul class="drows" data-mez="dablak"></ul>
-      <h2>Az ablak-API részletei</h2>
-      <ul class="drows" data-mez="dapi"></ul>
-      <h2>Mit enged át a biztonsági beállítás</h2>
-      <ul class="drows" data-mez="dcsp"></ul>
-      <p class="note">Ez a fül csak a fejlesztéshez kell. Ha az ikonok közvetlen URL-ről nem töltenek, de a blob vagy a data igen, akkor a végleges változat arra a kerülőútra épül.</p>
-      <h2>Elrendezés</h2>
-      <ul class="drows" data-mez="dlayout"></ul>
-      <h2>Natív UI-stílusminták — 5A <span class="mono">(STYLE PROBE, nem production)</span></h2>
-      <ul class="drows" data-mez="dstyle"></ul>
-      <h2>Komponens-térképező — 5B1 <span class="mono">(COMPONENT MAPPER, nem production)</span></h2>
-      <ul class="drows" data-mez="dcomp"></ul>
+      <h2>${T("beall_nyelv")}</h2>
+      <ul class="drows" data-mez="dnyelv"></ul>
+      <h2>${T("beall_verzio")}</h2>
+      <ul class="drows" data-mez="dverzio"></ul>
+      <h2>${T("beall_allapot")}</h2>
+      <ul class="drows" data-mez="dallapot"></ul>
+      <h2>${T("beall_honlap")}</h2>
+      <ul class="drows" data-mez="dhonlap"></ul>
     </section>
   </div>
 
@@ -1358,7 +1544,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         gyoker.appendChild(st5c);
         host.dataset.ui5c = "1";
         const box = document.createElement("div");
-        box.innerHTML = VAZ;
+        box.innerHTML = VAZ();
         gyoker.appendChild(box.firstElementChild);
 
         /* a játék billentyűparancsai ne süljenek el gépelés közben */
@@ -1455,7 +1641,6 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                     const h = Math.min(Math.max(420, h0 + ev.clientY - y0), window.innerHeight - beall.top);
                     beall.width = w; beall.height = h;
                     host.style.width = w + "px"; host.style.height = h + "px";
-                    jelentElrendezes();
                 }
             };
         });
@@ -1487,9 +1672,11 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
     function rajzolChips() {
         const el = $("chips");
-        const mind = `<button class="chip" data-prof="0" aria-pressed="${szuroProf === null}">Mind</button>`;
+        const MIND = { hu: "Mind", en: "All", de: "Alle", pl: "Wszystkie" };
+        const mind = `<button class="chip" data-prof="0" aria-pressed="${szuroProf === null}">`
+            + `${esc(MIND[nyelv === null ? nyelvBeallit() : nyelv] || MIND.hu)}</button>`;
         el.innerHTML = mind + PROFS.map(p =>
-            `<button class="chip" data-prof="${p.id}" aria-pressed="${szuroProf === p.id}">${esc(p.name)}</button>`
+            `<button class="chip" data-prof="${p.id}" aria-pressed="${szuroProf === p.id}">${esc(profOf(p.id))}</button>`
         ).join("");
         el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
             const v = Number(b.dataset.prof);
@@ -1506,7 +1693,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         const lista = RECIPES.filter(r => {
             if (szuroProf !== null && !profIds(r.p).includes(szuroProf)) return false;
             if (csakEnyem && megtanult.size && !megtanult.has(r.i)) return false;
-            if (q && !r.n.toLowerCase().includes(q)) return false;
+            if (q && !nameOf(r.i).toLowerCase().includes(q)) return false;
             return true;
         }).sort((a, b) =>
             (parseInt(a.l) || 0) - (parseInt(b.l) || 0) || a.n.localeCompare(b.n, "hu"));
@@ -1530,11 +1717,9 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             cb.checked = van && csakEnyem;
             $("enyemsor").classList.toggle("tehetetlen", !van);
             $("enyemcimke").textContent = van
-                ? `Csak a megtanult receptjeim (${megtanult.size})`
-                : "A megtanult receptek nem olvashatók ki";
-            $("enyemsor").title = van ? ""
-                : "A játék Crafting.recipes objektumában nincs last_craft mező. "
-                + "Ezt más futó szkript (például a TW-Calc) is okozhatja.";
+                ? T("szuro_megtanult", { n: megtanult.size })
+                : T("szuro_megtanult_tiltva");
+            $("enyemsor").title = van ? "" : T("szuro_megtanult_ok");
         }
 
         $("rcount").textContent = lista.length;
@@ -1544,16 +1729,25 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             const tervben = tervek.find(t => t.i === r.i);
             return `<li><button data-id="${r.i}" class="${zar ? "halvany" : ""}"
               aria-current="${valasztott === r.i}">
-              <i class="dot ${all}"></i><span class="nev">${esc(r.n)}</span>
+              <i class="dot ${all}"></i><span class="nev">${esc(nameOf(r.i))}</span>
               <span class="szint">${parseInt(r.l) || 0}</span>
               <span class="plusz${tervben ? " benne" : ""}" data-plusz="${r.i}" role="button"
-                tabindex="0" title="Hozzáadás a tervhez"
-                aria-label="${esc(r.n)} hozzáadása a tervhez">+</span>
+                tabindex="0" title="${T("plusz_cim")}"
+                aria-label="${esc(T("plusz_aria", { nev: nameOf(r.i) }))}">+</span>
               </button></li>`;
         }).join("");
 
         /* A soron kattintás MEGNYITJA a receptet; a tervbe csak a + gomb rakja. */
         $("rlist").querySelectorAll("button[data-id]").forEach(b => b.addEventListener("click", () => {
+            /* 1.7.5 (H14): a darabszám beírása vagy a -/+ lépteto magától
+               létrehoz egy EGYELEMŰ tervbejegyzést (lásd allit()). Onnantól a
+               celok() a tervek tömböt adja vissza, és a valasztott értéke nem
+               számít — a munkalap nem váltott másik receptre.
+               Ha a terv legfeljebb egy elemű, azt nem a felhasználó építette
+               tudatosan a + gombbal, ezért a kiválasztás vezet: ürítjük.
+               Két vagy több célnál békén hagyjuk, azt szándékosan állította
+               össze. Ugyanarra a receptre kattintva a darabszám megmarad. */
+            if (tervek.length <= 1 && !tervek.some(t => t.i === b.dataset.id)) tervek = [];
             valasztott = b.dataset.id;
             gyoker.querySelector(".frame").dataset.fiok = "";
             rajzolReceptek(); rajzolMunkalap();
@@ -1584,9 +1778,9 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         const ertek = (isFinite(nyers) && nyers > 0) ? Math.min(Math.round(nyers), SZINT_MAX) : 0;
         const szazalek = Math.max(0, Math.min(100, Math.floor(ertek / SZINT_MAX * 100)));
         el.innerHTML = `<div class="charbar">
-          <div class="szakma">${esc(profOf(karakter.prof) || "nincs mesterség")}</div>
+          <div class="szakma">${esc(profOf(karakter.prof) || T("nincs_mesterseg"))}</div>
           <div class="szintsav" role="img"
-               aria-label="Mesterségszint: ${ertek} / ${SZINT_MAX}, ${szazalek} százalék">
+               aria-label="${esc(T("szintsav_aria", { ertek: ertek, max: SZINT_MAX, szazalek: szazalek }))}">
             <i style="width:${szazalek}%"></i>
             <b>${ertek} / ${SZINT_MAX} (${szazalek}%)</b>
           </div>
@@ -1633,7 +1827,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             const r = recipeMap.get(id);
             if (r) {
                 if (marad > 0) r.g.forEach(([gid, q]) => { kell[gid] = (kell[gid] || 0) + q * marad; });
-                const l = { id: id, nev: r.n, p: r.p, kell: n, van: van, adag: marad, gyartott: true };
+                const l = { id: id, nev: nameOf(id), p: r.p, kell: n, van: van, adag: marad, gyartott: true };
                 lepesek.push(l); id_szerint[id] = l;
             } else {
                 const b = { id: id, nev: nameOf(id), kell: n, van: van, marad: marad, gyartott: false };
@@ -1705,17 +1899,17 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                       (fedve && !gyoker) ? "covered" : "", hianyos ? "short" : ""]
                      .filter(Boolean).join(" ");
         let meta;
-        if (csp.korkoros) meta = `<span class="mt">körkörös recept</span>`;
+        if (csp.korkoros) meta = `<span class="mt">${T("fa_korkoros")}</span>`;
         else if (csp.gyartott) meta = `<span class="mt">${esc(profLabel(csp.p))} · ${esc(csp.szint)}</span>`
             + (csp.t ? `<span class="zar">${esc(zarCimke(csp.t))}</span>` : "")
-            + (fedve ? `<span class="mt ok">raktárból fedezve</span>`
-                     : `<span class="mt">${csp.van ? csp.van + " raktárból · " : ""}${csp.adag}× gyártás</span>`);
+            + (fedve ? `<span class="mt ok">${T("fa_raktarbol_fedezve")}</span>`
+                     : `<span class="mt">${csp.van ? esc(T("fa_raktarbol", { n: csp.van })) + " · " : ""}${esc(T("fa_gyartas", { n: csp.adag }))}</span>`);
         else meta = csp.marad === 0
-            ? `<span class="mt ok">${csp.van} raktárból · megvan</span>`
-            : `<span class="mt">${csp.van ? csp.van + " raktárból · " : ""}még ${csp.marad} kell</span>`;
+            ? `<span class="mt ok">${esc(T("fa_megvan", { n: csp.van }))}</span>`
+            : `<span class="mt">${csp.van ? esc(T("fa_raktarbol", { n: csp.van })) + " · " : ""}${esc(T("fa_meg_kell", { n: csp.marad }))}</span>`;
         const gy = csp.gyerekek.length;
         return `<li class="${gy ? "has-kids" : ""}">
-          <div class="${oszt}">${gy ? `<button class="toggle" aria-label="Ág nyitása és zárása"></button>`
+          <div class="${oszt}">${gy ? `<button class="toggle" aria-label="${T("fa_ag_aria")}"></button>`
                                     : `<span class="toggle-hely"></span>`}
             <span class="q">${csp.kell} ×</span>${ico(csp.id, "sm") || ""}
             <span class="nm">${esc(csp.nev)}</span>${meta}</div>
@@ -1731,13 +1925,15 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         .slice().sort((a, b) => b.marad - a.marad || a.nev.localeCompare(b.nev, "hu"));
 
     const zarCimke = t => !t ? ""
-        : (t >= 86400 ? (t / 86400) + " napos zárolás" : (t / 3600) + " órás zárolás");
+        : (t >= 86400
+            ? (t / 86400 === 1 ? T("zarolas_nap_egy") : T("zarolas_nap_tobb", { n: t / 86400 }))
+            : T("zarolas_ora", { n: t / 3600 }));
 
     function rajzolMunkalap() {
         const fo = $("munkalap");
         const cel = celok();
         if (!cel.length) {
-            fo.innerHTML = `<p class="ures">Válassz egy receptet a listából.</p>`;
+            fo.innerHTML = `<p class="ures">${T("ures_valassz")}</p>`;
             $("gyujts").innerHTML = "";
             $("ncount").textContent = "";
             return;
@@ -1754,34 +1950,34 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             const van = raktar[t.i] || 0;
             fejBal = `
               <div class="fej">${ico(r.i, "xl")}
-                <div><h1>${esc(r.n)}</h1>
+                <div><h1>${esc(nameOf(r.i))}</h1>
                 <p class="meta">${esc(profLabel(r.p))} · ${esc(r.l)}${zar}</p></div>
               </div>
               <div class="stepper">
-                <button data-tdec="${r.i}" aria-label="Kevesebb">−</button>
-                <input data-tq="${r.i}" inputmode="numeric" value="${t.q}" aria-label="${esc(r.n)} darabszám">
-                <button data-tinc="${r.i}" aria-label="Több">+</button>
+                <button data-tdec="${r.i}" aria-label="${T("leptető_kevesebb")}">−</button>
+                <input data-tq="${r.i}" inputmode="numeric" maxlength="4" value="${t.q}" aria-label="${esc(T("darabszam_aria", { nev: nameOf(r.i) }))}">
+                <button data-tinc="${r.i}" aria-label="${T("leptető_tobb")}">+</button>
               </div>
               <label class="excl${van ? "" : " tehetetlen"}">
                 <input type="checkbox" data-tx="${r.i}" ${t.x !== false ? "checked" : ""} ${van ? "" : "disabled"}>
                 <span>${van
-                    ? `A raktáradban lévő ${van} db ${esc(r.n)} nem számít bele`
-                    : `Nincs kész ${esc(r.n)} a raktáradban, nincs mit kizárni`}</span></label>`;
+                    ? esc(T("kizaras_van", { n: van, nev: nameOf(r.i) }))
+                    : esc(T("kizaras_nincs", { nev: nameOf(r.i) }))}</span></label>`;
         } else {
             fejBal = `<div class="tervlista">` + cel.map(t => {
                 const r = recipeMap.get(t.i);
                 const van = raktar[t.i] || 0;
                 return `<div class="trow">${ico(t.i, "lg")}
-                  <div class="tname"><b>${esc(r.n)}</b><small>${esc(profLabel(r.p))} · ${esc(r.l)}</small>
+                  <div class="tname"><b>${esc(nameOf(t.i))}</b><small>${esc(profLabel(r.p))} · ${esc(r.l)}</small>
                     <label class="texcl${van ? "" : " tehetetlen"}">
                       <input type="checkbox" data-tx="${t.i}" ${t.x !== false ? "checked" : ""} ${van ? "" : "disabled"}>
-                      ${van ? `meglévő ${van} db nem számít` : "nincs belőle raktáron"}</label></div>
+                      ${esc(van ? T("terv_kizaras_van", { n: van }) : T("terv_kizaras_nincs"))}</label></div>
                   <div class="stepper">
-                    <button data-tdec="${t.i}" aria-label="Kevesebb">−</button>
-                    <input data-tq="${t.i}" inputmode="numeric" value="${t.q}" aria-label="${esc(r.n)} darabszám">
-                    <button data-tinc="${t.i}" aria-label="Több">+</button></div>
-                  <button class="wipe" data-tdel="${t.i}" title="Eltávolítás a tervből"
-                          aria-label="${esc(r.n)} eltávolítása a tervből">×</button></div>`;
+                    <button data-tdec="${t.i}" aria-label="${T("leptető_kevesebb")}">−</button>
+                    <input data-tq="${t.i}" inputmode="numeric" maxlength="4" value="${t.q}" aria-label="${esc(T("darabszam_aria", { nev: nameOf(r.i) }))}">
+                    <button data-tinc="${t.i}" aria-label="${T("leptető_tobb")}">+</button></div>
+                  <button class="wipe" data-tdel="${t.i}" title="${T("terv_torles")}"
+                          aria-label="${esc(T("terv_torles_aria", { nev: nameOf(t.i) }))}">×</button></div>`;
             }).join("") + `</div>`;
         }
 
@@ -1795,7 +1991,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                       stroke-dashoffset="${KER - KER * terv.szazalek / 100}"
                       transform="rotate(-90 46 46)"></circle>
             </svg>
-            <div><b>${terv.szazalek}%</b><i>készen áll</i></div>
+            <div><b>${terv.szazalek}%</b><i>${T("gyuru_keszen")}</i></div>
           </div>`;
 
         /* --- a három nézetmód --- */
@@ -1813,7 +2009,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
               ${ico(l.id, "lg") || '<i class="ico lg"></i>'}
               <div class="lfej"><b>${esc(l.nev)}</b>${zar}
                 <div class="hozok">${hozzavalo}</div></div>
-              <span class="kell">${l.adag ? l.adag + " db gyártás" : "megvan"}</span></li>`;
+              <span class="kell">${esc(l.adag ? T("lepes_db_gyartas", { n: l.adag }) : T("lepes_megvan"))}</span></li>`;
         }).join("");
 
         /* Robbantott ábra: minden cél saját fája, közös készletből fogyasztva */
@@ -1821,8 +2017,8 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             const k = keszlet(cel);
             const erdo = cel.map(t => faEpit(t.i, t.q, [], k));
             return `<div class="treebar">
-                <button data-tb="open">Mind kinyit</button>
-                <button data-tb="close">Mind bezár</button></div>
+                <button data-tb="open">${T("fa_mind_kinyit")}</button>
+                <button data-tb="close">${T("fa_mind_bezar")}</button></div>
               <ul class="tree">${erdo.map(n => faHTML(n, true)).join("")}</ul>`;
         };
 
@@ -1831,42 +2027,40 @@ li.collapsed > .node > .toggle::before{ content:"+" }
            a játék [item=ID] hivatkozásformátumában. */
         const chipek = (lista, mezo, hianyos) => lista.map(b =>
             `<button class="chip-item${hianyos ? " hi" : ""}" data-copy1="${b.id}" data-copyn="${b[mezo]}"
-               title="Kattints a másoláshoz">
+               title="${T("chip_cim")}">
                <b>${b[mezo]}</b> <span>${esc(b.nev)}</span></button>`).join("");
 
         const nyersTorzs = () => {
             const mind = teljesLista(), hiany = hianyLista();
-            if (!mind.length) return `<p class="ures">Ehhez nem kell alapanyag.</p>`;
+            if (!mind.length) return `<p class="ures">${T("nyers_ures")}</p>`;
             const osszDb = hiany.reduce((a, b) => a + b.marad, 0);
             return `
               <div class="blokk">
-                <div class="bfej"><b>Összesen kell a gyártáshoz</b>
-                  <button class="mind" data-copyall="teljes">${mind.length} tétel</button></div>
+                <div class="bfej"><b>${T("blokk_osszesen")}</b>
+                  <button class="mind" data-copyall="teljes">${esc(T("blokk_tetel", { n: mind.length }))}</button></div>
                 <div class="chips-wrap">${chipek(mind, "kell", false)}</div>
               </div>
               <div class="blokk">
-                <div class="bfej"><b>Még ennyit gyűjts</b>
-                  <button class="mind ${osszDb ? "hi" : ""}" data-copyall="hiany">${osszDb} db</button></div>
+                <div class="bfej"><b>${T("blokk_meg_gyujts")}</b>
+                  <button class="mind ${osszDb ? "hi" : ""}" data-copyall="hiany">${esc(T("blokk_db", { n: osszDb }))}</button></div>
                 ${hiany.length
                     ? `<div class="chips-wrap">${chipek(hiany, "marad", true)}</div>
-                       <p class="sugo">Kattints egy tételre a másoláshoz, vagy a jobb felső
-                          darabszámra, és mind a ${hiany.length} tétel egyszerre kerül a
-                          vágólapra, soronként egy.</p>`
-                    : `<p class="ures">Minden alapanyag megvan.</p>`}
+                       <p class="sugo">${esc(T("blokk_sugo", { n: hiany.length }))}</p>`
+                    : `<p class="ures">${T("gyujts_minden_megvan")}</p>`}
               </div>`;
         };
 
-        const NEZETEK = [["tree", "Robbantott ábra"], ["all", "Lépéskártyák"], ["raw", "Csak alapanyag"]];
+        const NEZETEK = [["tree", T("nezet_fa")], ["all", T("nezet_kartyak")], ["raw", T("nezet_nyers")]];
         const valto = `<div class="seg" role="tablist">` + NEZETEK.map(([m, cimke]) =>
             `<button role="tab" data-nezet="${m}" aria-selected="${nezet === m}">${cimke}</button>`
         ).join("") + `</div>`;
 
         const fejCimke = nezet === "raw" ? ""
-            : `<p class="eyebrow">Gyártási lépések <span class="kicsi">${terv.gyartas} gyártás</span></p>`;
+            : `<p class="eyebrow">${T("eyebrow_lepesek")} <span class="kicsi">${T("gyartas_szam", { n: cel.reduce((a, t) => a + t.q, 0) })}</span></p>`;
 
         const torzs = nezet === "tree" ? faTorzs()
             : nezet === "raw" ? nyersTorzs()
-            : `<ul class="cards">${lepesSorok || `<p class="ures">Ez a tétel alapanyag, nem kell gyártani.</p>`}</ul>`;
+            : `<ul class="cards">${lepesSorok || `<p class="ures">${T("nyers_nincs_gyartas")}</p>`}</ul>`;
 
         fo.innerHTML = `
           <div class="order">
@@ -1880,7 +2074,8 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         /* --- MIT GYŰJTS: az összesített alapanyagigény --- */
         const hianyzo = hianyLista();
         const hianyDb = hianyzo.reduce((a, b) => a + b.marad, 0);
-        $("ncount").textContent = hianyzo.length ? `${hianyzo.length} tétel · ${hianyDb} db` : "";
+        $("ncount").textContent = hianyzo.length
+            ? T("gyujts_fejlec", { tetel: hianyzo.length, db: hianyDb }) : "";
         $("gyujts").innerHTML = hianyzo.length
             ? `<ul class="needlist">` + hianyzo.map(b => {
                 const szaz = Math.round(Math.min(1, b.van / b.kell) * 100);
@@ -1888,8 +2083,8 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                   <b>${esc(b.nev)}<span class="szam">${b.van} / ${b.kell}</span></b>
                   <div class="sav"><i style="width:${szaz}%"></i></div></li>`;
             }).join("") + `</ul>
-            <button class="act" data-mit="masol"><i class="kozep"></i><span class="cimke">Hiánylista másolása</span></button>`
-            : `<p class="ures">Minden hozzávaló megvan.</p>`;
+            <button class="act" data-mit="masol"><i class="kozep"></i><span class="cimke">${T("gomb_hianylista")}</span></button>`
+            : `<p class="ures">${T("gyujts_minden_megvan")}</p>`;
 
         kotesekTerv();
     }
@@ -1946,7 +2141,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             if (!tervek.length && valasztott === id) tervek = [{ i: id, q: 1, x: true }];
             const t = tervek.find(x => x.i === id);
             if (!t) return;
-            t.q = Math.max(1, ujQ);
+            t.q = Math.min(9999, Math.max(1, ujQ));   /* négyjegyű felső korlát */
 
             let jegy = null;
             try {
@@ -2003,8 +2198,8 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             b.addEventListener("click", () => {
                 const eredeti = b.innerHTML;
                 vagolapra(itemSor(b.dataset.copyn, b.dataset.copy1)).then(jo => {
-                    b.innerHTML = jo ? "<b>✓</b> <span>másolva</span>"
-                                     : "<b>!</b> <span>nem sikerült</span>";
+                    b.innerHTML = jo ? `<b>✓</b> <span>${esc(T("chip_masolva"))}</span>`
+                                     : `<b>!</b> <span>${esc(T("chip_nem_sikerult"))}</span>`;
                     setTimeout(() => { b.innerHTML = eredeti; }, 1100);
                 });
             }));
@@ -2017,7 +2212,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                 const txt = lista.map(x => itemSor(hiany ? x.marad : x.kell, x.id)).join("\n");
                 const eredeti = b.textContent;
                 vagolapra(txt).then(jo => {
-                    b.textContent = jo ? `✓ ${lista.length} sor` : "nem sikerült";
+                    b.textContent = jo ? T("blokk_sor", { n: lista.length }) : T("chip_nem_sikerult");
                     setTimeout(() => { b.textContent = eredeti; }, 1400);
                 });
             }));
@@ -2049,36 +2244,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         return `<li><span>${esc(cim)}</span><span data-cella="${cellaSzam++}" class="${oszt || ""}">${ertek}</span></li>`;
     }
 
-    function jelentJatek() {
-        const W = jatek();
-        const van = (o, n) => o ? `<span class="jo">van</span>` : `<span class="rossz">nincs</span> — ${n}`;
-        $("dgame").innerHTML = [
-            sor("unsafeWindow", typeof unsafeWindow !== "undefined"
-                ? `<span class="jo">elérhető</span>` : `<span class="rossz">nincs</span>`),
-            sor("Bag", van(W.Bag && W.Bag.getItemCount, "a hátizsák még nem töltött be")),
-            sor("Character", van(W.Character && W.Character.name, "nincs karakteradat")),
-            sor("Crafting", van(W.Crafting && W.Crafting.recipes, "nyisd meg a mesterség ablakot")),
-            sor("megtanult receptek", megtanult.size
-                ? `<span class="jo">${megtanult.size} db</span>`
-                : `<span class="varo">nincs adat</span> — nyisd meg a mesterség ablakot, vagy fut a TW-Calc`),
-            sor("raktár", Object.keys(raktar).length
-                ? `<span class="jo">${Object.keys(raktar).length} féle tétel</span>`
-                : `<span class="varo">üres</span>`)
-        ].join("");
-    }
-
     /* egy kép betöltésének kipróbálása — a CSP img-src szabálya itt derül ki */
-    function probaKep(src) {
-        return new Promise(res => {
-            const i = new Image();
-            let kesz = false;
-            const v = ok => { if (!kesz) { kesz = true; res(ok); } };
-            i.onload = () => v(true);
-            i.onerror = () => v(false);
-            i.src = src;
-            setTimeout(() => v(false), 8000);
-        });
-    }
 
     function letolt(url, tipus) {
         return new Promise(res => {
@@ -2094,65 +2260,6 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         });
     }
 
-    async function jelentCsp() {
-        const el = $("dcsp");
-        const teszt = IMG_BASE + "ham.png";
-        const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-
-        cellaSzam = 0;
-        el.innerHTML = [
-            sor("CSP meta a lapon", meta
-                ? `<span class="mono">${esc(meta.content.slice(0, 200))}</span>`
-                : `nincs — akkor fejlécből jöhet`, meta ? "" : "jo"),
-            sor("ikon közvetlen URL-ről", `próba fut…`, "varo"),
-            sor("ikon blob: címről", `várakozik`, "varo"),
-            sor("ikon data: címről", `várakozik`, "varo"),
-            sor("betűk (Rye)", `próba fut…`, "varo")
-        ].join("");
-
-        const ir = (i, txt, oszt) => {
-            const c = el.querySelector(`[data-cella="${i}"]`);
-            if (c) { c.innerHTML = txt; c.className = oszt || ""; }
-        };
-
-        const kiir = (i, ok) => ir(i, ok ? "sikerült" : "nem sikerült", ok ? "jo" : "rossz");
-
-        /* 1. közvetlen */
-        kiir(1, await probaKep(teszt));
-
-        /* 2. blob: — a szkript tölti le, a lap csak megjeleníti */
-        ir(2, "próba fut…", "varo");
-        const blob = await letolt(teszt, "blob");
-        if (!blob) {
-            ir(2, "a letöltés sem ment", "rossz");
-            ir(3, "kihagyva", "varo");
-        } else {
-            const burl = URL.createObjectURL(blob);
-            kiir(2, await probaKep(burl));
-            URL.revokeObjectURL(burl);
-
-            /* 3. data: */
-            ir(3, "próba fut…", "varo");
-            const durl = await new Promise(res => {
-                const fr = new FileReader();
-                fr.onload = () => res(fr.result);
-                fr.onerror = () => res(null);
-                fr.readAsDataURL(blob);
-            });
-            if (!durl) ir(3, "nem sikerült átalakítani", "rossz");
-            else kiir(3, await probaKep(durl));
-        }
-
-        /* 4. betűk */
-        try {
-            await document.fonts.load('16px "Rye"');
-            const ok = document.fonts.check('16px "Rye"');
-            ir(4, ok ? "betöltött" : "nem töltött be, tartalék betű fut", ok ? "jo" : "rossz");
-        } catch (e) {
-            ir(4, "nem ellenőrizhető", "varo");
-        }
-    }
-
     /* ===================================================================
        Natív játékablak
 
@@ -2163,7 +2270,14 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
     let nativAblak = null;
     let nativFoDiv = null;      /* az eltett mainDiv, hogy a bezárás biztos legyen */
-    let kozepreIgazitva = false; /* a nyitási center pontosan egyszer fusson */
+    /* 1.7.5 (H13): melyik ablakPÉLDÁNYT igazítottuk középre. Korábban ez
+       puszta igaz/hamis volt, és csak a saját bezárónk állította vissza.
+       Ha a JÁTÉK X-e zárta be az ablakot, a zarNativAblak() nem futott, az
+       őr igaz maradt, és a következő nyitáskor az ÚJ példány center()
+       nélkül jött létre — a játék által adott kis helyen, a felnagyítás
+       után jobbra-lefelé elcsúszva. Példányhoz kötve mindkét út helyes:
+       új példány → egy center, ugyanaz a példány → nincs újabb. */
+    let kozepreIgazitva = null;
 
     function vanNativ() {
         try { return typeof jatek().west.gui.Window === "function"; } catch (e) { return false; }
@@ -2230,7 +2344,6 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
             megjegyez();
             if (nativAblak) alkalmazNativSkin(nativAblak);
-            jelentElrendezes();
         };
         alkalmaz();
         requestAnimationFrame(alkalmaz);
@@ -2459,6 +2572,26 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                 abl = wm.getById(ABLAK_ID);
         } catch (e) { /* megyünk tovább */ }
 
+        /* Verzióváltás vagy két megnyitott lap után előfordulhat, hogy a
+           játék visszaállít egy régi, üres mk-kalkulator ablakot. Ha találunk
+           ilyet, és nincs benne a mi panelünk, bezárjuk, mielőtt újat nyitunk. */
+        try {
+            const regi = wm && wm.getById ? wm.getById(ABLAK_ID) : null;
+            if (regi && regi !== nativAblak) {
+                let fo = null;
+                try { fo = elemNorm(regi.getMainDiv ? regi.getMainDiv() : null); } catch (e) { fo = null; }
+                const mienk = !!(fo && host && fo.contains(host));
+                if (!mienk) {
+                    try { if (wm.close) wm.close(ABLAK_ID); } catch (e) { /* nem baj */ }
+                    try { if (regi.destroy) regi.destroy(); } catch (e) { /* nem baj */ }
+                    if (fo && document.contains(fo)) {
+                        try { fo.parentNode.removeChild(fo); } catch (e) { /* nem baj */ }
+                    }
+                    abl = null;
+                }
+            }
+        } catch (e) { /* megyünk tovább */ }
+
         /* Külön jelöljük, hogy MOST jött létre a példány. Csak ilyenkor
            igazítunk középre, és akkor is pontosan egyszer. */
         let ujPeldany = false;
@@ -2475,7 +2608,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         const hivd = (nev, ...a) => {
             try { if (typeof abl[nev] === "function") abl[nev](...a); } catch (e) { /* nem baj */ }
         };
-        hivd("setTitle", ABLAK_CIM);
+        hivd("setTitle", T("ablak_cim"));
         hivd("setMiniTitle", "Kalkulátor");
         /* 1.5.2: az átméretezés ideiglenesen kikapcsolva */
         hivd("setResizeable", false);
@@ -2509,7 +2642,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         /* A játék a régi, kicsi mérethez helyezte el az ablakot; a felnagyítás
            után ezért lóg ki. A végleges nyitási mérettel egyszer középre
            igazítjuk — csak új példánynál, és soha nem átméretezéskor. */
-        if (ujPeldany && !kozepreIgazitva) { kozepreIgazitva = true; hivd("center"); }
+        if (ujPeldany && kozepreIgazitva !== abl) { kozepreIgazitva = abl; hivd("center"); }
 
         /* setSize nélküli stabilizáló kör: csak elrendez, fest, skint illeszt */
         const stabilizal = () => {
@@ -2559,7 +2692,6 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             beall.left = null; beall.top = ALAP.top;
             allitMeret(); ment();
         }
-        jelentElrendezes();
     }
 
     function nativMod(be) {
@@ -2575,2031 +2707,10 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     /* Mit tud a kliens ablakkezelése? Ebből derül ki, hogy a következő
        változat a játék saját ablakát használhatja-e — azzal a design és a
        rétegsorrend is egyszerre megoldódik. */
-    function jelentAblak() {
-        const W = jatek();
-        const ut = p => { try { return p.split(".").reduce((o, k) => o[k], W); } catch (e) { return undefined; } };
-        const jel = v => v === undefined ? `<span class="rossz">nincs</span>`
-            : `<span class="jo">${typeof v}</span>`;
-
-        const sorok = [
-            sor("west", jel(ut("west"))),
-            sor("west.gui", jel(ut("west.gui"))),
-            sor("west.gui.Window", jel(ut("west.gui.Window"))),
-            sor("WestUi", jel(ut("WestUi"))),
-            sor("wman / WindowManager", jel(ut("wman") ?? ut("WindowManager")))
-        ];
-
-        const gui = ut("west.gui");
-        if (gui) {
-            let kulcsok = "";
-            try { kulcsok = Object.keys(gui).join(", "); } catch (e) { kulcsok = "nem olvasható"; }
-            sorok.push(sor("west.gui tartalma", `<span class="mono">${esc(kulcsok.slice(0, 400))}</span>`));
-        }
-
-        /* a látható játékablakok rétegszáma — ehhez kell igazodnunk */
-        let retegek = [];
-        try {
-            document.querySelectorAll('[class*="window"],[class*="Window"]').forEach(e => {
-                const z = parseInt(getComputedStyle(e).zIndex);
-                if (!isNaN(z)) retegek.push(z);
-            });
-        } catch (e) { /* nem baj */ }
-        retegek = [...new Set(retegek)].sort((a, b) => a - b);
-        sorok.push(sor("játékablakok rétegszáma", retegek.length
-            ? `<span class="mono">${retegek.join(", ")}</span>` : "nincs nyitva ablak"));
-        sorok.push(sor("a panel rétegszáma", `<span class="mono">${host.style.zIndex || 100}</span>`));
-
-
-        $("dablak").innerHTML = sorok.join("");
-    }
 
     /* A west.gui.Window pontos használatát nem tippeljük meg: kiolvassuk
        a prototípusából. Ebből derül ki, hogyan kell példányosítani, és hova
        kerül a tartalom. */
-    function jelentApi() {
-        const W = jatek();
-        const ut = p => { try { return p.split(".").reduce((o, k) => o[k], W); } catch (e) { return undefined; } };
-        const KOZOS = new Set(Object.getOwnPropertyNames(Object.prototype));
-        const nevek = o => {
-            if (!o) return "nincs";
-            try {
-                const s = new Set();
-                const fel = x => Object.getOwnPropertyNames(x).forEach(n => {
-                    if (n !== "constructor" && !KOZOS.has(n)) s.add(n);
-                });
-                fel(o);
-                const p = Object.getPrototypeOf(o);
-                if (p && p !== Object.prototype) fel(p);
-                return [...s].join(", ") || "üres";
-            } catch (e) { return "nem olvasható"; }
-        };
-
-        cellaSzam = 0;
-        const Wnd = ut("west.gui.Window");
-        const sorok = [
-            sor("Window paraméterszáma", Wnd ? `<span class="mono">${Wnd.length}</span>` : "nincs"),
-            sor("Window metódusai", `<span class="mono">${esc(nevek(Wnd && Wnd.prototype).slice(0, 700))}</span>`),
-            sor("wman tartalma", `<span class="mono">${esc(nevek(ut("wman") ?? ut("WindowManager")).slice(0, 500))}</span>`),
-            sor("WestUi tartalma", `<span class="mono">${esc(nevek(ut("WestUi")).slice(0, 500))}</span>`),
-            sor("Groupframe metódusai",
-                `<span class="mono">${esc(nevek(ut("west.gui.Groupframe") && ut("west.gui.Groupframe").prototype).slice(0, 400))}</span>`),
-            sor("natív skin", (() => {
-                if (!host || !host.dataset.nativ) return `<span class="varo">saját keret — nem értelmezhető</span>`;
-                return host.dataset.nativSkin === "ok"
-                    ? `<span class="jo">aktív</span> — a játék hivatalos felülete`
-                    : `<span class="varo">tartalék</span> — a saját háttér fut`;
-            })())
-        ];
-        $("dapi").innerHTML = sorok.join("");
-    }
-
-    /* ===================================================================
-       ===============  STYLE PROBE 5A — IDEIGLENES BLOKK  ===============
-
-       Kizárólag mérésre való: a valódi The West felület stílusait olvassa
-       ki, hogy a későbbi UI-integráció ne találgatásból dolgozzon.
-
-       Nem production kód. Az 5B integráció után ez a blokk egyben
-       eltávolítható — a production függvények törzsébe nem nyúl, csak két
-       életciklus-horgot használ (diagnosztika kirajzolása, panelbezárás).
-
-       Nem nyit meg játékablakot, nem automatizál kattintást, nem módosítja
-       egyetlen játékbeli elem stílusát, osztályát vagy DOM-helyét sem.
-       =================================================================== */
-
-    const SP_CELOK = [
-        { id: "N1", cimke: "Hirdetőtábla — aktív fül (pl. Játékosok keresése)" },
-        { id: "N2", cimke: "Hirdetőtábla — inaktív fül (pl. Városok keresése)" },
-        { id: "N3", cimke: "Natív nagy ablakcím (pl. Hirdetőtábla, Munkák)" },
-        { id: "N4", cimke: "Munkák — natív fagomb (pl. Mind, Összehasonlítás)" },
-        { id: "N5", cimke: "Munkák — natív törzsszöveg vagy felirat" },
-        { id: "N6", cimke: "Natív beviteli mező (pl. Munkák keresője)" },
-        { id: "N7", cimke: "Munkák — görgetősáv (sín, csúszka vagy nyílgomb)" },
-        { id: "T1", cimke: "TW Calc — aktív mesterségfül (pl. Sarlatán)" },
-        { id: "T2", cimke: "TW Calc — inaktív mesterségfül vagy keresőmező" }
-    ];
-
-    const SP_GEO = ["boxSizing", "display", "position", "overflow", "overflowX", "overflowY", "zIndex",
-        "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
-        "marginTop", "marginRight", "marginBottom", "marginLeft",
-        "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth"];
-    const SP_TIPO = ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight",
-        "letterSpacing", "textTransform", "textAlign", "color", "textShadow", "opacity", "whiteSpace"];
-    const SP_HATTER = ["backgroundColor", "backgroundImage", "backgroundRepeat", "backgroundPosition",
-        "backgroundSize", "backgroundOrigin", "backgroundClip",
-        "borderImageSource", "borderImageSlice", "borderImageWidth", "borderImageRepeat",
-        "borderRadius", "borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle",
-        "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor",
-        "boxShadow", "cursor"];
-    const SP_PSZ = ["content", "display", "width", "height",
-        "backgroundImage", "backgroundColor", "borderImageSource", "boxShadow"];
-    const SP_SCROLLPSZ = ["::-webkit-scrollbar", "::-webkit-scrollbar-track",
-        "::-webkit-scrollbar-thumb", "::-webkit-scrollbar-button"];
-    const SP_FA_MELYSEG = 4, SP_FA_MAX = 80, SP_OS_MAX = 6, SP_SZOVEG_MAX = 100;
-
-    let spMintak = {};          /* cél-azonosító → minta */
-    let spAktiv = null;         /* a futó rögzítés állapota */
-    let spNyelo = null;         /* egyszer futó elnyelő a mérőkattintáshoz */
-    let spValasztott = "N1";
-    let spOverlay = null;
-
-    const spVag = (s, n) => String(s == null ? "" : s).slice(0, n || 200);
-    const spK2 = n => (typeof n === "number" && isFinite(n)) ? Math.round(n * 100) / 100 : null;
-
-    function spStilus(el, mezok, pszeudo) {
-        const ki = {};
-        let st = null;
-        try { st = pszeudo ? getComputedStyle(el, pszeudo) : getComputedStyle(el); }
-        catch (e) { return { hiba: "nem olvasható" }; }
-        if (!st) return { hiba: "nem olvasható" };
-        mezok.forEach(n => {
-            let v = null;
-            try { v = st[n] == null ? null : String(st[n]); } catch (e) { v = null; }
-            ki[n] = v === null ? null : spVag(v, 300);
-        });
-        return ki;
-    }
-
-    /* Egy elem teljes leírása. Sosem dob, sosem módosít. */
-    function spLeir(el, cimke) {
-        const d = { cimke: cimke, van: false };
-        if (!el || el.nodeType !== 1) { d.megjegyzes = "nincs elem"; return d; }
-        d.van = true;
-        const a = n => { try { return el.getAttribute(n); } catch (e) { return null; } };
-        d.tag = el.tagName || "?";
-        d.id = spVag(el.id, 120);
-        try {
-            const cn = el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className;
-            d.osztaly = spVag(cn, 300);
-        } catch (e) { d.osztaly = ""; }
-        d.role = a("role"); d.type = a("type");
-        d.ariaSelected = a("aria-selected"); d.ariaPressed = a("aria-pressed");
-        d.disabled = a("disabled");
-        /* Rövid szövegminta — de csak levélszerű elemnél. Egy nagy tartónál
-           (BODY, sok gyerek) a minta a lap idegen tartalmát szippantaná be,
-           ezért ott kihagyjuk. */
-        try {
-            const sok = d.tag === "BODY" || d.tag === "HTML"
-                || (el.children && el.children.length > 12);
-            d.szoveg = sok ? "(kihagyva — összetett elem)"
-                : spVag((el.textContent || "").replace(/\s+/g, " ").trim(), SP_SZOVEG_MAX);
-        } catch (e) { d.szoveg = ""; }
-        try {
-            const r = el.getBoundingClientRect();
-            d.rect = { left: spK2(r.left), top: spK2(r.top), right: spK2(r.right),
-                       bottom: spK2(r.bottom), width: spK2(r.width), height: spK2(r.height) };
-        } catch (e) { d.rect = null; }
-        try { d.client = { w: spK2(el.clientWidth), h: spK2(el.clientHeight) }; } catch (e) { d.client = null; }
-        try { d.offset = { w: spK2(el.offsetWidth), h: spK2(el.offsetHeight) }; } catch (e) { d.offset = null; }
-        d.geometria = spStilus(el, SP_GEO);
-        d.tipografia = spStilus(el, SP_TIPO);
-        d.hatter = spStilus(el, SP_HATTER);
-        d.elotte = spStilus(el, SP_PSZ, "::before");
-        d.utana = spStilus(el, SP_PSZ, "::after");
-        try { d.sajatAblakonKivul = !(nativFoDiv && nativFoDiv.contains(el)); } catch (e) { d.sajatAblakonKivul = null; }
-        return d;
-    }
-
-    const spVanAsset = el => {
-        const h = spStilus(el, ["backgroundImage", "borderImageSource"]);
-        const u = v => v && v !== "none";
-        return u(h.backgroundImage) || u(h.borderImageSource);
-    };
-
-    /* Assetgyűjtés a vizsgált körből, eredet szerint megjelölve. */
-    function spAssetek(elemek) {
-        const h = new Map();
-        elemek.forEach(el => {
-            if (!el || el.nodeType !== 1) return;
-            const s = spStilus(el, ["backgroundImage", "borderImageSource"]);
-            [s.backgroundImage, s.borderImageSource].forEach(v => {
-                if (!v || v === "none") return;
-                const url = /url\(["']?([^"')]+)/.exec(v);
-                const cim = url ? url[1] : v;
-                if (!h.has(cim)) h.set(cim, /the-west|innogames/i.test(cim) ? "the-west/innogames" : "harmadik fél");
-            });
-        });
-        return [...h.entries()].map(([url, eredet]) => ({ url: spVag(url, 300), eredet: eredet }));
-    }
-
-    /* Korlátozott részfa a görgetősáv-mintához. */
-    function spReszfa(gyoker) {
-        const ki = [];
-        if (!gyoker) return ki;
-        const verem = [{ el: gyoker, m: 0 }];
-        while (verem.length && ki.length < SP_FA_MAX) {
-            const t = verem.pop();
-            ki.push(t.el);
-            if (t.m >= SP_FA_MELYSEG) continue;
-            let gy = [];
-            try { gy = t.el.children ? Array.prototype.slice.call(t.el.children) : []; } catch (e) { gy = []; }
-            for (let i = gy.length - 1; i >= 0; i--) verem.push({ el: gy[i], m: t.m + 1 });
-        }
-        return ki;
-    }
-
-    /* A görgetősáv besorolása. Tényszerű, találgatás nélkül. */
-    function spGorgeto(kattintott, osok) {
-        const ki = { jeloltek: [], pszeudo: {}, besorolas: "D", indok: "" };
-        const lanc = [kattintott].concat(osok);
-
-        /* legközelebbi ténylegesen görgethető elem */
-        let gorgetheto = null;
-        for (const el of lanc) {
-            let sh = 0, ch = 0, sw = 0, cw = 0;
-            try { sh = el.scrollHeight; ch = el.clientHeight; sw = el.scrollWidth; cw = el.clientWidth; }
-            catch (e) { continue; }
-            const ov = spStilus(el, ["overflow", "overflowX", "overflowY"]);
-            const gorgos = /auto|scroll|overlay/.test(
-                String(ov.overflow) + " " + String(ov.overflowX) + " " + String(ov.overflowY));
-            ki.jeloltek.push({
-                cimke: spVag(el.tagName + (el.id ? "#" + el.id : "") + "." + spVag(el.className, 120), 200),
-                scrollHeight: sh, clientHeight: ch, scrollWidth: sw, clientWidth: cw,
-                overflow: ov, gorgethetoStilus: gorgos
-            });
-            if (!gorgetheto && gorgos && (sh > ch + 2 || sw > cw + 2)) gorgetheto = el;
-        }
-        ki.gorgethetoTalalat = !!gorgetheto;
-
-        /* webkit pszeudoelemek — ha a böngésző ad értelmes adatot */
-        const cel = gorgetheto || kattintott;
-        let pszeudoAd = false;
-        SP_SCROLLPSZ.forEach(p => {
-            const v = spStilus(cel, ["width", "height", "backgroundImage", "backgroundColor", "display"], p);
-            ki.pszeudo[p] = v;
-            if (!v.hiba && ((v.backgroundImage && v.backgroundImage !== "none")
-                || (v.width && v.width !== "auto" && v.width !== "0px"))) pszeudoAd = true;
-        });
-        ki.pszeudoAdErtelmesAdatot = pszeudoAd;
-
-        /* DOM-elemes scrollbar jelöltek a szűk részfában */
-        const fa = spReszfa(gorgetheto || osok[0] || kattintott);
-        ki.reszfaElemszam = fa.length;
-        const domJeloltek = fa.filter(el => {
-            let cn = "";
-            try { cn = String(el.className || ""); } catch (e) { cn = ""; }
-            return /scroll|slider|thumb|track|arrow|up|down|bar/i.test(cn);
-        }).slice(0, 12).map(el => spVag(el.tagName + (el.id ? "#" + el.id : "") + "." + spVag(el.className, 120), 200));
-        ki.domScrollbarJeloltek = domJeloltek;
-        ki.reszfaAssetek = spAssetek(fa);
-
-        if (domJeloltek.length >= 2) { ki.besorolas = "A"; ki.indok = "több scroll/thumb/track jellegű DOM-elem a részfában"; }
-        else if (pszeudoAd) { ki.besorolas = "B"; ki.indok = "a böngésző értelmes ::-webkit-scrollbar értéket ad"; }
-        else if (ki.reszfaAssetek.length && gorgetheto) { ki.besorolas = "C"; ki.indok = "háttérképes görgethető konténer, DOM-elemes sáv nélkül"; }
-        else { ki.besorolas = "D"; ki.indok = "nem eldönthető a rendelkezésre álló adatból"; }
-        return ki;
-    }
-
-    /* ---- A minta rögzítése ---- */
-    function spRogzit(cel, kattintott) {
-        const minta = { cel: cel, cimke: (SP_CELOK.find(c => c.id === cel) || {}).cimke || cel,
-                        ido: new Date().toLocaleString("hu-HU"), hibak: [] };
-        try {
-            minta.kattintott = spLeir(kattintott, "kattintott elem");
-
-            const osok = [];
-            let p = kattintott.parentElement, i = 0;
-            while (p && i < SP_OS_MAX) { osok.push(p); p = p.parentElement; i++; }
-            minta.osok = osok.map((el, n) => spLeir(el, "parent" + (n + 1)));
-
-            let kattinthato = null;
-            try { kattinthato = kattintott.closest('button,a,input,li,[role="button"],[role="tab"],[onclick]'); }
-            catch (e) { kattinthato = null; }
-            minta.kattinthato = kattinthato && kattinthato !== kattintott
-                ? spLeir(kattinthato, "legközelebbi kattintható") : { van: false, megjegyzes: "a kattintott elem maga" };
-
-            let assetes = null;
-            for (const el of [kattintott].concat(osok)) { if (spVanAsset(el)) { assetes = el; break; } }
-            minta.assetes = assetes ? spLeir(assetes, "legközelebbi assetes elem") : { van: false, megjegyzes: "nincs asset a vizsgált körben" };
-
-            minta.assetek = spAssetek([kattintott].concat(osok));
-            if (cel === "N7") minta.gorgeto = spGorgeto(kattintott, osok);
-        } catch (e) {
-            minta.hibak.push(spVag(e && e.message, 200));
-        }
-        spMintak[cel] = minta;
-    }
-
-    /* ---- Vizuális visszajelzés: külön réteg, a célhoz nem nyúlunk ---- */
-    function spOverlayKi(el) {
-        spOverlayTakarit();
-        try {
-            const r = el.getBoundingClientRect();
-            const d = document.createElement("div");
-            d.id = "mk-sp-overlay";
-            d.setAttribute("style", [
-                "position:fixed", "pointer-events:none", "z-index:2147483000",
-                "left:" + spK2(r.left) + "px", "top:" + spK2(r.top) + "px",
-                "width:" + spK2(r.width) + "px", "height:" + spK2(r.height) + "px",
-                "outline:2px solid #2f6bd8", "background:transparent"
-            ].join(";"));
-            document.body.appendChild(d);
-            spOverlay = { el: d, ido: setTimeout(spOverlayTakarit, 1500) };
-        } catch (e) { /* nem baj */ }
-    }
-    function spOverlayTakarit() {
-        if (!spOverlay) return;
-        try { clearTimeout(spOverlay.ido); } catch (e) { /* nem baj */ }
-        try { if (spOverlay.el && spOverlay.el.parentNode) spOverlay.el.parentNode.removeChild(spOverlay.el); }
-        catch (e) { /* nem baj */ }
-        spOverlay = null;
-    }
-
-    /* ---- A rögzítő életciklusa ---- */
-    function spNyeloTakarit() {
-        if (!spNyelo) return;
-        const n = spNyelo;
-        spNyelo = null;
-        try { window.removeEventListener("click", n.cl, true); } catch (e) { /* nem baj */ }
-        if (n.ido) clearTimeout(n.ido);
-    }
-
-    function spTakarit(csendben) {
-        spOverlayTakarit();
-        spNyeloTakarit();
-        if (!spAktiv) return;
-        const a = spAktiv;
-        spAktiv = null;
-        try { window.removeEventListener("pointerdown", a.pd, true); } catch (e) { /* nem baj */ }
-        try { window.removeEventListener("keydown", a.kd, true); } catch (e) { /* nem baj */ }
-        if (!csendben) spRajzol();
-    }
-
-    function spSajatunk(e) {
-        try {
-            if (typeof e.composedPath === "function") return e.composedPath().indexOf(host) !== -1;
-        } catch (er) { /* megyünk tovább */ }
-        try { return !!(host && e.target && host.contains(e.target)); } catch (er) { return false; }
-    }
-
-    function spInditRogzites() {
-        if (spAktiv) { spTakarit(); return; }      /* második nyomás: megszakítás */
-        const cel = spValasztott;
-        const a = { cel: cel };
-
-        a.pd = e => {
-            if (spSajatunk(e)) return;             /* a saját felületünk nem minta */
-            /* csak ezt az egyetlen mérőkattintást állítjuk meg */
-            try { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); } catch (er) { /* nem baj */ }
-            const t = e.target && e.target.nodeType === 1 ? e.target : null;
-
-            /* a rögzítő figyelők azonnal lekerülnek — nem marad aktív mód */
-            spTakarit(true);
-
-            if (t) { spRogzit(cel, t); spOverlayKi(t); }
-
-            /* a rákövetkező kattintást egyszer futó elnyelő fogja fel, hogy
-               ne induljon játékbeli művelet; utána magától lekerül */
-            const n = {};
-            n.cl = ev => {
-                if (spSajatunk(ev)) return;
-                try { ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation(); } catch (er) { /* nem baj */ }
-                spNyeloTakarit();
-            };
-            n.ido = setTimeout(spNyeloTakarit, 600);
-            spNyelo = n;
-            window.addEventListener("click", n.cl, true);
-
-            spRajzol();
-        };
-        a.kd = e => {
-            if (e.key !== "Escape") return;
-            try { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); } catch (er) { /* nem baj */ }
-            spTakarit();
-        };
-
-        spAktiv = a;
-        window.addEventListener("pointerdown", a.pd, true);
-        window.addEventListener("keydown", a.kd, true);
-        spRajzol();
-    }
-
-    /* ---- A jelentés ---- */
-    function spJelentes() {
-        const S = [];
-        const meg = SP_CELOK.filter(c => spMintak[c.id]).map(c => c.id);
-        const hianyzik = SP_CELOK.filter(c => !spMintak[c.id]).map(c => c.id);
-
-        S.push("THE WEST — NATÍV UI-STÍLUSMINTÁK (STYLE PROBE 5A)");
-        S.push("=".repeat(60));
-        S.push("userscript verzió: " + VERZIO + " STYLE PROBE");
-        S.push("időpont: " + new Date().toLocaleString("hu-HU"));
-        try { S.push("hostname: " + location.hostname); } catch (e) { S.push("hostname: ?"); }
-        try { S.push("viewport: " + window.innerWidth + " × " + window.innerHeight); } catch (e) { /* nem baj */ }
-        try { S.push("devicePixelRatio: " + window.devicePixelRatio); } catch (e) { /* nem baj */ }
-        try { S.push("userAgent: " + spVag(navigator.userAgent, 300)); } catch (e) { /* nem baj */ }
-        S.push("rögzített slotok: " + (meg.join(", ") || "egy sem"));
-        S.push("hiányzó slotok: " + (hianyzik.join(", ") || "nincs"));
-        S.push("");
-        S.push("Adatminimalizálás: nincs teljes HTML, süti, tároló, üzenet vagy");
-        S.push("100 karakternél hosszabb szövegtartalom. Legfeljebb 6 ős,");
-        S.push("a részfa legfeljebb " + SP_FA_MELYSEG + " mélység és " + SP_FA_MAX + " elem.");
-
-        SP_CELOK.forEach(c => {
-            const m = spMintak[c.id];
-            S.push("");
-            S.push("#".repeat(60));
-            S.push("### SLOT " + c.id + " — " + c.cimke);
-            S.push("#".repeat(60));
-            if (!m) { S.push("nincs rögzítve"); return; }
-            S.push("rögzítve: " + m.ido);
-            S.push("");
-            S.push("-- 2. kattintott elem --");
-            S.push(JSON.stringify(m.kattintott, null, 1));
-            S.push("");
-            S.push("-- 3. legközelebbi kattintható --");
-            S.push(JSON.stringify(m.kattinthato, null, 1));
-            S.push("");
-            S.push("-- 3b. legközelebbi assetes elem --");
-            S.push(JSON.stringify(m.assetes, null, 1));
-            S.push("");
-            S.push("-- 3c. ősök (legfeljebb 6) --");
-            (m.osok || []).forEach(o => S.push(JSON.stringify(o, null, 1)));
-            S.push("");
-            S.push("-- 7. egyedi assetek --");
-            S.push(JSON.stringify(m.assetek, null, 1));
-            if (m.gorgeto) {
-                S.push("");
-                S.push("-- 8. görgetősáv-besorolás --");
-                S.push("besorolás: " + m.gorgeto.besorolas + " — " + m.gorgeto.indok);
-                S.push("A = DOM-elemes The West scrollbar · B = ::-webkit-scrollbar · C = háttérképes konténer · D = nem eldönthető");
-                S.push(JSON.stringify(m.gorgeto, null, 1));
-            }
-            if (m.hibak && m.hibak.length) {
-                S.push("");
-                S.push("-- 9. mérési korlát/hiba --");
-                m.hibak.forEach(h => S.push("  " + h));
-            }
-        });
-        return S.join("\n");
-    }
-
-    /* ---- A diagnosztikai felület ---- */
-    function spRajzol() {
-        const el = $("dstyle");
-        if (!el) return;
-        cellaSzam = 0;
-        const allapot = SP_CELOK.map(c => {
-            const m = spMintak[c.id];
-            const jel = !m ? `<span class="varo">nincs</span>`
-                : (m.hibak && m.hibak.length) ? `<span class="rossz">hibás</span>`
-                : `<span class="jo">rögzítve</span>`;
-            return `  ${c.id} — ${jel} · ${esc(c.cimke)}`;
-        }).join("<br>");
-
-        const opciok = SP_CELOK.map(c =>
-            `<option value="${c.id}"${c.id === spValasztott ? " selected" : ""}>${esc(c.id + " — " + c.cimke)}</option>`
-        ).join("");
-
-        el.innerHTML = [
-            sor("állapot", spAktiv
-                ? `<span class="jo">VÁR A KATTINTÁSRA — ${esc(spAktiv.cel)}</span> · Escape megszakít`
-                : `<span class="varo">nem fut rögzítés</span>`),
-            sor("mérési cél", `<select data-mez="spcel" style="max-width:100%;font:12px sans-serif">${opciok}</select>`),
-            sor("műveletek",
-                `<button class="icon" style="width:auto;padding:4px 10px" data-sp-mit="rogzit">Következő kattintás rögzítése</button> `
-                + `<button class="icon" style="width:auto;padding:4px 10px" data-sp-mit="megszakit">Aktív rögzítés megszakítása</button><br>`
-                + `<button class="icon" style="width:auto;padding:4px 10px;margin-top:5px" data-sp-mit="masol">Teljes jelentés másolása</button> `
-                + `<button class="icon" style="width:auto;padding:4px 10px;margin-top:5px" data-sp-mit="torol">Mérések törlése</button>`),
-            sor("slotok", `<span class="mono">${allapot}</span>`),
-            sor("használat", `1. Kézzel nyisd meg a referenciaablakot (Hirdetőtábla, Munkák, Mesterség).<br>`
-                + `2. Húzd úgy az ablakokat, hogy a cél elem látszódjon.<br>`
-                + `3. Válaszd ki a slotot, nyomd meg a rögzítést, majd kattints a referenciaelemre.<br>`
-                + `4. Ismételd mind a kilenc célra, aztán másold ki a jelentést.<br>`
-                + `<b>A mérőkattintás azt az egy kattintást elnyeli</b> — ez szándékos, hogy ne induljon játékbeli művelet.`)
-        ].join("");
-
-        spKotes();
-    }
-
-    /* A mérőblokk saját, szűk eseménydelegálója. Kizárólag a tartós dstyle
-       konténerre kötődik, pontosan egyszer, ezért az innerHTML újrarajzolása
-       nem duplázhatja. A production data-mit névterét nem használja. */
-    let spKotve = false;
-
-    function spKotes() {
-        if (spKotve) return;
-        const doboz = $("dstyle");
-        if (!doboz) return;
-        spKotve = true;
-
-        doboz.addEventListener("change", e => {
-            const sel = e.target.closest('[data-mez="spcel"]');
-            if (sel) spValasztott = sel.value;
-        });
-
-        doboz.addEventListener("click", e => {
-            const b = e.target.closest("[data-sp-mit]");
-            if (!b) return;
-            const mit = b.dataset.spMit;
-            if (mit === "rogzit") spInditRogzites();
-            if (mit === "megszakit") spTakarit();
-            if (mit === "torol") { spMintak = {}; spRajzol(); }
-            if (mit === "masol") {
-                let txt = "";
-                try { txt = spJelentes(); } catch (er) { txt = "a jelentés összeállítása nem sikerült: " + er.message; }
-                const vissza = jo => {
-                    b.textContent = jo ? "Másolva" : "Nem sikerült";
-                    setTimeout(() => b.textContent = "Teljes jelentés másolása", 1600);
-                };
-                try { navigator.clipboard.writeText(txt).then(() => vissza(true), () => vissza(false)); }
-                catch (er) { vissza(false); }
-            }
-        });
-    }
-
-    /* =============  STYLE PROBE 5A BLOKK VÉGE  ============= */
-
-    /* ===================================================================
-       ==========  COMPONENT MAPPER 5B1 — IDEIGLENES BLOKK  ==========
-
-       A STYLE PROBE 5A egyetlen kattintott elemet és annak őseit mérte.
-       Ez összetett natív komponensekhez kevés: egy fül, fagomb,
-       görgetősáv vagy groupframe több vizuális rétegből állhat — külön
-       DOM-gyermekekből, pszeudoelemekből, vagy egyetlen sprite külön
-       szeleteiből.
-
-       Ez a blokk komponensszintű mintát vesz: felismeri a komponens
-       gyökerét, bejárja a teljes korlátozott leszármazotti fáját, minden
-       rétegről teljes stílusrekordot készít, és tényszerűen besorolja,
-       MI adja a vizuális részeket. Bal/közép/jobb felosztást bizonyíték
-       nélkül nem állít.
-
-       Kattintás nélkül mér: a felhasználó a cél fölé viszi az egeret és
-       F2-t nyom. Így az aktív/inaktív állapot nem változhat meg a mérés
-       miatt.
-
-       Nem production kód. Az 5A blokkal együtt egyben eltávolítható.
-       Production függvény törzsébe nem nyúl; ugyanazt a két életciklus-
-       horgot használja, mint az 5A (diagnosztika kirajzolása, panelzárás).
-       =================================================================== */
-
-    const CM_ROGZITO_BILLENTYU = "F2";
-
-    const CM_PRESETEK = [
-        { id: "C1", nev: "TAB_ACTIVE_FULL", tipus: "TAB", cimke: "Valóban aktív fül, teljes komponens" },
-        { id: "C2", nev: "TAB_INACTIVE_FULL", tipus: "TAB", cimke: "Ténylegesen NEM választott fül" },
-        { id: "C3", nev: "BUTTON_NORMAL_FULL", tipus: "BUTTON", cimke: "Fagomb nyugalmi állapotban" },
-        { id: "C4", nev: "BUTTON_HOVER_FULL", tipus: "BUTTON", cimke: "Ugyanaz a gomb hover állapotban" },
-        { id: "C5", nev: "SCROLLBAR_FULL", tipus: "SCROLLBAR", cimke: "Teljes függőleges görgetősáv" },
-        { id: "C6", nev: "GROUPFRAME_FULL", tipus: "GROUPFRAME", cimke: "Teljes groupframe fejléccel" },
-        { id: "C7", nev: "BODY_TEXT", tipus: "TEXT", cimke: "Valódi folyó mondat szövegeleme" },
-        { id: "C8", nev: "NUMBER_VALUE", tipus: "NUMBER", cimke: "Valódi számérték eleme" }
-    ];
-
-    const CM_GYOKER_SELECTOR = {
-        TAB: ".tw2gui_window_tab",
-        BUTTON: ".tw2gui_button",
-        SCROLLBAR: ".tw2gui_scrollbar",
-        GROUPFRAME: ".tw2gui_groupframe"
-    };
-
-    const CM_MELYSEG = 6;
-    const CM_MAXELEM = 120;
-    const CM_OS_MAX = 4;
-    const CM_SZOVEG = 100;
-    const CM_AKTIV_OSZTALY = "tw2gui_window_tab_active";
-
-    const CM_GEO = ["display", "position", "top", "right", "bottom", "left", "zIndex",
-        "overflow", "overflowX", "overflowY", "boxSizing", "width", "height", "transform",
-        "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
-        "marginTop", "marginRight", "marginBottom", "marginLeft",
-        "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth",
-        "borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle",
-        "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor"];
-    const CM_TIPO = ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight",
-        "letterSpacing", "textTransform", "textAlign", "color", "textShadow", "opacity", "whiteSpace"];
-    const CM_HATTER = ["backgroundColor", "backgroundImage", "backgroundRepeat", "backgroundPosition",
-        "backgroundSize", "backgroundOrigin", "backgroundClip",
-        "borderImageSource", "borderImageSlice", "borderImageWidth", "borderImageOutset",
-        "borderImageRepeat", "borderRadius", "boxShadow", "cursor", "pointerEvents"];
-    const CM_PSZ_MEZOK = ["content", "display", "position", "top", "right", "bottom", "left",
-        "width", "height", "zIndex", "opacity", "transform",
-        "backgroundColor", "backgroundImage", "backgroundRepeat", "backgroundPosition",
-        "backgroundSize", "borderImageSource", "boxShadow"];
-
-    let cmMintak = {};          /* preset-azonosító → minta */
-    let cmAktiv = null;         /* a futó rögzítés állapota */
-    let cmValasztott = "C1";
-    let cmPointer = { x: -1, y: -1 };
-    let cmPointerErvenyes = false;   /* érkezett-e mousemove a jelenlegi indítás óta */
-    let cmKotve = false;
-
-    const cmVag = (s, n) => String(s == null ? "" : s).slice(0, n || 200);
-    const cmK2 = n => (typeof n === "number" && isFinite(n)) ? Math.round(n * 100) / 100 : null;
-    const cmUres = v => !v || v === "none" || v === "normal" || v === "auto"
-        || v === "rgba(0, 0, 0, 0)" || v === "transparent" || v === "0px";
-
-    function cmStilus(el, mezok, pszeudo) {
-        const ki = {};
-        let st = null;
-        try { st = pszeudo ? getComputedStyle(el, pszeudo) : getComputedStyle(el); }
-        catch (e) { return { hiba: "nem olvasható" }; }
-        if (!st) return { hiba: "nem olvasható" };
-        mezok.forEach(n => {
-            let v = null;
-            try { v = st[n] == null ? null : String(st[n]); } catch (e) { v = null; }
-            ki[n] = v === null ? null : cmVag(v, 300);
-        });
-        return ki;
-    }
-
-    function cmOsztaly(el) {
-        try {
-            const cn = el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className;
-            return cmVag(cn, 300);
-        } catch (e) { return ""; }
-    }
-
-    /* Egyetlen elem szövegmintája — nagy tartónál üresen marad. */
-    function cmSzoveg(el) {
-        try {
-            const sok = el.tagName === "BODY" || el.tagName === "HTML"
-                || (el.children && el.children.length > 12);
-            if (sok) return "";
-            return cmVag((el.textContent || "").replace(/\s+/g, " ").trim(), CM_SZOVEG);
-        } catch (e) { return ""; }
-    }
-
-    /* Egy réteg teljes rekordja. Sosem dob, sosem módosít. */
-    function cmReteg(el, layerId, parentLayerId, childIndex, selectorPath, gyokerRect) {
-        const d = { layerId: layerId, parentLayerId: parentLayerId, childIndex: childIndex,
-                    selectorPath: selectorPath };
-        const a = n => { try { return el.getAttribute(n); } catch (e) { return null; } };
-        d.tag = el.tagName || "?";
-        d.id = cmVag(el.id, 120);
-        d.osztaly = cmOsztaly(el);
-        d.osztalyLista = d.osztaly ? d.osztaly.split(/\s+/).filter(Boolean) : [];
-        d.role = a("role"); d.type = a("type");
-        d.allapot = {
-            ariaSelected: a("aria-selected"), ariaPressed: a("aria-pressed"),
-            ariaExpanded: a("aria-expanded"), disabled: a("disabled"),
-            dataState: a("data-state"), selected: a("selected")
-        };
-        d.szoveg = cmSzoveg(el);
-        try {
-            const r = el.getBoundingClientRect();
-            d.rect = { left: cmK2(r.left), top: cmK2(r.top), right: cmK2(r.right),
-                       bottom: cmK2(r.bottom), width: cmK2(r.width), height: cmK2(r.height) };
-            if (gyokerRect) d.gyokerhez = {
-                x: cmK2(r.left - gyokerRect.left), y: cmK2(r.top - gyokerRect.top),
-                jobbra: cmK2(gyokerRect.right - r.right), lent: cmK2(gyokerRect.bottom - r.bottom)
-            };
-        } catch (e) { d.rect = null; d.gyokerhez = null; }
-        try { d.client = { w: cmK2(el.clientWidth), h: cmK2(el.clientHeight) }; } catch (e) { d.client = null; }
-        try { d.offset = { w: cmK2(el.offsetWidth), h: cmK2(el.offsetHeight) }; } catch (e) { d.offset = null; }
-        d.geometria = cmStilus(el, CM_GEO);
-        d.tipografia = cmStilus(el, CM_TIPO);
-        d.hatter = cmStilus(el, CM_HATTER);
-        d.elotte = cmStilus(el, CM_PSZ_MEZOK, "::before");
-        d.utana = cmStilus(el, CM_PSZ_MEZOK, "::after");
-        d.assetek = cmRetegAssetek(d);
-        d.vizualis = cmVizualisJel(d);
-        return d;
-    }
-
-    /* Egy CSS-lista biztonságos szétbontása vesszőnél — a függvényeken
-       belüli vesszőket (rgb(), url(), gradient) nem vágja el. Ha a lista
-       nem bontható biztonságosan, null jön vissza, és nem találunk ki értéket. */
-    function cmListaBont(ertek) {
-        if (ertek == null) return null;
-        const sz = String(ertek);
-        const ki = [];
-        let melyseg = 0, kezd = 0, idezo = null;
-        for (let x = 0; x < sz.length; x++) {
-            const c = sz[x];
-            if (idezo) { if (c === idezo && sz[x - 1] !== "\\") idezo = null; continue; }
-            if (c === '"' || c === "'") { idezo = c; continue; }
-            if (c === "(") melyseg++;
-            else if (c === ")") melyseg--;
-            else if (c === "," && melyseg === 0) { ki.push(sz.slice(kezd, x).trim()); kezd = x + 1; }
-        }
-        if (melyseg !== 0 || idezo) return null;      /* nem bontható biztonságosan */
-        ki.push(sz.slice(kezd).trim());
-        return ki;
-    }
-
-    /* Egy background-image értékből MINDEN url(...) réteg, sorrendben.
-       A "none" rétegek helyben maradnak, hogy az index ne csússzon el. */
-    function cmHatterRetegek(ertek) {
-        const lista = cmListaBont(ertek);
-        if (!lista) return { retegek: null, ok: "a CSS-lista nem bontható biztonságosan" };
-        return {
-            retegek: lista.map(x => {
-                const m = /url\(["']?([^"')]+)/.exec(x);
-                return { nyers: cmVag(x, 300), url: m ? m[1] : null };
-            }), ok: null
-        };
-    }
-
-    /* A természetes assetméret hálózati kérés nélkül nem állapítható meg.
-       Nem becsüljük meg a DOM-ból: null + indoklás. */
-    function cmTermeszetesMeret() {
-        return {
-            naturalWidth: null,
-            naturalHeight: null,
-            intrinsicSizeStatus: "UNAVAILABLE_NO_NETWORK",
-            intrinsicSizeReason: "A természetes képméret csak új kép betöltésével lenne "
-                + "megállapítható (new Image, IMG elem vagy hálózati kérés), amit a mérő "
-                + "tiltása kizár. A DOM-elem vagy képernyőkép alapján becsülni tilos."
-        };
-    }
-
-    /* Egy réteg saját assetjei — rétegenként ÉS háttérrétegenként megőrizve. */
-    function cmRetegAssetek(d) {
-        const ki = [];
-        const be = (url, nyers, tulajdonsag, honnan, idx, repeat, position, size, ok) => {
-            if (!url) return;
-            const t = cmTermeszetesMeret();
-            ki.push({
-                url: cmVag(url, 300),
-                eredet: /the-west|innogames/i.test(url) ? "the-west/innogames" : "harmadik fél",
-                tulajdonsag: tulajdonsag, reteg: honnan,
-                backgroundLayerIndex: idx,
-                nyersErtek: nyers == null ? null : cmVag(nyers, 300),
-                backgroundRepeat: repeat === undefined ? null : repeat,
-                backgroundPosition: position === undefined ? null : position,
-                backgroundSize: size === undefined ? null : size,
-                parositasiOk: ok || null,
-                naturalWidth: t.naturalWidth, naturalHeight: t.naturalHeight,
-                intrinsicSizeStatus: t.intrinsicSizeStatus,
-                intrinsicSizeReason: t.intrinsicSizeReason
-            });
-        };
-
-        const hatterbol = (forras, honnan) => {
-            if (!forras || forras.hiba) return;
-            const bont = cmHatterRetegek(forras.backgroundImage);
-            const rep = cmListaBont(forras.backgroundRepeat);
-            const poz = cmListaBont(forras.backgroundPosition);
-            const mer = cmListaBont(forras.backgroundSize);
-            if (!bont.retegek) {
-                /* nem bontható: az egész értékből az első url, de jelezzük az okot */
-                const m = /url\(["']?([^"')]+)/.exec(String(forras.backgroundImage || ""));
-                if (m) be(m[1], forras.backgroundImage, "background-image", honnan, null,
-                    null, null, null, bont.ok);
-                return;
-            }
-            bont.retegek.forEach((r, idx) => {
-                if (!r.url) return;
-                /* az azonos indexű érték csak akkor rendelhető hozzá, ha a lista
-                   szétbontható volt ÉS van elem az adott indexen */
-                const vesz = (lista) => (lista && lista.length)
-                    ? (lista.length > idx ? lista[idx] : lista[idx % lista.length])
-                    : undefined;
-                const ok = (rep && poz && mer) ? null
-                    : "a repeat/position/size lista nem volt biztonságosan szétbontható";
-                be(r.url, r.nyers, "background-image", honnan, idx,
-                   vesz(rep), vesz(poz), vesz(mer), ok);
-            });
-        };
-
-        hatterbol(d.hatter, "elem");
-        hatterbol(d.elotte, "::before");
-        hatterbol(d.utana, "::after");
-
-        /* border-image külön marad, nem keveredik a háttérrétegekkel */
-        const bi = (forras, honnan) => {
-            if (!forras || forras.hiba) return;
-            const v = forras.borderImageSource;
-            if (!v || cmUres(v)) return;
-            const m = /url\(["']?([^"')]+)/.exec(String(v));
-            if (m) be(m[1], v, "border-image-source", honnan, null,
-                forras.borderImageRepeat, null, null, null);
-        };
-        bi(d.hatter, "elem"); bi(d.elotte, "::before"); bi(d.utana, "::after");
-        return ki;
-    }
-
-    /* Van-e tényleges vizuális bizonyíték a rétegen. */
-    function cmVizualisJel(d) {
-        const okok = [];
-        const h = d.hatter || {}, g = d.geometria || {};
-        if (!cmUres(h.backgroundColor)) okok.push("háttérszín");
-        if (!cmUres(h.backgroundImage)) okok.push("háttérkép");
-        if (!cmUres(h.borderImageSource)) okok.push("border-image");
-        if (!cmUres(h.boxShadow)) okok.push("árnyék");
-        ["borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle"].forEach(n => {
-            if (g[n] && g[n] !== "none" && okok.indexOf("keret") === -1) okok.push("keret");
-        });
-        const psz = (nev, p) => {
-            if (!p || p.hiba) return;
-            if (p.content === "none" || p.content == null) return;
-            if (!cmUres(p.backgroundImage) || !cmUres(p.backgroundColor)
-                || !cmUres(p.borderImageSource) || !cmUres(p.boxShadow)
-                || (p.content && p.content !== "none" && p.content !== "normal" && p.content !== '""'))
-                okok.push(nev);
-        };
-        psz("::before", d.elotte);
-        psz("::after", d.utana);
-        return okok.length ? okok : null;
-    }
-
-    /* ---- Korlátozott leszármazotti bejárás ---- */
-    function cmFa(gyoker) {
-        const ki = { retegek: [], csonkolt: false, melysegKorlat: CM_MELYSEG, maxElem: CM_MAXELEM };
-        /* a valódi elemek csak a CSSOM matches() illeszkedéshez kellenek;
-           a jelentésbe soha nem kerülnek bele */
-        Object.defineProperty(ki, "elemek", { value: [], enumerable: false });
-        let gRect = null;
-        try { gRect = gyoker.getBoundingClientRect(); } catch (e) { gRect = null; }
-        const verem = [{ el: gyoker, id: "R", szuloId: null, idx: null, ut: "", m: 0 }];
-        while (verem.length) {
-            if (ki.retegek.length >= CM_MAXELEM) { ki.csonkolt = true; break; }
-            const t = verem.shift();
-            /* a saját panelünk részfájába nem megyünk be */
-            if (host && t.el !== gyoker && (t.el === host || (host.contains && host.contains(t.el)))) continue;
-            let d;
-            try { d = cmReteg(t.el, t.id, t.szuloId, t.idx, t.ut || ":scope", gRect); }
-            catch (e) { d = { layerId: t.id, hiba: cmVag(e && e.message, 160) }; }
-            ki.retegek.push(d);
-            ki.elemek.push(t.el);
-            if (t.m >= CM_MELYSEG) continue;
-            let gy = [];
-            try { gy = t.el.children ? Array.prototype.slice.call(t.el.children) : []; } catch (e) { gy = []; }
-            gy.forEach((c, i) => {
-                let cn = "";
-                try { cn = cmOsztaly(c).split(/\s+/)[0]; } catch (e) { cn = ""; }
-                const ut = (t.ut ? t.ut + " > " : ":scope > ") + (c.tagName || "*").toLowerCase()
-                    + (cn ? "." + cn : "") + ":nth-child(" + (i + 1) + ")";
-                verem.push({ el: c, id: t.id + ">" + i, szuloId: t.id, idx: i, ut: ut, m: t.m + 1 });
-            });
-        }
-        return ki;
-    }
-
-    /* ---- Felfelé legfeljebb négy releváns ős ---- */
-    function cmOsok(gyoker) {
-        const ki = [];
-        let p = gyoker.parentElement, i = 0;
-        while (p && i < CM_OS_MAX) {
-            if (host && (p === host || (host.contains && host.contains(p)))) break;
-            let d;
-            try { d = cmReteg(p, "A" + (i + 1), i ? "A" + i : "R", null, "ős " + (i + 1), null); }
-            catch (e) { d = { layerId: "A" + (i + 1), hiba: cmVag(e && e.message, 160) }; }
-            ki.push(d); p = p.parentElement; i++;
-        }
-        return ki;
-    }
-
-    /* ---- Asset-katalógus: rétegenként megőrzött használatokkal ---- */
-    function cmAssetKatalogus(retegek) {
-        const h = new Map();
-        retegek.forEach(d => (d.assetek || []).forEach(a => {
-            if (!h.has(a.url)) h.set(a.url, { url: a.url, eredet: a.eredet, hasznalatok: [] });
-            h.get(a.url).hasznalatok.push({
-                layerId: d.layerId, osztaly: d.osztaly, tulajdonsag: a.tulajdonsag, reteg: a.reteg,
-                backgroundRepeat: a.backgroundRepeat, backgroundPosition: a.backgroundPosition,
-                backgroundSize: a.backgroundSize
-            });
-        }));
-        return [...h.values()];
-    }
-
-    /* ---- Összetételi besorolás: A / B / C / D / E ---- */
-    function cmOsszetetel(retegek) {
-        const vizualis = retegek.filter(d => d.vizualis && d.layerId !== "R");
-        const gyoker = retegek.find(d => d.layerId === "R");
-        const indokok = [];
-
-        const domReteg = vizualis.filter(d => d.vizualis.some(o =>
-            o === "háttérszín" || o === "háttérkép" || o === "border-image" || o === "keret" || o === "árnyék"));
-        const pszReteg = retegek.filter(d => d.vizualis && d.vizualis.some(o => o === "::before" || o === "::after"));
-
-        /* Sprite-bizonyíték: ugyanaz az URL több rétegen ELTÉRŐ, ISMERT
-           background-positionnel. Minden háttérréteget figyelembe veszünk,
-           nem csak az elsőt. Ismeretlen (null) pozíció nem számít eltérésnek. */
-        const poz = new Map();
-        retegek.forEach(d => (d.assetek || []).forEach(a => {
-            if (a.tulajdonsag !== "background-image") return;
-            if (a.backgroundPosition == null) return;      /* ismeretlen: nem bizonyít */
-            if (!poz.has(a.url)) poz.set(a.url, []);
-            poz.get(a.url).push({
-                layerId: d.layerId, backgroundLayerIndex: a.backgroundLayerIndex,
-                backgroundPosition: a.backgroundPosition, backgroundRepeat: a.backgroundRepeat,
-                backgroundSize: a.backgroundSize
-            });
-        }));
-        let sprite = false, spriteUrl = null;
-        const spriteEvidence = [];
-        poz.forEach((lista, url) => {
-            const kulonbozo = new Set(lista.map(x => String(x.backgroundPosition)));
-            if (kulonbozo.size >= 2) {
-                sprite = true; spriteUrl = url;
-                spriteEvidence.push({ url: url, kulonbozoPoziciok: [...kulonbozo], hasznalatok: lista });
-            }
-        });
-
-        const A = domReteg.length >= 2;
-        const B = pszReteg.length >= 1;
-        const C = sprite;
-
-        if (A) indokok.push("A: " + domReteg.length + " külön DOM-réteg hordoz vizuális bizonyítékot ("
-            + domReteg.slice(0, 6).map(d => d.layerId + "=" + (d.vizualis || []).join("/")).join(", ") + ")");
-        if (B) indokok.push("B: pszeudoelem hordoz vizuálist ("
-            + pszReteg.slice(0, 6).map(d => d.layerId + "=" + (d.vizualis || []).join("/")).join(", ") + ")");
-        if (C) indokok.push("C: ugyanaz az asset több rétegen eltérő background-positionnel — sprite-szeletek ("
-            + cmVag(spriteUrl, 160) + ")");
-
-        let tipus = "E";
-        const db = (A ? 1 : 0) + (B ? 1 : 0) + (C ? 1 : 0);
-        if (db >= 2) tipus = "D";
-        else if (A) tipus = "A";
-        else if (B) tipus = "B";
-        else if (C) tipus = "C";
-
-        if (tipus === "E") {
-            const gv = gyoker && gyoker.vizualis;
-            indokok.push(gv
-                ? "E: a vizuális bizonyíték egyedül a gyökéren (R) van (" + gv.join("/")
-                  + "), a sprite belső felosztása nem bizonyított"
-                : "E: a vizsgált körben nincs elegendő vizuális bizonyíték a felosztáshoz");
-        }
-        return { compositionType: tipus, rationale: indokok, domRetegDb: domReteg.length,
-                 pszeudoRetegDb: pszReteg.length, spriteBizonyitott: C, spriteUrl: spriteUrl,
-                 spriteEvidence: spriteEvidence };
-    }
-
-    /* ---- Fül-specifikus kimenet ---- */
-    function cmFulReszek(minta) {
-        const R = minta.fa.retegek;
-        const gyoker = R.find(d => d.layerId === "R") || null;
-        const felirat = R.find(d => (d.osztalyLista || []).indexOf("tw2gui_window_tab_text") !== -1) || null;
-        const ki = {
-            rootLayer: gyoker ? gyoker.layerId : null,
-            labelLayer: felirat ? felirat.layerId : null,
-            leftCandidateLayers: [], centerCandidateLayers: [], rightCandidateLayers: [],
-            otherVisualLayers: [], megjegyzes: ""
-        };
-        if (!gyoker || !gyoker.rect) { ki.megjegyzes = "nincs gyökérrekord"; return ki; }
-        const gw = gyoker.rect.width;
-
-        /* Csak akkor sorolunk bal/közép/jobb jelöltet, ha VAN olyan
-           vizuális réteg, amely a gyökérnél keskenyebb — vagy bizonyított
-           sprite-szelet. Egyébként a három lista üresen marad. */
-        /* Minden besoroláshoz megnevezzük a bizonyíték forrását: DOM-geometria,
-           pszeudo-geometria vagy bizonyított sprite-szelet. Puszta feltételezés
-           nem kerülhet a listákba. */
-        ki.jeloltIndoklas = [];
-        const spriteUtak = new Set();
-        ((minta.osszetetel && minta.osszetetel.spriteEvidence) || []).forEach(e =>
-            (e.hasznalatok || []).forEach(h => spriteUtak.add(h.layerId)));
-
-        R.forEach(d => {
-            if (d.layerId === "R" || !d.vizualis || !d.rect || !d.gyokerhez) return;
-            if (felirat && d.layerId === felirat.layerId) return;
-            const pszVizualis = (d.vizualis || []).some(o => o === "::before" || o === "::after");
-            const forras = spriteUtak.has(d.layerId) ? "bizonyított sprite-szelet"
-                : (pszVizualis ? "pszeudo-geometria" : "DOM-geometria");
-            const keskenyebb = gw > 0 && d.rect.width < gw - 1;
-            const be = (lista, nev) => {
-                ki[lista].push(d.layerId);
-                ki.jeloltIndoklas.push({ layerId: d.layerId, szerep: nev, forras: forras,
-                    meret: d.rect.width + "×" + d.rect.height,
-                    gyokerhezX: d.gyokerhez.x, gyokerhezJobbra: d.gyokerhez.jobbra });
-            };
-            if (!keskenyebb) { be("otherVisualLayers", "gyökérszéles réteg"); return; }
-            const kozepPont = d.gyokerhez.x + d.rect.width / 2;
-            if (d.gyokerhez.x <= 1) be("leftCandidateLayers", "bal");
-            else if (d.gyokerhez.jobbra <= 1) be("rightCandidateLayers", "jobb");
-            else if (kozepPont > gw * 0.25 && kozepPont < gw * 0.75) be("centerCandidateLayers", "közép");
-            else be("otherVisualLayers", "nem besorolható helyzet");
-        });
-
-        /* EXACT akkor és CSAK akkor, ha mind a három szerep megvan külön,
-           vizuálisan bizonyított rétegekkel, van gyökér és felirat, a minta
-           státusza OK, és a compositionType nem E. Egy vagy két szerep
-           mindig PARTIAL. */
-        const o = minta.osszetetel;
-        const bal = ki.leftCandidateLayers.length > 0;
-        const kozep = ki.centerCandidateLayers.length > 0;
-        const jobb = ki.rightCandidateLayers.length > 0;
-        const szerepDb = (bal ? 1 : 0) + (kozep ? 1 : 0) + (jobb ? 1 : 0);
-        const jeloltDb = ki.leftCandidateLayers.length + ki.centerCandidateLayers.length
-            + ki.rightCandidateLayers.length;
-
-        /* minden felhasznált jelölt rétegen legyen tényleges vizuális bizonyíték */
-        const jeloltIdk = ki.leftCandidateLayers
-            .concat(ki.centerCandidateLayers, ki.rightCandidateLayers);
-        const mindenJeloltVizualis = jeloltIdk.length > 0 && jeloltIdk.every(id => {
-            const d = R.find(x => x.layerId === id);
-            return !!(d && d.vizualis && d.vizualis.length);
-        });
-        const statuszOK = minta.statusz === "OK";
-        const vanRoot = ki.rootLayer !== null && ki.rootLayer !== undefined;
-        const vanLabel = ki.labelLayer !== null && ki.labelLayer !== undefined;
-
-        const hianyzo = [];
-        if (!vanRoot) hianyzo.push("rootLayer");
-        if (!vanLabel) hianyzo.push("labelLayer");
-        if (!bal) hianyzo.push("leftCandidateLayers");
-        if (!kozep) hianyzo.push("centerCandidateLayers");
-        if (!jobb) hianyzo.push("rightCandidateLayers");
-        if (jeloltIdk.length && !mindenJeloltVizualis) hianyzo.push("vizuális bizonyíték valamely jelölt rétegen");
-        if (!statuszOK) hianyzo.push("OK státusz (" + minta.statusz + ")");
-        if (o.compositionType === "E") hianyzo.push("compositionType nem lehet E");
-
-        ki.felosztasBizonyitek = {
-            szerepekMegvan: { bal: bal, kozep: kozep, jobb: jobb },
-            megvanSzerepDb: szerepDb,
-            jeloltDb: jeloltDb,
-            mindenJeloltVizualis: mindenJeloltVizualis,
-            vanRootLayer: vanRoot, vanLabelLayer: vanLabel,
-            statuszOK: statuszOK, compositionType: o.compositionType,
-            kuszob: "EXACT-hoz MINDHÁROM szerep (bal, közép, jobb) kötelező, "
-                + "rootLayer és labelLayer megléte mellett, minden jelölt rétegen vizuális "
-                + "bizonyítékkal, OK státusszal, és a compositionType nem lehet E",
-            requiredMissing: hianyzo,
-            spriteEvidence: o.spriteEvidence || []
-        };
-
-        const exact = vanRoot && vanLabel && bal && kozep && jobb
-            && mindenJeloltVizualis && statuszOK && o.compositionType !== "E";
-
-        let conf;
-        if (exact) {
-            conf = "EXACT";
-            ki.megjegyzes = "A felosztás teljesen bizonyított: mind a három szerep külön, "
-                + "vizuálisan bizonyított réteggel, gyökérrel és felirattal.";
-        } else if (jeloltDb > 0 || (gyoker && gyoker.vizualis)) {
-            conf = "PARTIAL";
-            ki.megjegyzes = "NEM EXACT — hiányzik: " + hianyzo.join(", ") + ". "
-                + "A bal/közép/jobb felosztást csak mind a három szerep együtt bizonyítja.";
-        } else {
-            conf = "BLOCKED";
-            ki.megjegyzes = "Nincs vizuális bizonyíték a komponensen. Hiányzik: " + hianyzo.join(", ") + ".";
-        }
-
-        ki.compositionType = o.compositionType;
-        ki.confidence = conf;
-        ki.rationale = o.rationale;
-        return ki;
-    }
-
-    /* ---- Görgetősáv-specifikus kimenet ---- */
-    const CM_SB_MINTAK = [
-        ["arrowUpLayers", /scrollbar_arrow_leup|scrollbar_arrow_up/i],
-        ["arrowDownLayers", /scrollbar_arrow_ribo|scrollbar_arrow_down/i],
-        ["pulleyLayers", /scrollbar_pulley_bg\d/i],
-        ["pulleyAreaLayers", /scrollbar_pulley_area/i],
-        ["trackBgLayers", /scrollbar_bg\d/i]
-    ];
-
-    function cmScrollbarReszek(minta) {
-        const R = minta.fa.retegek;
-        const ki = {
-            trackRoot: null, trackRootVizualis: false,
-            trackBgLayers: [], arrowUpLayers: [], arrowDownLayers: [],
-            pulleyAreaLayers: [], pulleyRoot: null, pulleyRootVizualis: false, pulleyLayers: [],
-            unverifiedClassCandidates: [],  /* classnév illeszkedik, vizuális bizonyíték nincs */
-            unknownLayers: [],              /* sem osztálynév, sem vizuális alapján nem besorolható */
-            requiredMissing: [],
-            spriteHasznalat: [], azonositatlanAsset: []
-        };
-        const gyoker = R.find(d => d.layerId === "R");
-        if (gyoker) {
-            ki.trackRoot = gyoker.layerId;
-            ki.trackRootVizualis = !!(gyoker.vizualis && gyoker.vizualis.length);
-        }
-
-        R.forEach(d => {
-            if (d.layerId === "R") return;
-            const cn = (d.osztalyLista || []).join(" ");
-            const vizualis = !!(d.vizualis && d.vizualis.length);
-            let cel = null;
-
-            /* pulley gyökér külön: pulley, de nem pulley_bg és nem pulley_area */
-            if (/scrollbar_pulley(\s|$)/.test(cn)
-                || (/scrollbar_pulley\b/.test(cn) && !/pulley_bg|pulley_area/.test(cn))) {
-                cel = "pulleyRoot";
-            }
-            if (!cel) {
-                for (const [kulcs, re] of CM_SB_MINTAK) { if (re.test(cn)) { cel = kulcs; break; } }
-            }
-
-            if (!cel) {
-                ki.unknownLayers.push({ layerId: d.layerId, osztaly: d.osztaly,
-                    ok: vizualis ? "vizuális réteg, de egyik ismert scrollbar-részre sem illeszkedik"
-                                 : "sem osztálynév, sem vizuális bizonyíték alapján nem besorolható" });
-                return;
-            }
-
-            /* A megerősített tömbökbe CSAK vizuálisan bizonyított réteg kerülhet.
-               A vizuál nélküli classjelölt nem vész el: teljes rekordhivatkozással
-               az unverifiedClassCandidates listába kerül. */
-            if (!vizualis) {
-                ki.unverifiedClassCandidates.push({
-                    layerId: d.layerId, osztaly: d.osztaly, szerep: cel,
-                    parentLayerId: d.parentLayerId, selectorPath: d.selectorPath,
-                    rect: d.rect || null,
-                    ok: "az osztálynév a(z) " + cel + " szerepre illeszkedik, de a computed "
-                      + "style-ban nincs vizuális bizonyíték — megerősítettnek nem számít"
-                });
-                return;
-            }
-
-            if (cel === "pulleyRoot") {
-                if (!ki.pulleyRoot) { ki.pulleyRoot = d.layerId; ki.pulleyRootVizualis = true; }
-                else ki.unknownLayers.push({ layerId: d.layerId, osztaly: d.osztaly,
-                    ok: "több pulley gyökérjelölt — az első lett megerősítve" });
-            } else {
-                ki[cel].push(d.layerId);
-            }
-        });
-
-        /* sprite-változatok felhasználói — kizárólag a KOMPONENS katalógusából */
-        const hasznalt = new Set();
-        (minta.componentAssetCatalog || []).forEach(a => {
-            if (!/scrollbar/i.test(a.url)) return;
-            hasznalt.add(a.url);
-            ki.spriteHasznalat.push({ url: a.url, hasznalatok: a.hasznalatok });
-        });
-        ["?1", "?3"].forEach(v => {
-            const van = [...hasznalt].some(u => u.indexOf("window2_scrollbar_vertical.png" + v) !== -1);
-            if (!van) ki.azonositatlanAsset.push("window2_scrollbar_vertical.png" + v
-                + " — a komponensfában nem jelent meg, felhasználója nem azonosítható");
-        });
-
-        /* Kötelező részek — mind vizuálisan bizonyítva. */
-        const kell = [
-            ["trackRoot", ki.trackRoot && ki.trackRootVizualis, "a sín gyökere vizuálisan bizonyítva"],
-            ["trackBgLayers >= 2", ki.trackBgLayers.length >= 2, "legalább két megerősített sín-háttérréteg"],
-            ["arrowUpLayers >= 1", ki.arrowUpLayers.length >= 1, "megerősített felső nyíl"],
-            ["arrowDownLayers >= 1", ki.arrowDownLayers.length >= 1, "megerősített alsó nyíl"],
-            ["pulleyAreaLayers >= 1", ki.pulleyAreaLayers.length >= 1, "megerősített pulley terület"],
-            ["pulleyRoot", ki.pulleyRoot && ki.pulleyRootVizualis, "a csúszka gyökere vizuálisan bizonyítva"],
-            ["pulleyLayers >= 3", ki.pulleyLayers.length >= 3, "legalább három megerősített csúszka-háttérréteg"]
-        ];
-        kell.forEach(([nev, ok, leiras]) => { if (!ok) ki.requiredMissing.push(nev + " — " + leiras); });
-        if (ki.unverifiedClassCandidates.length)
-            ki.requiredMissing.push("unverifiedClassCandidates === 0 — "
-                + ki.unverifiedClassCandidates.length + " réteg csak osztálynév alapján ismert");
-        if (ki.azonositatlanAsset.length)
-            ki.requiredMissing.push("azonositatlanAsset === 0 — "
-                + ki.azonositatlanAsset.length + " sprite-változat felhasználója ismeretlen");
-        if (minta.fa.csonkolt)
-            ki.requiredMissing.push("a komponensfa nem lehet csonkolt — a "
-                + minta.fa.maxElem + " elemes korlát elérve");
-
-        ki.confidence = ki.requiredMissing.length === 0 ? "EXACT"
-            : (ki.trackRoot ? "PARTIAL" : "BLOCKED");
-        if (ki.requiredMissing.length)
-            ki.confidenceOk = "NEM EXACT — hiányzó kötelező részek: " + ki.requiredMissing.length;
-        return ki;
-    }
-
-    /* ---- CSSOM: csak olvasás, tiltásnál CSSOM_BLOCKED ---- */
-    const CM_CSSOM_VIZSGALT = 120, CM_CSSOM_TALALAT = 60;
-
-    /* Rekurzív, csak olvasó bejárás. A csoportszabályok (media, supports,
-       layer, container) saját cssRules-át is végigjárja. Hálózati kérést
-       nem indít, SecurityError esetén nem kerüli meg a tiltást. */
-    function cmCssomBejar(szabalyok, allapot, elemek, keresett) {
-        if (!szabalyok) return;
-        let db = 0;
-        try { db = szabalyok.length; } catch (e) { allapot.olvashatatlan++; return; }
-        for (let i = 0; i < db; i++) {
-            if (allapot.vizsgalt >= CM_CSSOM_VIZSGALT) { allapot.korlatElerve = true; return; }
-            if (allapot.talalatok.length >= CM_CSSOM_TALALAT) { allapot.korlatElerve = true; return; }
-            let sz = null;
-            try { sz = szabalyok[i]; } catch (e) { allapot.olvashatatlan++; continue; }
-            if (!sz) continue;
-            allapot.vizsgalt++;
-
-            /* csoportszabály: rekurzió a saját szabályaira */
-            let belso = null;
-            try { belso = sz.cssRules; } catch (e) { allapot.olvashatatlan++; belso = null; }
-            if (belso) {
-                let felt = "";
-                try { felt = cmVag(sz.conditionText || sz.media && sz.media.mediaText || sz.name || "", 160); }
-                catch (e) { felt = ""; }
-                allapot.csoportok.push({ tipus: sz.type || null, feltetel: felt });
-                cmCssomBejar(belso, allapot, elemek, keresett);
-                continue;
-            }
-
-            let sel = null;
-            try { sel = sz.selectorText; } catch (e) { sel = null; }
-            if (!sel) continue;
-
-            /* elsődlegesen tényleges illeszkedés matches()-szel */
-            let mod = null;
-            let illeszkedik = false;
-            try {
-                illeszkedik = elemek.some(el => { try { return el.matches(sel); } catch (e) { return false; } });
-                if (illeszkedik) mod = "MATCHED";
-            } catch (e) { illeszkedik = false; }
-
-            if (!illeszkedik) {
-                /* dokumentált tartalék: puszta névegyezés, ha a selector a
-                   matches() számára nem értelmezhető vagy nem illeszkedik */
-                if (keresett.some(c => sel.indexOf("." + c) !== -1)) { illeszkedik = true; mod = "NAME_ONLY"; }
-            }
-            if (!illeszkedik) continue;
-
-            let cssText = "";
-            try { cssText = cmVag(sz.style && sz.style.cssText, 400); } catch (e) { cssText = ""; }
-            allapot.talalatok.push({ selector: cmVag(sel, 200), css: cssText, matchMethod: mod });
-        }
-    }
-
-    function cmCssom(osztalyok, elemek) {
-        const allapot = { vizsgalt: 0, olvashatatlan: 0, talalatok: [], csoportok: [], korlatElerve: false };
-        let lapok = [];
-        try { lapok = Array.prototype.slice.call(document.styleSheets); }
-        catch (e) {
-            return { statusz: "CSSOM_BLOCKED", ok: cmVag(e && e.message, 120), lapok: 0,
-                     olvashatatlan: 0, vizsgalt: 0, szabalyok: [], csoportok: [] };
-        }
-        const keresett = (osztalyok || []).filter(Boolean).slice(0, 12);
-        const celok = (elemek || []).slice(0, 20);
-
-        for (const lap of lapok) {
-            let sz = null;
-            try { sz = lap.cssRules; }
-            catch (e) { allapot.olvashatatlan++; continue; }   /* SecurityError — nem kerüljük meg */
-            if (!sz) { allapot.olvashatatlan++; continue; }
-            cmCssomBejar(sz, allapot, celok, keresett);
-        }
-
-        let statusz = "OK";
-        if (allapot.olvashatatlan && !allapot.talalatok.length) statusz = "CSSOM_BLOCKED";
-        else if (allapot.olvashatatlan) statusz = "RÉSZLEGES";
-        return {
-            statusz: statusz, lapok: lapok.length, olvashatatlan: allapot.olvashatatlan,
-            vizsgalt: allapot.vizsgalt, korlatElerve: allapot.korlatElerve,
-            korlatok: { vizsgaltMax: CM_CSSOM_VIZSGALT, talalatMax: CM_CSSOM_TALALAT },
-            csoportok: allapot.csoportok.slice(0, 20),
-            szabalyok: allapot.talalatok
-        };
-    }
-
-    /* ---- Állapot-ujjlenyomat a mérés előtt és után ---- */
-    /* Az ujjlenyomat a szülő TELJES azonosságát is rögzíti, nem csak az
-       osztályát — így az azonos classú másik szülőbe helyezés is kiderül. */
-    function cmAllapotJegy(el) {
-        if (!el) return null;
-        let hely = -1;
-        try { hely = el.parentElement ? Array.prototype.indexOf.call(el.parentElement.children, el) : -1; }
-        catch (e) { hely = -1; }
-        const a = n => { try { return el.getAttribute(n); } catch (e) { return null; } };
-        const sz = el.parentElement || null;
-        let csatlakozik = null;
-        try { csatlakozik = el.isConnected === undefined ? null : !!el.isConnected; }
-        catch (e) { csatlakozik = null; }
-        return {
-            className: cmOsztaly(el),
-            aktivOsztaly: (cmOsztaly(el).split(/\s+/).indexOf(CM_AKTIV_OSZTALY) !== -1),
-            ariaSelected: a("aria-selected"), ariaPressed: a("aria-pressed"),
-            ariaExpanded: a("aria-expanded"), disabled: a("disabled"),
-            selected: a("selected"), dataState: a("data-state"),
-            domHely: hely,
-            inlineStyle: a("style"),
-            isConnected: csatlakozik,
-            szulo: sz ? { tag: sz.tagName || null, id: cmVag(sz.id, 120), osztaly: cmOsztaly(sz) } : null
-        };
-    }
-
-    /* A szülő objektumazonosságát külön, a szinkron before/after összevetés
-       idejére tartjuk — így nem kell megőrizni referenciát a jelentésben. */
-    function cmSzuloAzonos(el, mentettSzulo) {
-        try { return el.parentElement === mentettSzulo; } catch (e) { return false; }
-    }
-
-    const cmJegyEgyezik = (a, b) => a && b && JSON.stringify(a) === JSON.stringify(b);
-
-    /* ---- A komponens rögzítése ---- */
-    function cmRogzit(presetId, cel) {
-        const preset = CM_PRESETEK.find(p => p.id === presetId) || CM_PRESETEK[0];
-        const minta = {
-            preset: presetId, nev: preset.nev, tipus: preset.tipus, cimke: preset.cimke,
-            ido: new Date().toISOString().replace("T", " ").slice(0, 19),
-            statusz: "OK", hibak: []
-        };
-        try {
-            /* 1. hit-tested elem */
-            minta.hitTested = cmReteg(cel, "H", null, null, "hit-tested", null);
-
-            /* 2. komponensgyökér */
-            const sel = CM_GYOKER_SELECTOR[preset.tipus];
-            let gyoker = null;
-            if (sel) { try { gyoker = cel.closest(sel); } catch (e) { gyoker = null; } }
-            if (!gyoker) {
-                gyoker = cel;
-                minta.gyokerStatusz = sel ? "UNRESOLVED" : "CEL_ELEM";
-                if (sel) minta.hibak.push("a(z) " + sel + " gyökér nem található — a cél elem szűk ős- és részfája következik");
-            } else {
-                minta.gyokerStatusz = "FELISMERT";
-            }
-            minta.gyokerSelector = sel || null;
-
-            /* 3. állapot a mérés ELŐTT — a szülő objektumát is eltesszük */
-            const elotte = cmAllapotJegy(gyoker);
-            const elotteSzulo = gyoker.parentElement || null;
-            minta.stateBefore = elotte;
-
-            /* 4. teljes korlátozott részfa + ősök */
-            minta.fa = cmFa(gyoker);
-            minta.osok = cmOsok(gyoker);
-
-            /* 5. vizuális rétegek és a KÉT KÜLÖN asset-katalógus.
-               Az ős assetje soha nem bizonyíthat komponensrészt vagy sprite-ot,
-               ezért a két lista sosem keveredik. */
-            minta.visualLayers = minta.fa.retegek.filter(d => d.vizualis)
-                .map(d => ({ layerId: d.layerId, osztaly: d.osztaly, okok: d.vizualis,
-                             meret: d.rect ? d.rect.width + "×" + d.rect.height : null,
-                             gyokerhez: d.gyokerhez || null }));
-            minta.componentAssetCatalog = cmAssetKatalogus(minta.fa.retegek);
-            minta.ancestorAssetCatalog = cmAssetKatalogus(minta.osok);
-
-            /* 6. összetételi besorolás — kizárólag a komponensfából */
-            minta.osszetetel = cmOsszetetel(minta.fa.retegek);
-
-            /* 7. típusspecifikus kimenet */
-            if (preset.tipus === "TAB") minta.tabParts = cmFulReszek(minta);
-            if (preset.tipus === "SCROLLBAR") minta.scrollbarParts = cmScrollbarReszek(minta);
-
-            /* 8. CSSOM */
-            const oszt = [];
-            minta.fa.retegek.slice(0, 20).forEach(d => (d.osztalyLista || []).forEach(c => {
-                if (/^tw2gui/.test(c) && oszt.indexOf(c) === -1) oszt.push(c);
-            }));
-            minta.cssom = cmCssom(oszt, minta.fa.elemek || []);
-
-            /* 9. állapot a mérés UTÁN */
-            const utana = cmAllapotJegy(gyoker);
-            minta.stateAfter = utana;
-            const szuloAzonos = cmSzuloAzonos(gyoker, elotteSzulo);
-            minta.stateParentIdentical = szuloAzonos;
-            if (!cmJegyEgyezik(elotte, utana)) {
-                minta.statusz = "STATE_MUTATED";
-                minta.hibak.push("a komponens állapota megváltozott a mérés alatt — a minta nem használható");
-            } else if (!szuloAzonos) {
-                minta.statusz = "STATE_MUTATED";
-                minta.hibak.push("a komponens azonos osztályú, de MÁSIK szülőbe került a mérés alatt "
-                    + "— az ujjlenyomat egyezne, az objektumazonosság nem");
-            }
-
-            /* 10. fülkapuk */
-            if (preset.tipus === "TAB") {
-                const aktiv = !!(utana && utana.aktivOsztaly);
-                minta.aktivAllapot = aktiv;
-                if (presetId === "C1" && !aktiv) {
-                    minta.statusz = "NEM_AKTIV";
-                    minta.hibak.push("C1 aktív fület vár, de a gyökéren nincs " + CM_AKTIV_OSZTALY);
-                }
-                if (presetId === "C2" && aktiv) {
-                    minta.statusz = "AKTIV_A_C2_HELYEN";
-                    minta.hibak.push("C2 inaktív fület vár, de a gyökéren OTT VAN a " + CM_AKTIV_OSZTALY
-                        + " — pontosan ez a hiba történt a korábbi INAKTÍV FÜL mérésben, ezért nem mentjük jónak");
-                }
-                /* C1 és C2 nem lehet ugyanaz a rekord — de a konkrétabb
-                   aktív/inaktív hibát nem írjuk felül ezzel */
-                const masik = presetId === "C1" ? cmMintak.C2 : (presetId === "C2" ? cmMintak.C1 : null);
-                if (minta.statusz === "OK" && masik && masik.stateAfter && utana
-                    && masik.stateAfter.className === utana.className
-                    && masik.stateAfter.domHely === utana.domHely
-                    && masik.stateAfter.szuloOsztaly === utana.szuloOsztaly) {
-                    minta.statusz = "C1_C2_AZONOS";
-                    minta.hibak.push("a C1 és C2 ugyanazt az elemet és állapotot rögzítené");
-                }
-            }
-        } catch (e) {
-            minta.statusz = "HIBA";
-            minta.hibak.push(cmVag(e && e.message, 200));
-        }
-
-        /* Minden mintához kötelező confidence — sosem marad üresen. */
-        cmMintaBizalom(minta);
-        cmMintak[presetId] = minta;
-        return minta;
-    }
-
-    /* Presetenkénti bizalmi szint. A típusspecifikus kapuk döntenek, de
-       minden mintán ott lesz az érték, és sosem "—". */
-    function cmMintaBizalom(minta) {
-        const ok = [];
-        const zar = (szint, indok) => {
-            minta.confidence = szint;
-            minta.confidenceOk = indok;
-            return szint;
-        };
-        if (minta.statusz !== "OK") return zar("BLOCKED", "a minta státusza " + minta.statusz);
-        if (!minta.fa || !minta.fa.retegek || !minta.fa.retegek.length)
-            return zar("BLOCKED", "nincs komponensfa");
-
-        if (minta.tabParts) return zar(minta.tabParts.confidence,
-            minta.tabParts.megjegyzes || "a fül-kapuk eredménye");
-        if (minta.scrollbarParts) return zar(minta.scrollbarParts.confidence,
-            minta.scrollbarParts.confidenceOk || "a görgetősáv-kapuk eredménye");
-
-        if (minta.fa.csonkolt) ok.push("a komponensfa csonkolt");
-        const gyoker = minta.fa.retegek.find(d => d.layerId === "R");
-        const vizualisak = minta.fa.retegek.filter(d => d.vizualis && d.layerId !== "R");
-
-        if (minta.tipus === "BUTTON") {
-            /* teljes, vizuálisan bizonyított gombfa: gyökér + legalább három
-               vizuális háttérréteg + felirat */
-            const felirat = minta.fa.retegek.find(d => (d.szoveg || "").length > 0 && d.layerId !== "R");
-            if (vizualisak.length < 3) ok.push("kevesebb mint három vizuálisan bizonyított gombréteg ("
-                + vizualisak.length + ")");
-            if (!felirat) ok.push("nincs feliratréteg");
-            return zar(ok.length ? "PARTIAL" : "EXACT",
-                ok.length ? "NEM EXACT — " + ok.join("; ") : "teljes, vizuálisan bizonyított gombfa");
-        }
-
-        if (minta.tipus === "GROUPFRAME") {
-            const van = re => minta.fa.retegek.some(d =>
-                re.test((d.osztalyLista || []).join(" ")) && d.vizualis && d.vizualis.length);
-            const vanTartalom = minta.fa.retegek.some(d =>
-                /groupframe_content/.test((d.osztalyLista || []).join(" ")));
-            if (!van(/groupframe_title|groupframe_header/)) ok.push("nincs bizonyított fejlécréteg");
-            if (!van(/groupframe_border|groupframe_bg/)) ok.push("nincs bizonyított keretréteg");
-            if (!vanTartalom) ok.push("nincs tartalomréteg");
-            return zar(ok.length ? "PARTIAL" : "EXACT",
-                ok.length ? "NEM EXACT — " + ok.join("; ") : "fejléc, keret és tartalom bizonyítva");
-        }
-
-        if (minta.tipus === "TEXT" || minta.tipus === "NUMBER") {
-            if (!gyoker) ok.push("nincs gyökérrekord");
-            else {
-                if (!gyoker.rect) ok.push("hiányzó geometria");
-                const t = gyoker.tipografia || {};
-                const kell = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "color"];
-                const hianyzo = kell.filter(n => t[n] == null || t[n] === "");
-                if (t.hiba) ok.push("a tipográfia nem olvasható");
-                if (hianyzo.length) ok.push("hiányzó tipográfiai mező: " + hianyzo.join(", "));
-                if (!(gyoker.szoveg || "").length) ok.push("a cél elemnek nincs közvetlen szövegtartalma");
-            }
-            return zar(ok.length ? "PARTIAL" : "EXACT",
-                ok.length ? "NEM EXACT — " + ok.join("; ") : "teljes geometria és tipográfia a közvetlen célból");
-        }
-
-        return zar(ok.length ? "PARTIAL" : "EXACT",
-            ok.length ? "NEM EXACT — " + ok.join("; ") : "a komponensfa teljes");
-    }
-
-    /* ---- Kattintás nélküli rögzítés: egérpozíció + F2 ---- */
-    function cmSajatunk(el) {
-        try { return !!(host && el && (el === host || host.contains(el))); } catch (e) { return false; }
-    }
-
-    /* A shadow panelt kizárva keressük a pont alatti elemet. */
-    function cmCelPontban(x, y) {
-        let lista = [];
-        try {
-            if (typeof document.elementsFromPoint === "function") lista = document.elementsFromPoint(x, y);
-            else { const e = document.elementFromPoint(x, y); lista = e ? [e] : []; }
-        } catch (e) { lista = []; }
-        for (const el of lista) { if (el && el.nodeType === 1 && !cmSajatunk(el)) return el; }
-        return null;
-    }
-
-    function cmTakarit(csendben) {
-        if (!cmAktiv) return;
-        const a = cmAktiv;
-        cmAktiv = null;
-        try { window.removeEventListener("mousemove", a.mm, true); } catch (e) { /* nem baj */ }
-        try { window.removeEventListener("keydown", a.kd, true); } catch (e) { /* nem baj */ }
-        cmPointerErvenyes = false;
-        if (!csendben) cmRajzol();
-    }
-
-    function cmInditRogzites() {
-        if (cmAktiv) { cmTakarit(); return; }
-        const preset = cmValasztott;
-        const a = { preset: preset };
-
-        /* minden indítás érvénytelen pointerrel kezd: régi koordinátát
-           semmilyen körülmények közt nem használunk fel */
-        cmPointer = { x: -1, y: -1 };
-        cmPointerErvenyes = false;
-
-        a.mm = e => {
-            cmPointer = { x: e.clientX, y: e.clientY };
-            cmPointerErvenyes = true;
-        };
-        a.kd = e => {
-            if (e.key !== CM_ROGZITO_BILLENTYU && e.key !== "Escape") return;
-            /* a billentyű nem juthat tovább a játékhoz */
-            try { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); } catch (er) { /* nem baj */ }
-            if (e.key === "Escape") { cmTakarit(); return; }
-            /* mousemove nélkül nincs érvényes koordináta — nem mérünk */
-            const cel = cmPointerErvenyes ? cmCelPontban(cmPointer.x, cmPointer.y) : null;
-            /* a pillanatkép szinkron, minden állapotváltozás előtt */
-            if (cel) cmRogzit(preset, cel);
-            else {
-                cmMintak[preset] = { preset: preset, statusz: "NINCS_CEL", confidence: "BLOCKED",
-                    ido: new Date().toISOString().slice(0, 19),
-                    hibak: [cmPointerErvenyes
-                        ? "a pointer alatt nem volt a panelen kívüli elem"
-                        : "a rögzítés indítása óta nem érkezett egérmozgás — régi koordinátát nem használunk"] };
-            }
-            cmTakarit();
-        };
-
-        cmAktiv = a;
-        window.addEventListener("mousemove", a.mm, true);
-        window.addEventListener("keydown", a.kd, true);
-        cmRajzol();
-    }
-
-    /* ---- Determinisztikus jelentés ---- */
-    function cmJelentes() {
-        const S = [];
-        const meg = CM_PRESETEK.filter(p => cmMintak[p.id]).map(p => p.id);
-        const hianyzik = CM_PRESETEK.filter(p => !cmMintak[p.id]).map(p => p.id);
-
-        S.push("THE WEST — COMPONENT MAPPER 5B1");
-        S.push("=".repeat(64));
-        S.push("userscript verzió: " + VERZIO + " COMPONENT MAPPER");
-        S.push("időpont: " + new Date().toISOString().replace("T", " ").slice(0, 19));
-        try { S.push("hostname: " + location.hostname); } catch (e) { S.push("hostname: ?"); }
-        try { S.push("viewport: " + window.innerWidth + " × " + window.innerHeight); } catch (e) { /* nem baj */ }
-        try { S.push("devicePixelRatio: " + window.devicePixelRatio); } catch (e) { /* nem baj */ }
-        try { S.push("userAgent: " + cmVag(navigator.userAgent, 300)); } catch (e) { /* nem baj */ }
-        S.push("rögzítő billentyű: " + CM_ROGZITO_BILLENTYU + " (kattintás nélküli mérés)");
-        S.push("korlátok: leszármazotti mélység " + CM_MELYSEG + ", elemszám " + CM_MAXELEM
-            + ", ős " + CM_OS_MAX + ", szövegminta " + CM_SZOVEG + " karakter");
-        S.push("rögzített presetek: " + (meg.join(", ") || "egy sem"));
-        S.push("hiányzó presetek: " + (hianyzik.join(", ") || "nincs"));
-        S.push("");
-        S.push("Adatminimalizálás: nincs teljes HTML, süti, böngésző- vagy GM-tároló,");
-        S.push("és nincs 100 karakternél hosszabb szövegtartalom. A jelentés csak a");
-        S.push("vágólapra kerül, sehova nem továbbítódik.");
-
-        CM_PRESETEK.forEach(p => {
-            const m = cmMintak[p.id];
-            S.push("");
-            S.push("#".repeat(64));
-            S.push("### " + p.id + " — " + p.nev + " — " + p.cimke);
-            S.push("#".repeat(64));
-            if (!m) { S.push("nincs rögzítve"); return; }
-            S.push("státusz: " + m.statusz + "   ·   rögzítve: " + m.ido);
-            S.push("confidence: " + (m.confidence || "BLOCKED"));
-            if (m.confidenceOk) S.push("  indoklás: " + m.confidenceOk);
-            if (m.hibak && m.hibak.length) m.hibak.forEach(h => S.push("  ! " + h));
-            if (!m.fa) return;
-
-            S.push("");
-            S.push("-- gyökérfelismerés --");
-            S.push("selector: " + (m.gyokerSelector || "—") + "   ·   eredmény: " + m.gyokerStatusz);
-            S.push("");
-            S.push("-- hit-tested elem --");
-            S.push(JSON.stringify(m.hitTested, null, 1));
-            S.push("");
-            S.push("-- komponensfa (" + m.fa.retegek.length + " réteg"
-                + (m.fa.csonkolt ? ", CSONKOLT a " + m.fa.maxElem + " elemes korlátnál" : "") + ") --");
-            m.fa.retegek.forEach(d => S.push(JSON.stringify(d, null, 1)));
-            S.push("");
-            S.push("-- ősök (legfeljebb " + CM_OS_MAX + ") --");
-            (m.osok || []).forEach(d => S.push(JSON.stringify(d, null, 1)));
-            S.push("");
-            S.push("-- komponenskapcsolatok --");
-            S.push(JSON.stringify(m.fa.retegek.map(d => ({
-                layerId: d.layerId, parentLayerId: d.parentLayerId, childIndex: d.childIndex,
-                selectorPath: d.selectorPath, osztaly: d.osztaly
-            })), null, 1));
-            S.push("");
-            S.push("-- visualLayers --");
-            S.push(JSON.stringify(m.visualLayers, null, 1));
-            S.push("");
-            S.push("-- componentAssetCatalog (KIZÁRÓLAG a komponensfa rétegei) --");
-            S.push("Csak ez bizonyíthat komponensrészt vagy sprite-felosztást.");
-            S.push(JSON.stringify(m.componentAssetCatalog, null, 1));
-            S.push("");
-            S.push("-- ancestorAssetCatalog (KIZÁRÓLAG az ősök) --");
-            S.push("Tájékoztató. Az ős assetje SOHA nem bizonyít komponensrészt,");
-            S.push("és nem befolyásolja a compositionType vagy confidence értéket.");
-            S.push(JSON.stringify(m.ancestorAssetCatalog, null, 1));
-            S.push("");
-            S.push("-- összetétel --");
-            S.push("compositionType: " + m.osszetetel.compositionType);
-            S.push("A = külön DOM-rétegek · B = pszeudoelemek · C = sprite-szeletek · D = kombináció · E = nem dönthető el");
-            (m.osszetetel.rationale || []).forEach(r => S.push("  " + r));
-            if (m.tabParts) {
-                S.push("");
-                S.push("-- fül-részek --");
-                S.push(JSON.stringify(m.tabParts, null, 1));
-            }
-            if (m.scrollbarParts) {
-                S.push("");
-                S.push("-- scrollbarParts --");
-                S.push(JSON.stringify(m.scrollbarParts, null, 1));
-            }
-            S.push("");
-            S.push("-- CSSOM --");
-            S.push(JSON.stringify(m.cssom, null, 1));
-            S.push("");
-            S.push("-- állapot a mérés előtt és után --");
-            S.push(JSON.stringify({ before: m.stateBefore, after: m.stateAfter,
-                                    szuloObjektumAzonos: m.stateParentIdentical,
-                                    valtozott: !cmJegyEgyezik(m.stateBefore, m.stateAfter)
-                                        || m.stateParentIdentical === false }, null, 1));
-        });
-
-        S.push("");
-        S.push("#".repeat(64));
-        S.push("### ÖSSZESÍTETT HIÁNYLISTA");
-        S.push("#".repeat(64));
-        CM_PRESETEK.forEach(p => {
-            const m = cmMintak[p.id];
-            if (!m) { S.push("  " + p.id + " (" + p.nev + "): nincs rögzítve"); return; }
-            if (m.statusz !== "OK") { S.push("  " + p.id + ": " + m.statusz + " — " + (m.hibak || []).join("; ")); return; }
-            if (m.confidence !== "EXACT")
-                S.push("  " + p.id + ": confidence " + m.confidence + " — " + (m.confidenceOk || ""));
-            if (m.tabParts && m.tabParts.felosztasBizonyitek
-                && m.tabParts.felosztasBizonyitek.requiredMissing.length)
-                m.tabParts.felosztasBizonyitek.requiredMissing.forEach(x =>
-                    S.push("    fül hiány: " + x));
-            if (m.scrollbarParts && m.scrollbarParts.requiredMissing.length)
-                m.scrollbarParts.requiredMissing.forEach(x => S.push("    scrollbar hiány: " + x));
-            if (m.osszetetel && m.osszetetel.compositionType === "E")
-                S.push("  " + p.id + ": rögzítve, de a vizuális felosztás nem bizonyított (compositionType E)");
-            if (m.scrollbarParts && m.scrollbarParts.azonositatlanAsset.length)
-                m.scrollbarParts.azonositatlanAsset.forEach(a => S.push("  " + p.id + ": " + a));
-            if (m.cssom && m.cssom.statusz !== "OK")
-                S.push("  " + p.id + ": CSSOM " + m.cssom.statusz);
-        });
-        S.push("  C4 (BUTTON_HOVER_FULL) hiánya nem blokkoló; a pressed állapot ebben a körben nem kötelező.");
-        c3JelentesResz(S);
-        return S.join("\n");
-    }
-
-    /* ---- Felület ---- */
-    function cmRajzol() {
-        const el = $("dcomp");
-        if (!el) return;
-        cellaSzam = 0;
-
-        const allapot = CM_PRESETEK.map(p => {
-            const m = cmMintak[p.id];
-            if (!m) return `  ${p.id} ${p.nev} — <span class="varo">nincs</span>`;
-            if (m.statusz !== "OK")
-                return `  ${p.id} ${p.nev} — <span class="rossz">${esc(m.statusz)}</span> · `
-                    + `<span class="rossz">${esc(m.confidence || "BLOCKED")}</span>`;
-            const r = m.fa ? m.fa.retegek.length : 0;
-            const v = m.visualLayers ? m.visualLayers.length : 0;
-            const a = m.componentAssetCatalog ? m.componentAssetCatalog.length : 0;
-            const c = m.osszetetel ? m.osszetetel.compositionType : "?";
-            const conf = m.confidence || "BLOCKED";
-            const oszt = conf === "EXACT" ? "jo" : (conf === "PARTIAL" ? "varo" : "rossz");
-            return `  ${p.id} ${p.nev} — <span class="jo">rögzítve</span> · `
-                + `${r} réteg · ${v} vizuális · ${a} asset · típus ${c} · `
-                + `<span class="${oszt}">${esc(conf)}</span>`;
-        }).join("<br>");
-
-        const opciok = CM_PRESETEK.map(p =>
-            `<option value="${p.id}"${p.id === cmValasztott ? " selected" : ""}>${esc(p.id + " — " + p.nev)}</option>`
-        ).join("");
-
-        el.innerHTML = [
-            sor("állapot", cmAktiv
-                ? `<span class="jo">VÁR — vidd az egeret a cél fölé, és nyomj ${esc(CM_ROGZITO_BILLENTYU)}-t</span> · Escape megszakít`
-                : `<span class="varo">nem fut rögzítés</span>`),
-            sor("preset", `<select data-mez="cmpreset" style="max-width:100%;font:12px sans-serif">${opciok}</select>`),
-            sor("műveletek",
-                `<button class="icon" style="width:auto;padding:4px 10px" data-cm-mit="rogzit">Rögzítés indítása (kattintás nélkül)</button> `
-                + `<button class="icon" style="width:auto;padding:4px 10px" data-cm-mit="megszakit">Megszakítás</button><br>`
-                + `<button class="icon" style="width:auto;padding:4px 10px;margin-top:5px" data-cm-mit="masol">Teljes jelentés másolása</button> `
-                + `<button class="icon" style="width:auto;padding:4px 10px;margin-top:5px" data-cm-mit="torolEgy">Kiválasztott preset törlése</button>`),
-            sor("presetek", `<span class="mono">${allapot}</span>`),
-            c3Sor(),
-            sor("használat",
-                `1. Nyisd meg kézzel a referenciaablakot (Hirdetőtábla, Munkák, Mesterség).<br>`
-                + `2. Válaszd ki a presetet, nyomd meg a rögzítés gombot.<br>`
-                + `3. Vidd az egeret a cél komponens fölé — <b>ne kattints</b> —, és nyomj <b>${esc(CM_ROGZITO_BILLENTYU)}</b>-t.<br>`
-                + `4. A mérés nem kattint és nem változtat állapotot; ha mégis változna, a slot STATE_MUTATED lesz.`)
-        ].join("");
-
-        cmKotes();
-    }
-
-    /* A mérőblokk saját, szűk delegálója — a production data-mit névterét nem használja. */
-    function cmKotes() {
-        if (cmKotve) return;
-        const doboz = $("dcomp");
-        if (!doboz) return;
-        cmKotve = true;
-
-        doboz.addEventListener("change", e => {
-            const sel = e.target.closest('[data-mez="cmpreset"]');
-            if (sel) cmValasztott = sel.value;
-        });
-
-        doboz.addEventListener("click", e => {
-            const b = e.target.closest("[data-cm-mit]");
-            if (!b) return;
-            const mit = b.dataset.cmMit;
-            if (mit === "rogzit") cmInditRogzites();
-            if (mit === "megszakit") cmTakarit();
-            if (mit === "torolEgy") { delete cmMintak[cmValasztott]; cmRajzol(); }
-            if (mit === "c3mer") { c3Meres(); cmRajzol(); }
-            if (mit === "masol") {
-                let txt = "";
-                try { txt = cmJelentes(); } catch (er) { txt = "a jelentés összeállítása nem sikerült: " + er.message; }
-                const vissza = jo => {
-                    b.textContent = jo ? "Másolva" : "Nem sikerült";
-                    setTimeout(() => b.textContent = "Teljes jelentés másolása", 1600);
-                };
-                try { navigator.clipboard.writeText(txt).then(() => vissza(true), () => vissza(false)); }
-                catch (er) { vissza(false); }
-            }
-        });
-    }
-
-    /* -------------------------------------------------------------------
-       ----------  C3 CÉLZOTT MÉRÉS — ALBLOKK (5B1-en belül)  ----------
-
-       A korábbi C3 nem a „Mind" gombot, hanem az id="ui_topbar" elemet
-       fogta meg, ezért a NYUGALMI gombassetek nincsenek bizonyítva.
-       A hover állapotot (C4) tilos visszakövetkeztetni rá.
-
-       A gombot egérrel nem lehet megcélozni, mert a rámutatás azonnal
-       hover állapotba viszi. Ezért ez a mérés KIZÁRÓLAG közvetlen
-       DOM-szelektorral dolgozik: nincs elementFromPoint, nincs
-       pointerkövetés, nincs hover-szimuláció, nincs click.
-       ------------------------------------------------------------------- */
-
-    const C3_SELECTOR = ".tw2gui_button.jobs_allbutton";
-    const C3_FELIRAT = "Mind";
-    const C3_RETEG_SZEREP = [
-        ["balCap", /tw2gui_button_left_cap/],
-        ["kozep", /tw2gui_button_middle_bg/],
-        ["jobbCap", /tw2gui_button_right_cap/],
-        ["felirat", /textart_title/]
-    ];
-
-    let c3Minta = null;
-
-    const c3Illeszkedik = (el, mit) => {
-        try { return !!(el && typeof el.matches === "function" && el.matches(mit)); }
-        catch (e) { return false; }
-    };
-    const c3Norm = t => String(t == null ? "" : t).replace(/\s+/g, " ").trim();
-
-    /* A cél kizárólag szelektorból, a megérintése nélkül. */
-    function c3Celok() {
-        let mind = [];
-        try { mind = Array.prototype.slice.call(document.querySelectorAll(C3_SELECTOR)); }
-        catch (e) { mind = []; }
-        const jeloltek = mind.map(el => {
-            let r = null;
-            try { r = el.getBoundingClientRect(); } catch (e) { r = null; }
-            let munkakAblak = false;
-            try {
-                munkakAblak = !!(el.closest(".jobswindow") || el.closest(".jobs")
-                    || el.closest(".jobs-leftSide"));
-            } catch (e) { munkakAblak = false; }
-            return {
-                el: el,
-                csatlakozik: el.isConnected === undefined ? null : !!el.isConnected,
-                lathato: !!(r && r.width > 0 && r.height > 0),
-                munkakAblak: munkakAblak,
-                szoveg: c3Norm(el.textContent),
-                feliratEgyezik: c3Norm(el.textContent) === C3_FELIRAT,
-                hoverben: c3Illeszkedik(el, ":hover"),
-                osztaly: cmOsztaly(el)
-            };
-        });
-        const pontos = jeloltek.filter(j =>
-            j.csatlakozik !== false && j.lathato && j.munkakAblak && j.feliratEgyezik && !j.hoverben);
-        return { jeloltek: jeloltek, pontos: pontos };
-    }
-
-    /* Az állapotkapuk. Bármelyik bukása érvénytelenné teszi a mérést. */
-    function c3Kapuk(root) {
-        let hoveresLeszarmazott = 0, fokuszBent = null;
-        try {
-            hoveresLeszarmazott = Array.prototype.slice.call(root.querySelectorAll("*"))
-                .filter(el => c3Illeszkedik(el, ":hover")).length;
-        } catch (e) { hoveresLeszarmazott = -1; }
-        try {
-            const a = document.activeElement;
-            fokuszBent = !!(a && (a === root || root.contains(a)));
-        } catch (e) { fokuszBent = null; }
-        const a = n => { try { return root.getAttribute(n); } catch (e) { return null; } };
-        return {
-            rootHoverFalse: !c3Illeszkedik(root, ":hover"),
-            descendantHoverCount: hoveresLeszarmazott,
-            rootActiveFalse: !c3Illeszkedik(root, ":active"),
-            focusOutside: fokuszBent === false,
-            ariaPressed: a("aria-pressed"), ariaSelected: a("aria-selected"),
-            disabled: a("disabled"),
-            className: cmOsztaly(root), inlineStyle: a("style")
-        };
-    }
-
-    /* Rétegszerepek — kizárólag osztálynév ÉS tényleges vizuális bizonyíték. */
-    function c3Szerepek(retegek) {
-        const ki = { balCap: null, kozep: null, jobbCap: null, felirat: null,
-                     classMatchedNoVisual: [], egyeb: [] };
-        retegek.forEach(d => {
-            if (d.layerId === "R") return;
-            const cn = (d.osztalyLista || []).join(" ");
-            const par = C3_RETEG_SZEREP.find(([, re]) => re.test(cn));
-            if (!par) { ki.egyeb.push(d.layerId); return; }
-            const nev = par[0];
-            const vizualis = !!(d.vizualis && d.vizualis.length);
-            if (nev !== "felirat" && !vizualis) {
-                ki.classMatchedNoVisual.push({ layerId: d.layerId, osztaly: d.osztaly, szerep: nev,
-                    ok: "az osztálynév a(z) " + nev + " szerepre illeszkedik, de a computed "
-                      + "style-ban nincs vizuális bizonyíték" });
-                return;
-            }
-            if (!ki[nev]) ki[nev] = d.layerId;
-        });
-        return ki;
-    }
-
-    /* A mérés. Szinkron, a cél megérintése nélkül. */
-    function c3Meres() {
-        const m = { blokk: "C3_NORMAL_SELECTOR_CAPTURE", selectorUsed: C3_SELECTOR,
-                    ido: new Date().toISOString().replace("T", " ").slice(0, 19),
-                    blockingReasons: [] };
-        try {
-            const c = c3Celok();
-            m.candidateCount = c.jeloltek.length;
-            m.exactTargetCount = c.pontos.length;
-            m.jeloltOsszegzes = c.jeloltek.map(j => ({
-                osztaly: j.osztaly, szoveg: j.szoveg, lathato: j.lathato,
-                munkakAblak: j.munkakAblak, feliratEgyezik: j.feliratEgyezik, hoverben: j.hoverben }));
-
-            if (c.pontos.length !== 1) {
-                m.targetResolution = c.pontos.length === 0 ? "NINCS_CEL" : "TOBB_CEL";
-                m.confidence = "INVALID";
-                m.blockingReasons.push("pontosan egy érvényes cél kell, de " + c.pontos.length
-                    + " maradt a szűrés után — nem választok találomra");
-                c3Minta = m; return m;
-            }
-
-            const root = c.pontos[0].el;
-            m.targetResolution = "EGYETLEN_CEL";
-            m.normalizedText = c3Norm(root.textContent);
-
-            /* állapot a mérés ELŐTT */
-            const elotte = cmAllapotJegy(root);
-            const elotteSzulo = root.parentElement || null;
-            const kapukElotte = c3Kapuk(root);
-            m.stateBefore = elotte;
-            Object.assign(m, {
-                rootHoverFalse: kapukElotte.rootHoverFalse,
-                descendantHoverCount: kapukElotte.descendantHoverCount,
-                rootActiveFalse: kapukElotte.rootActiveFalse,
-                focusOutside: kapukElotte.focusOutside,
-                allapotAttributumok: {
-                    ariaPressed: kapukElotte.ariaPressed, ariaSelected: kapukElotte.ariaSelected,
-                    disabled: kapukElotte.disabled, className: kapukElotte.className,
-                    inlineStyle: kapukElotte.inlineStyle }
-            });
-
-            if (!kapukElotte.rootHoverFalse) m.blockingReasons.push("a gyökér :hover állapotban van");
-            if (kapukElotte.descendantHoverCount > 0)
-                m.blockingReasons.push("a részfában " + kapukElotte.descendantHoverCount + " hoverelt elem van");
-            if (!kapukElotte.rootActiveFalse) m.blockingReasons.push("a gyökér :active állapotban van");
-            if (!kapukElotte.focusOutside) m.blockingReasons.push("a fókusz a célon vagy annak leszármazottján van");
-
-            /* teljes szűk részfa és assetek — a FIX1 szabályai szerint */
-            m.fa = cmFa(root);
-            m.osok = cmOsok(root);
-            m.layerCount = m.fa.retegek.length;
-            m.visualLayers = m.fa.retegek.filter(d => d.vizualis)
-                .map(d => ({ layerId: d.layerId, osztaly: d.osztaly, okok: d.vizualis,
-                             meret: d.rect ? d.rect.width + "×" + d.rect.height : null,
-                             gyokerhez: d.gyokerhez || null }));
-            m.visualLayerCount = m.visualLayers.length;
-            m.componentAssetCatalog = cmAssetKatalogus(m.fa.retegek);
-            m.ancestorAssetCatalog = cmAssetKatalogus(m.osok);
-            m.assetCount = m.componentAssetCatalog.length;
-            m.osszetetel = cmOsszetetel(m.fa.retegek);
-            m.spriteEvidence = m.osszetetel.spriteEvidence || [];
-            m.szerepek = c3Szerepek(m.fa.retegek);
-
-            /* állapot a mérés UTÁN */
-            const utana = cmAllapotJegy(root);
-            const kapukUtana = c3Kapuk(root);
-            m.stateAfter = utana;
-            m.stateParentIdentical = cmSzuloAzonos(root, elotteSzulo);
-            m.stateUnchanged = cmJegyEgyezik(elotte, utana)
-                && m.stateParentIdentical
-                && kapukElotte.rootHoverFalse === kapukUtana.rootHoverFalse
-                && kapukElotte.rootActiveFalse === kapukUtana.rootActiveFalse
-                && kapukElotte.focusOutside === kapukUtana.focusOutside;
-            if (!m.stateUnchanged) m.blockingReasons.push("STATE_MUTATED — a mérés alatt változott az állapot");
-
-            if (m.fa.csonkolt) m.blockingReasons.push("a részfa csonkolt");
-            if (m.szerepek.classMatchedNoVisual.length)
-                m.blockingReasons.push("classMatchedNoVisual: " + m.szerepek.classMatchedNoVisual.length
-                    + " réteg csak osztálynév alapján ismert");
-            ["balCap", "kozep", "jobbCap"].forEach(n => {
-                if (!m.szerepek[n]) m.blockingReasons.push("hiányzó, vizuálisan bizonyított réteg: " + n);
-            });
-            if (!m.szerepek.felirat) m.blockingReasons.push("hiányzó feliratréteg");
-
-            m.confidence = m.blockingReasons.length ? "PARTIAL" : "EXACT";
-            if (!m.stateUnchanged) m.confidence = "INVALID";
-        } catch (e) {
-            m.confidence = "INVALID";
-            m.blockingReasons.push("mérési hiba: " + cmVag(e && e.message, 200));
-        }
-        c3Minta = m;
-        return m;
-    }
-
-    /* A jelentés külön blokkja — a cmJelentes végén hívva. */
-    function c3JelentesResz(S) {
-        S.push("");
-        S.push("#".repeat(64));
-        S.push("### C3_NORMAL_SELECTOR_CAPTURE — a Mind gomb NYUGALMI allapota");
-        S.push("#".repeat(64));
-        if (!c3Minta) { S.push("nincs rögzítve"); return; }
-        const m = c3Minta;
-        S.push("targetResolution: " + m.targetResolution);
-        S.push("selectorUsed: " + m.selectorUsed);
-        S.push("candidateCount: " + m.candidateCount);
-        S.push("exactTargetCount: " + m.exactTargetCount);
-        S.push("normalizedText: " + (m.normalizedText == null ? "—" : m.normalizedText));
-        S.push("rootHoverFalse: " + m.rootHoverFalse);
-        S.push("descendantHoverCount: " + m.descendantHoverCount);
-        S.push("rootActiveFalse: " + m.rootActiveFalse);
-        S.push("focusOutside: " + m.focusOutside);
-        S.push("stateUnchanged: " + m.stateUnchanged);
-        S.push("layerCount: " + m.layerCount);
-        S.push("visualLayerCount: " + m.visualLayerCount);
-        S.push("assetCount: " + m.assetCount);
-        S.push("confidence: " + m.confidence);
-        S.push("rögzítve: " + m.ido);
-        S.push("");
-        S.push("-- blockingReasons --");
-        if (!m.blockingReasons.length) S.push("  nincs");
-        else m.blockingReasons.forEach(x => S.push("  " + x));
-        S.push("");
-        S.push("-- jelöltek --");
-        S.push(JSON.stringify(m.jeloltOsszegzes, null, 1));
-        if (!m.fa) return;
-        S.push("");
-        S.push("-- rétegszerepek --");
-        S.push(JSON.stringify(m.szerepek, null, 1));
-        S.push("");
-        S.push("-- komponensfa (" + m.layerCount + " réteg) --");
-        m.fa.retegek.forEach(d => S.push(JSON.stringify(d, null, 1)));
-        S.push("");
-        S.push("-- ősök --");
-        (m.osok || []).forEach(d => S.push(JSON.stringify(d, null, 1)));
-        S.push("");
-        S.push("-- visualLayers --");
-        S.push(JSON.stringify(m.visualLayers, null, 1));
-        S.push("");
-        S.push("-- componentAssetCatalog --");
-        S.push(JSON.stringify(m.componentAssetCatalog, null, 1));
-        S.push("");
-        S.push("-- ancestorAssetCatalog --");
-        S.push(JSON.stringify(m.ancestorAssetCatalog, null, 1));
-        S.push("");
-        S.push("-- spriteEvidence --");
-        S.push(JSON.stringify(m.spriteEvidence, null, 1));
-        S.push("");
-        S.push("-- összetétel --");
-        S.push("compositionType: " + m.osszetetel.compositionType);
-        (m.osszetetel.rationale || []).forEach(r => S.push("  " + r));
-        S.push("");
-        S.push("-- állapot a mérés előtt és után --");
-        S.push(JSON.stringify({ before: m.stateBefore, after: m.stateAfter,
-                                szuloObjektumAzonos: m.stateParentIdentical,
-                                allapotAttributumok: m.allapotAttributumok }, null, 1));
-    }
-
-    /* A felület egyetlen sora — a cmRajzol dcomp-táblájába illesztve. */
-    function c3Sor() {
-        const m = c3Minta;
-        const allapot = !m ? `<span class="varo">nincs rögzítve</span>`
-            : m.confidence === "EXACT" ? `<span class="jo">EXACT</span>`
-            : m.confidence === "PARTIAL" ? `<span class="varo">PARTIAL</span>`
-            : `<span class="rossz">${esc(m.confidence)}</span>`;
-        const reszlet = !m ? "" :
-            `<br><span class="mono">  cél: ${esc(m.targetResolution)} · jelölt ${m.candidateCount}`
-            + ` · pontos ${m.exactTargetCount}`
-            + (m.layerCount ? ` · ${m.layerCount} réteg · ${m.visualLayerCount} vizuális`
-                + ` · ${m.assetCount} asset` : "")
-            + `<br>  hover ${m.rootHoverFalse ? "nincs" : "VAN"}`
-            + ` · leszármazott hover ${m.descendantHoverCount}`
-            + ` · active ${m.rootActiveFalse ? "nincs" : "VAN"}`
-            + ` · fókusz kívül ${m.focusOutside}`
-            + ` · állapot változatlan ${m.stateUnchanged}`
-            + (m.blockingReasons.length
-                ? `<br>  blokkolók: ${esc(m.blockingReasons.join("; "))}` : "")
-            + `</span>`;
-        return sor("C3 nyugalmi gomb",
-            `<button class="icon" style="width:auto;padding:4px 10px" data-cm-mit="c3mer">`
-            + `C3 — Mind gomb nyugalmi állapotának rögzítése</button><br>`
-            + `<span class="mono">Vedd le az egeret a gombról, aztán nyomd meg. `
-            + `A mérő szelektorral dolgozik, a célt nem érinti meg.</span><br>`
-            + `állapot: ${allapot}${reszlet}`);
-    }
-
-    /* ----------  C3 CÉLZOTT MÉRÉS ALBLOKK VÉGE  ---------- */
-
-    /* ==========  COMPONENT MAPPER 5B1 BLOKK VÉGE  ========== */
 
     /* ===================================================================
        ==========  NATIVE UI PREVIEW 5D — VIZUÁLIS PREVIEW  ==========
@@ -5023,26 +3134,110 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
     /* ==========  NATIVE UI PREVIEW 5D BLOKK VÉGE  ========== */
 
-
-    function jelentElrendezes() {
-        const w = host.dataset.nativ ? (host.getBoundingClientRect().width || beall.width) : beall.width;
-        const all = w >= 880 ? "három hasáb" : w >= 620 ? "két hasáb" : "egy hasáb, fiókkal";
-        $("dlayout").innerHTML = [
-            sor("megjelenés", host.dataset.nativ
-                ? `<span class="jo">a játék saját ablakában</span>`
-                : `<span class="varo">saját keretben</span> — nincs west.gui.Window`),
-            sor("panel szélessége", `<span class="mono">${Math.round(w)}</span>`),
-            sor("elrendezés", `<span class="jo">${all}</span>`),
-            sor("konténer-lekérdezés",
-                (window.CSS && window.CSS.supports && window.CSS.supports("container-type", "inline-size"))
-                    ? `<span class="jo">támogatott</span>`
-                    : `<span class="rossz">nem támogatott</span> — a böngésző régi`)
-        ].join("");
-    }
-
     /* ===================================================================
        8. Kötések
        =================================================================== */
+
+    /* ===================================================================
+       BEÁLLÍTÁSOK FÜL
+       A korábbi fejlesztői diagnosztika helyén. Csak olyasmit mutat, ami a
+       felhasználónak is mond valamit: nyelv, verzió, adatállapot, honlap.
+       =================================================================== */
+
+    function rajzolBeallitasok() {
+        const nyelvEl = $("dnyelv");
+        if (!nyelvEl) return;
+
+        cellaSzam = 0;
+        const auto = szerverNyelve();
+        const autoNev = (NYELVEK.find(x => x.kod === auto) || {}).nev || auto;
+        const opciok = `<option value="">${esc(T("beall_nyelv_auto"))} - ${esc(autoNev)}</option>`
+            + NYELVEK.map(x =>
+                `<option value="${x.kod}"${beall.nyelv === x.kod ? " selected" : ""}>${esc(x.nev)}</option>`
+              ).join("");
+        nyelvEl.innerHTML = [
+            sor(T("beall_nyelv"), `<select data-mez="nyelvvalaszto" style="max-width:100%;font:12px sans-serif">${opciok}</select>`),
+            sor(T("beall_nyelv_most"), `<b>${esc((NYELVEK.find(x => x.kod === nyelv) || {}).nev || nyelv)}</b>`),
+            sor("", `<span class="mono">${esc(T("beall_nyelv_megj"))}</span>`)
+        ].join("");
+
+        const sel = $("nyelvvalaszto");
+        if (sel && !sel.dataset.kotve) {
+            sel.dataset.kotve = "1";
+            sel.addEventListener("change", e => {
+                const v = e.target.value;
+                beall.nyelv = v || undefined;
+                if (!v) delete beall.nyelv;
+                ment();
+                nyelv = v || szerverNyelve();
+                /* a váz statikus szövegei is nyelvfüggők, ezért újraépítjük */
+                /* A váz statikus szövegei is nyelvfüggők, ezért újraépítjük.
+                   A kötések a gyökérre vannak delegálva, ezért NEM kell újra
+                   bekötni - az duplázná az eseménykezelőket. */
+                const doboz = gyoker.querySelector(".frame");
+                if (doboz) {
+                    const uj = document.createElement("div");
+                    uj.innerHTML = VAZ();
+                    doboz.replaceWith(uj.firstElementChild);
+                    $("kereso").addEventListener("input", rajzolReceptek);
+                    /* Natív módban az ablak méretét és helyét a játék adja;
+                       a saját méretezés ilyenkor elmozdítaná a keretet. */
+                    if (host.dataset.nativ) {
+                        if (nativAblak) { fessTartot(nativAblak); igazitNativ(nativAblak); }
+                    } else allitMeret();
+                }
+                try { if (nativAblak) nativAblak.setTitle(T("ablak_cim")); } catch (e) { /* nem baj */ }
+                rajzolChips(); rajzolKarakter(); rajzolReceptek(); rajzolMunkalap();
+                valtLap(beall.tab || "calc");
+                rajzolBeallitasok();
+            });
+        }
+
+        cellaSzam = 0;
+        const f = frissAllapot;
+        const eredmeny =
+            f.statusz === "fut" ? `<span class="varo">ellenőrzés fut…</span>`
+            : f.statusz === "naprakesz" ? `<span class="jo">${esc(T("beall_frissites_naprakesz"))}</span>`
+            : f.statusz === "van-uj"
+                ? `<span class="rossz">${esc(T("beall_frissites_van_uj", { ver: f.ver }))}</span>`
+                  + ` <button class="icon" style="width:auto;padding:3px 9px;margin-left:6px"`
+                  + ` data-mit="frissitesnyit">${T("frissites_gomb_megnyit")}</button>`
+            : f.statusz === "hiba"
+                ? `<span class="rossz">${esc(T("allapot_nem_sikerult"))}</span>`
+                  + `<br><span class="mono">${esc(f.ok || "")}</span>`
+            : `<span class="varo">még nem futott</span>`;
+
+        $("dverzio").innerHTML = [
+            sor(T("beall_verzio"), `<b>${esc(VERZIO)}</b>`),
+            sor(T("beall_frissites_keres"),
+                `<button class="icon" style="width:auto;padding:4px 10px" data-mit="frissiteskeres">`
+                + `${T("beall_frissites_keres")}</button>`
+                + `<br><span style="display:inline-block;margin-top:5px">${eredmeny}</span>`
+                + (f.ido ? `<br><span class="mono">${esc(T("beall_frissites_utoljara", { ido: f.ido }))}</span>` : "")),
+            sor(T("beall_forras"), `<span class="mono">${esc(SZKRIPT_URL)}</span>`)
+        ].join("");
+
+        cellaSzam = 0;
+        const megt = megtanult.size;
+        const raktarDb = Object.keys(raktar).length;
+        $("dallapot").innerHTML = [
+            sor(T("beall_receptek"), `<span class="jo">${RECIPES.length}</span>`),
+            sor(T("beall_raktar"), raktarDb
+                ? `<span class="jo">${raktarDb}</span>`
+                : `<span class="varo">${esc(T("beall_raktar_var"))}</span>`),
+            sor(T("beall_megtanult"), megt
+                ? `<span class="jo">${esc(T("beall_megtanult_ok", { n: megt }))}</span>`
+                : `<span class="rossz">${esc(T("beall_megtanult_hiba"))}</span>`
+                  + `<br><span class="mono">${esc(T("szuro_megtanult_ok"))}</span>`),
+            sor(T("beall_karakter"), karakter
+                ? `${esc(profLabel(karakter.prof) || "nincs mesterség")} · ${esc(String(karakter.szint))}`
+                : `<span class="varo">még nem olvasható</span>`)
+        ].join("");
+
+        cellaSzam = 0;
+        $("dhonlap").innerHTML = sor(T("beall_honlap_link"),
+            `<a href="${HONLAP_URL}" target="_blank" rel="noopener">${esc(HONLAP_URL)}</a>`);
+    }
 
     function valtLap(nev) {
         beall.tab = nev; ment();
@@ -5057,9 +3252,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         }
         if (nev === "stock") rajzolRaktar();
         if (nev === "diag") {
-            jelentJatek(); jelentAblak(); jelentApi(); jelentElrendezes(); jelentCsp();
-            spRajzol();                       /* STYLE PROBE 5A */
-            cmRajzol();                       /* COMPONENT MAPPER 5B1 */
+            rajzolBeallitasok();
         }
     }
 
@@ -5071,7 +3264,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         gyujtMegtanult();
         rajzolKarakter(); rajzolReceptek(); rajzolMunkalap();
         if (!gyoker.querySelector('[data-lap="stock"]').hidden) rajzolRaktar();
-        if (!gyoker.querySelector('[data-lap="diag"]').hidden) jelentJatek();
+        if (!gyoker.querySelector('[data-lap="diag"]').hidden) rajzolBeallitasok();
     }
 
     function kotesek() {
@@ -5086,6 +3279,10 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             if (mit === "frissit") frissit();
             /* 1.5.2 SINGLE-VIEW: a fogaskerék oda-vissza vált */
             if (mit === "diagvalt") valtLap(beall.tab === "diag" ? "calc" : "diag");
+            if (mit === "frissiteskeres") frissitestNezKezzel();
+            if (mit === "frissitesnyit" && frissAllapot.ver) {
+                try { window.open(SZKRIPT_URL, "_blank"); } catch (e) { /* nem baj */ }
+            }
             if (mit === "fiok") {
                 const f = gyoker.querySelector(".frame");
                 f.dataset.fiok = f.dataset.fiok === "nyit" ? "" : "nyit";
@@ -5109,7 +3306,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                    recept közvetlen hozzávalói */
                 const txt = hianyLista().map(x => itemSor(x.marad, x.id)).join("\n");
                 vagolapra(txt).then(jo =>
-                    gombJelez(b, jo ? "Másolva" : "Nem sikerült", "Hiánylista másolása", 1400));
+                    gombJelez(b, jo ? T("gomb_masolva") : T("gomb_nem_sikerult"), T("gomb_hianylista"), 1400));
             }
         });
 
@@ -5119,12 +3316,10 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         window.addEventListener("resize", () => {
             if (host.hidden) return;
             if (!host.dataset.nativ) allitMeret();
-            jelentElrendezes();
         });
 
         /* natív ablaknál a méretváltozást a böngésző jelzi */
         try {
-            new ResizeObserver(() => { if (!host.hidden) jelentElrendezes(); }).observe(host);
         } catch (e) { /* régi böngésző: marad az ablakfigyelés */ }
         window.addEventListener("focus", () => { if (!host.hidden) frissit(); });
     }
@@ -5173,7 +3368,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         /* 10. */
         nativAblak = null;
         nativFoDiv = null;
-        kozepreIgazitva = false;
+        kozepreIgazitva = null;
     }
 
     function nyit(mit) {
@@ -5181,8 +3376,6 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
         if (!mit) {
             host.hidden = true;
-            spTakarit(true);                  /* STYLE PROBE 5A */
-            cmTakarit(true);                  /* COMPONENT MAPPER 5B1 */
             zarNativAblak();
             return;
         }
@@ -5207,7 +3400,6 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         }
 
         frissit();
-        jelentElrendezes();
         let volt = ujjlenyomat();
         ora = setInterval(() => {
             const most = ujjlenyomat();
@@ -5234,7 +3426,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         const b = document.createElement("div");
         b.id = "mk-panel-btn";
         b.textContent = "\u2764";
-        b.title = "Mesterség-kalkulátor";
+        b.title = T("ablak_cim");
 
         let pos = { right: 2, top: 340 };
         try {
@@ -5280,7 +3472,16 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         });
         b.addEventListener("click", () => {
             if (mozgott) { mozgott = false; return; }
-            nyit(host.hidden);
+            /* Ha a játék saját ✕ gombjával zárták be a natív ablakot, a
+               host.hidden hamis marad, és az első kattintás bezárásnak
+               számítana. Ezért a TÉNYLEGES láthatóságot nézzük. */
+            let lathato = !host.hidden;
+            if (lathato && host.dataset.nativ) {
+                try { lathato = !!(nativFoDiv && document.contains(nativFoDiv)); }
+                catch (e) { lathato = false; }
+                if (!lathato) { host.hidden = true; nativAblak = null; nativFoDiv = null; }
+            }
+            nyit(!lathato);
         });
 
         document.body.appendChild(b);
@@ -5293,15 +3494,37 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     /* A saját verzió NEM külön konstans: a VERZIO az egyetlen forrás, hogy
        a fejléc, a @version és a frissítésellenőrzés ne csúszhasson szét. */
     const SAJAT_VER = VERZIO;
+    const HONLAP_URL = ADAT_URL;   /* ugyanaz a hely szolgálja ki a honlapot */
     const SZKRIPT_URL = ADAT_URL + "the-west-panel.user.js";
 
-    /* a fent lévő fájl @version sorát olvassuk ki */
+    /* A fent lévő fájl @version sorának kiolvasása. A hibát NEM nyeljük el:
+       minden ág beállítja a frissAllapot mezőit. */
     async function ujVerzio() {
-        const txt = await letolt(SZKRIPT_URL + "?v=" + Date.now(), "text");
-        if (!txt) return null;
+        frissAllapot.ido = new Date().toLocaleString("hu-HU");
+        let txt = null;
+        try { txt = await letolt(SZKRIPT_URL + "?v=" + Date.now(), "text"); }
+        catch (e) {
+            frissAllapot = { statusz: "hiba", ido: frissAllapot.ido, ver: null,
+                             ok: "a letöltés hibára futott: " + (e && e.message || "ismeretlen") };
+            return null;
+        }
+        if (!txt) {
+            frissAllapot = { statusz: "hiba", ido: frissAllapot.ido, ver: null,
+                             ok: "a fájl nem érhető el (hálózati hiba, 404 vagy időtúllépés)" };
+            return null;
+        }
         const m = txt.match(/@version\s+([^\s]+)/);
-        if (!m) return null;
-        return m[1] !== SAJAT_VER ? m[1] : null;
+        if (!m) {
+            frissAllapot = { statusz: "hiba", ido: frissAllapot.ido, ver: null,
+                             ok: "a letöltött fájlban nincs @version sor" };
+            return null;
+        }
+        if (m[1] === SAJAT_VER) {
+            frissAllapot = { statusz: "naprakesz", ido: frissAllapot.ido, ver: m[1], ok: null };
+            return null;
+        }
+        frissAllapot = { statusz: "van-uj", ido: frissAllapot.ido, ver: m[1], ok: null };
+        return m[1];
     }
 
     /* a játék saját ablakstílusában jelenít meg egy értesítőt */
@@ -5361,15 +3584,32 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         document.body.appendChild(box);
     }
 
+    /* Automatikus ellenőrzés induláskor: naponta legfeljebb egyszer szól. */
     async function frissitestNez() {
         try {
             const ma = new Date().toISOString().slice(0, 10);
-            if (GM_getValue("mk-upd-nap", "") === ma) return;   /* naponta egyszer */
+            if (GM_getValue("mk-upd-nap", "") === ma) return;
             const ver = await ujVerzio();
             if (!ver) return;
             GM_setValue("mk-upd-nap", ma);
             frissitesAblak(ver);
-        } catch (e) { /* csendben elengedjük */ }
+        } catch (e) {
+            frissAllapot = { statusz: "hiba", ido: new Date().toLocaleString("hu-HU"),
+                             ver: null, ok: "váratlan hiba: " + (e && e.message || "ismeretlen") };
+        }
+    }
+
+    /* Kézi ellenőrzés a Beállítások fülről. A napi korlátot megkerüli, mert
+       kiadás után azonnal tudni akarjuk, elérhető-e a fájl. */
+    async function frissitestNezKezzel() {
+        frissAllapot = { statusz: "fut", ido: null, ver: null, ok: null };
+        rajzolBeallitasok();
+        try { await ujVerzio(); }
+        catch (e) {
+            frissAllapot = { statusz: "hiba", ido: new Date().toLocaleString("hu-HU"),
+                             ver: null, ok: "váratlan hiba: " + (e && e.message || "ismeretlen") };
+        }
+        rajzolBeallitasok();
     }
 
     /* ===================================================================
