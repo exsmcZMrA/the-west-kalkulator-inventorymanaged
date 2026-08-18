@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Mesterség-kalkulátor — játékbeli panel
+// @name         The West Crafting Calculator
 // @namespace    the-west-kalkulator-ingame
-// @version      1.7.5
-// @description  A mesterség-kalkulátor a játék felületén, mozgatható ablakban. Csak a már betöltött adatot olvassa.
-// @author       —
+// @version      1.0.0
+// @description  Crafting calculator inside the game, in a movable window. Reads only data already loaded in the browser.
+// @author       smcZ
 // @match        https://*.the-west.hu/game.php*
 // @match        https://*.the-west.net/game.php*
 // @match        https://*.the-west.com/game.php*
@@ -29,17 +29,17 @@
 // ==/UserScript==
 
 /* =======================================================================
-   Mesterség-kalkulátor — játékbeli panel, 0.1 (váz)
+   Mesterség-kalkulátor - játékbeli panel, 1.0.0
 
-   Mit tud ez a változat:
-     · mozgatható, átméretezhető ablak a játék felületén
+   Mit tud:
+     · mozgatható ablak a játék saját ablakkeretében
      · a raktárat élőben olvassa a Bag objektumból, nem tárolja
+     · a teljes gyártási lánc lebontása, darabszámmal és több céllal
+     · három nézet: robbantott ábra, lépéskártyák, csak alapanyag
      · receptlista kereséssel, mesterség-szűréssel, állapotpöttyökkel
-     · a kijelölt recept közvetlen hozzávalói, készlethez mérve
-     · diagnosztika fül: kiderül, mit enged át a játék biztonsági beállítása
-
-   Mit NEM tud még:
-     · a teljes gyártási lánc lebontását — az a következő lépés
+     · készültségi gyűrű és hiánylista, a játék [item=ID] formátumában
+     · négy nyelv: magyar, angol, német, lengyel
+     · beállítások fül: nyelv, verzió, frissítéskeresés, adatállapot
 
    Amit szándékosan nem csinál, és nem is fog:
      · nem küld kérést a játék szervereinek
@@ -916,6 +916,12 @@ const SZOVEG = {
   lepes_megvan: ["megvan","in stock","vorhanden","jest"],
   leptető_kevesebb: ["Kevesebb","Less","Weniger","Mniej"],
   leptető_tobb: ["Több","More","Mehr","Więcej"],
+  masol_fejlec: ["{cel} - {mit}:","{cel} - {mit}:","{cel} - {mit}:","{cel} - {mit}:"],
+  masol_formatum_aria: ["A másolás formátuma","Copy format","Format des Kopierens","Format kopiowania"],
+  masol_kod: ["Kód","Code","Code","Kod"],
+  masol_kod_cim: ["A játékba illeszthető alak","The form you can paste into the game","Die im Spiel einfügbare Form","Postać do wklejenia w grze"],
+  masol_szoveg: ["Szöveg","Text","Text","Tekst"],
+  masol_szoveg_cim: ["Olvasható név, a játékon kívülre","Readable names, for use outside the game","Lesbare Namen, für außerhalb des Spiels","Czytelne nazwy, poza grą"],
   nezet_fa: ["Robbantott ábra","Exploded view","Explosionsansicht","Widok rozstrzelony"],
   nezet_kartyak: ["Lépéskártyák","Step cards","Schrittkarten","Karty kroków"],
   nezet_nyers: ["Csak alapanyag","Raw materials only","Nur Rohstoffe","Tylko surowce"],
@@ -943,7 +949,7 @@ const SZOVEG = {
 (function () {
     "use strict";
 
-    const VERZIO = "1.7.5";
+    const VERZIO = "1.0.0";
 
     /* ===================================================================
        1. Segédek és a játék adatai
@@ -1034,7 +1040,7 @@ const SZOVEG = {
         ? `<img class="ico${cls ? " " + cls : ""}" src="${IMG_BASE}${ITEM_IMG[id]}" alt="" loading="lazy">`
         : "";
 
-    /* a játék globális objektumai — a Tampermonkey homokozója miatt
+    /* a játék globális objektumai - a Tampermonkey homokozója miatt
        előbb az unsafeWindow-ban nézzük */
     function jatek() {
         const U = (typeof unsafeWindow !== "undefined") ? unsafeWindow : null;
@@ -1043,7 +1049,7 @@ const SZOVEG = {
     }
 
     /* A raktár tartalma. Nem tároljuk el: minden olvasáskor friss adat jön.
-       A Bag mindent visszaad — fegyvert, ruhát, küldetéstárgyat is —, ezért
+       A Bag mindent visszaad - fegyvert, ruhát, küldetéstárgyat is -, ezért
        csak azt tartjuk meg, ami valamelyik receptben előfordul. A többit
        megszámoljuk, de nem mutatjuk. */
     let ismeretlenDb = 0;
@@ -1083,7 +1089,7 @@ const SZOVEG = {
        A megtanult recepteken ott a last_craft mező, a többin nincs.
        Csak akkor látszik, ha a játékos megnyitotta a mesterség ablakot.
        Ismert ütközés: a TW-Calc szkript lecseréli a listát olyan
-       objektumokra, amelyeken nincs last_craft — ilyenkor üres marad,
+       objektumokra, amelyeken nincs last_craft - ilyenkor üres marad,
        és akkor nem halványítunk semmit. */
     const megtanult = new Set();
 
@@ -1111,7 +1117,7 @@ const SZOVEG = {
 
     const ALAP = {
         nezet: "tree", prof: undefined, enyem: false, nyelv: undefined, left: null, top: 90, width: 880, height: 620,
-        tab: "calc", sajat: false };
+        tab: "calc", sajat: false, masolmod: "kod" };
     let beall = Object.assign({}, ALAP);
     try {
         const m = JSON.parse(GM_getValue("mk-panel", "null"));
@@ -1122,10 +1128,15 @@ const SZOVEG = {
         try { GM_setValue("mk-panel", JSON.stringify(beall)); } catch (e) { /* nem baj */ }
     }
 
+    /* 1.0.1: a másolás formátuma. "kod" = a játékba illeszthető [item=ID]
+       alak, "szoveg" = olvasható név, amit a játékon kívül is megért a
+       címzett. A választás mentődik, és egy kattintással váltható. */
+    let masolMod = beall.masolmod === "szoveg" ? "szoveg" : "kod";
+
     let raktar = {};
     let karakter = null;
     let valasztott = null;
-    /* 1.6.0 TERV: több cél egyszerre — [{i, q, x}], a webes motor alakja */
+    /* 1.6.0 TERV: több cél egyszerre - [{i, q, x}], a webes motor alakja */
     let tervek = [];
     let terv = null;          /* a legutóbbi compute() eredménye */
     let nezet = beall.nezet || "tree";   /* tree | all | raw */
@@ -1156,7 +1167,7 @@ const SZOVEG = {
     let host = null, gyoker = null;
 
     /* ===================================================================
-       3. Stílus — a weboldal színei és betűi, árnyékgyökérbe zárva
+       3. Stílus - a weboldal színei és betűi, árnyékgyökérbe zárva
        =================================================================== */
 
     const CSS = `
@@ -1331,6 +1342,22 @@ h1{ font-family:"Rye",Georgia,serif; font-size:19px; font-weight:400; line-heigh
   color:var(--brass); border-radius:6px; padding:8px; cursor:pointer; font-size:13.5px }
 .act:hover{ background:var(--bg) }
 
+/* ---------- másolási formátum váltó ---------- */
+/* A felső sávban áll, a Frissítés gomb előtt. Ott az Istállómester fül és a
+   Frissítés között üres a sáv, és onnan nem tud elcsúszni: a jobb oszlopban
+   hosszú listánál a görgetősáv alá került volna, épp amikor a legjobban kell.
+   Az aktív állás SÖTÉT kitöltést kap - pergamenen a halvány kiemelés nem
+   látszott, a felhasználó pedig másolás ELŐTT akarja tudni, mit fog kapni. */
+.fmtsor{ display:inline-flex; align-items:center; gap:6px; flex:0 0 auto }
+.fmtvalto{ display:inline-flex; border:1px solid var(--brass); border-radius:5px;
+  overflow:hidden; flex:0 0 auto }
+.fmtvalto button{ background:var(--panel); border:0; cursor:pointer; padding:3px 10px;
+  font-size:11.5px; color:var(--dim); font-family:inherit; white-space:nowrap; line-height:17px }
+.fmtvalto button + button{ border-left:1px solid var(--brass) }
+.fmtvalto button:hover{ color:var(--ink); background:var(--raised) }
+.fmtvalto button[aria-pressed="true"]{ background:var(--fa2); color:#f0c874; font-weight:500 }
+.fmtvalto button[aria-pressed="true"]:hover{ background:var(--fa2); color:#f0c874 }
+
 /* ---------- raktár fül ---------- */
 .whrows{ list-style:none; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
   gap:2px 14px; margin-top:10px }
@@ -1358,7 +1385,7 @@ h1{ font-family:"Rye",Georgia,serif; font-size:19px; font-weight:400; line-heigh
 .grip::after{ content:""; position:absolute; right:3px; bottom:3px; width:7px; height:7px;
   border-right:2px solid var(--faint); border-bottom:2px solid var(--faint) }
 
-/* ================= 1.6.0 — terv, léptető, gyűrű, lánc ================= */
+/* ================= 1.6.0 - terv, léptető, gyűrű, lánc ================= */
 .order{ display:flex; align-items:flex-start; gap:14px; margin-bottom:10px }
 .orderbal{ flex:1 1 auto; min-width:0 }
 .ring{ flex:0 0 auto; position:relative; width:92px; height:92px; display:grid; place-items:center }
@@ -1459,7 +1486,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 <div class="frame">
   <header class="bar">
     <span class="mark">${T("ablak_cim")}</span>
-    <span class="ver">v${VERZIO} TERV</span>
+    <span class="ver">v${VERZIO}</span>
     <button class="icon" data-mit="kicsi" title="${T("gomb_osszecsukas")}">–</button>
     <button class="icon" data-mit="bezar" title="${T("gomb_bezaras")}">✕</button>
   </header>
@@ -1468,6 +1495,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
   <nav class="topbar" data-mez="topbar">
     <span class="proftabs" data-mez="chips"></span>
     <span class="utility">
+      <span class="fmtsor" data-mez="fmtsor"></span>
       <button class="icon" data-mit="frissit" title="${T("gomb_frissites_cim")}"><i class="kozep"></i><span class="cimke">${T("gomb_frissites")}</span></button>
       <button class="icon fogas" data-mit="diagvalt" data-mez="fogas"
               aria-pressed="false" aria-label="${T("gomb_beallitasok_megnyit")}"
@@ -1508,7 +1536,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
     <section data-lap="stock" class="diag" hidden>
       <p class="eyebrow">${T("eyebrow_gyujts")} <span data-mez="smeta"></span></p>
-      <p class="note">Ez közvetlenül a játékból jön, minden megnyitáskor frissül. Nincs eltárolva, és nem is szerkeszthető — amit a játékban látsz, azt látod itt.</p>
+      <p class="note">Ez közvetlenül a játékból jön, minden megnyitáskor frissül. Nincs eltárolva, és nem is szerkeszthető - amit a játékban látsz, azt látod itt.</p>
       <p class="note" data-mez="smegj"></p>
       <ul class="whrows" data-mez="stocklist"></ul>
     </section>
@@ -1537,7 +1565,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         const st = document.createElement("style");
         st.textContent = CSS;
         gyoker.appendChild(st);
-        /* NATIVE UI PREVIEW 5D — külön stíluselem, egy blokkban levehető */
+        /* NATIVE UI PREVIEW 5D - külön stíluselem, egy blokkban levehető */
         const st5c = document.createElement("style");
         st5c.id = "mk-ui5c";
         st5c.textContent = UI5D_CSS;
@@ -1555,7 +1583,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         host.hidden = true;
 
         kotesek();
-        rajzolChips();
+        rajzolChips(); rajzolFmt();
         valtLap(beall.tab || "calc");
     }
 
@@ -1670,6 +1698,26 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
     const gyarthatoMost = r => r.g.every(([id, q]) => (raktar[id] || 0) >= q);
 
+    /* 1.0.0: a másolási formátum váltója a felső sávban, a Frissítés gomb
+       előtt. Itt mindig látszik - a jobb oszlopban hosszú listánál a
+       görgetősáv alá csúszott volna, épp amikor a legjobban kell. */
+    function rajzolFmt() {
+        const el = $("fmtsor");
+        if (!el) return;
+        el.innerHTML = `<span class="fmtvalto" role="group" aria-label="${esc(T("masol_formatum_aria"))}">
+            <button data-fmt="kod" title="${esc(T("masol_kod_cim"))}"
+              aria-pressed="${masolMod === "kod"}">${esc(T("masol_kod"))}</button>
+            <button data-fmt="szoveg" title="${esc(T("masol_szoveg_cim"))}"
+              aria-pressed="${masolMod === "szoveg"}">${esc(T("masol_szoveg"))}</button>
+          </span>`;
+        el.querySelectorAll("[data-fmt]").forEach(b => b.addEventListener("click", () => {
+            const uj = b.dataset.fmt === "szoveg" ? "szoveg" : "kod";
+            if (uj === masolMod) return;
+            masolMod = uj; beall.masolmod = uj; ment();
+            rajzolFmt();
+        }));
+    }
+
     function rajzolChips() {
         const el = $("chips");
         const MIND = { hu: "Mind", en: "All", de: "Alle", pl: "Wszystkie" };
@@ -1708,7 +1756,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
         /* A megtanult receptek felismerése a Crafting.recipes last_craft
            mezőjéből megy. Ha egy másik szkript (például a TW-Calc) felülírja
-           ezt az objektumot, a mező eltűnik — ilyenkor a szűrő nem tud
+           ezt az objektumot, a mező eltűnik - ilyenkor a szűrő nem tud
            dolgozni, ezért letiltjuk, és megmondjuk, miért. */
         const cb = $("enyem");
         if (cb) {
@@ -1742,7 +1790,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             /* 1.7.5 (H14): a darabszám beírása vagy a -/+ lépteto magától
                létrehoz egy EGYELEMŰ tervbejegyzést (lásd allit()). Onnantól a
                celok() a tervek tömböt adja vissza, és a valasztott értéke nem
-               számít — a munkalap nem váltott másik receptre.
+               számít - a munkalap nem váltott másik receptre.
                Ha a terv legfeljebb egy elemű, azt nem a felhasználó építette
                tudatosan a + gombbal, ezért a kiválasztás vezet: ürítjük.
                Két vagy több célnál békén hagyjuk, azt szándékosan állította
@@ -1788,7 +1836,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     }
 
     /* ===================================================================
-       GYÁRTÁSI LÁNC — a webes kalkulátor motorja, változtatás nélkül átemelve.
+       GYÁRTÁSI LÁNC - a webes kalkulátor motorja, változtatás nélkül átemelve.
        Bemenete célok listája: [{ i: receptId, q: darab, x: kizárjuk-e a
        meglévő készletet }]. Kimenete a teljes lebontás.
        =================================================================== */
@@ -1916,7 +1964,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
           ${gy ? `<ul>${csp.gyerekek.map(x => faHTML(x)).join("")}</ul>` : ""}</li>`;
     }
 
-    /* Összes anyagszükséglet, név szerint — ahogy a weboldalon. */
+    /* Összes anyagszükséglet, név szerint - ahogy a weboldalon. */
     const teljesLista = () => (terv ? terv.alap.filter(b => b.kell > 0) : [])
         .slice().sort((a, b) => a.nev.localeCompare(b.nev, "hu"));
 
@@ -2022,7 +2070,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
               <ul class="tree">${erdo.map(n => faHTML(n, true)).join("")}</ul>`;
         };
 
-        /* Csak alapanyag: két blokk, ahogy a weboldalon — a teljes
+        /* Csak alapanyag: két blokk, ahogy a weboldalon - a teljes
            anyagszükséglet és a még hiányzó mennyiség. Mindkettő másolható
            a játék [item=ID] hivatkozásformátumában. */
         const chipek = (lista, mezo, hianyos) => lista.map(b =>
@@ -2129,12 +2177,36 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     /* A játék saját tételhivatkozása: chatbe és fórumra beilleszthető. */
     const itemSor = (db, id) => `${db} [item=${id}]`;
 
+    /* Olvasható alak a játékon kívülre. Szándékosan "48 Dohánylevél" a
+       sorrend: a webes kalkulátor beolvasója ezt felismeri, tehát akinek
+       elküldöd, be tudja illeszteni a saját listájába. */
+    const nevSor = (db, id) => `${db} ${nameOf(id)}`;
+
+    /* Minden másolás ezen az egy ponton megy át, hogy a chipek, a blokk
+       fejléce és a Hiánylista gomb sose adhasson eltérő formátumot. */
+    const masolSor = (db, id) => masolMod === "szoveg" ? nevSor(db, id) : itemSor(db, id);
+
+    /* A terv céljai emberi felsorolásban, a lista fejlécéhez. */
+    function celFelsorolas() {
+        return celok().map(c => T("blokk_db", { n: c.q }) + " " + nameOf(c.i)).join(", ");
+    }
+
+    /* Listamásolás. Szöveges módban egy fejlécsor is kerül a lista elé, hogy
+       a címzett lássa, miről van szó. Kódos módban nem: az a játék chatjébe
+       megy, ott a rövidség a fontos. */
+    function masolLista(tetelek, mitKulcs) {
+        const sorok = tetelek.map(x => masolSor(x.db, x.id));
+        if (masolMod !== "szoveg") return sorok.join("\n");
+        const fej = T("masol_fejlec", { cel: celFelsorolas(), mit: T(mitKulcs) });
+        return fej + "\n" + sorok.join("\n");
+    }
+
     /* A tervsorok kezelői. A munkalap minden rajzoláskor újraépül, ezért a
-       kötés is itt történik — új globális listener nem keletkezik. */
+       kötés is itt történik - új globális listener nem keletkezik. */
     function kotesekTerv() {
         const fo = $("munkalap");
         /* A munkalap minden változásra újraépül, ezért gépelés közben
-           elveszne a fókusz és a kurzor — így a „50" beírásából csak „5"
+           elveszne a fókusz és a kurzor - így a „50" beírásából csak „5"
            maradna. A mezőt azonosító és kurzorállást megjegyezzük, és az
            újrarajzolás után visszaállítjuk. */
         const allit = (id, ujQ) => {
@@ -2197,7 +2269,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         fo.querySelectorAll("[data-copy1]").forEach(b =>
             b.addEventListener("click", () => {
                 const eredeti = b.innerHTML;
-                vagolapra(itemSor(b.dataset.copyn, b.dataset.copy1)).then(jo => {
+                vagolapra(masolSor(b.dataset.copyn, b.dataset.copy1)).then(jo => {
                     b.innerHTML = jo ? `<b>✓</b> <span>${esc(T("chip_masolva"))}</span>`
                                      : `<b>!</b> <span>${esc(T("chip_nem_sikerult"))}</span>`;
                     setTimeout(() => { b.innerHTML = eredeti; }, 1100);
@@ -2209,7 +2281,9 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             b.addEventListener("click", () => {
                 const hiany = b.dataset.copyall === "hiany";
                 const lista = hiany ? hianyLista() : teljesLista();
-                const txt = lista.map(x => itemSor(hiany ? x.marad : x.kell, x.id)).join("\n");
+                const txt = masolLista(
+                    lista.map(x => ({ db: hiany ? x.marad : x.kell, id: x.id })),
+                    hiany ? "blokk_meg_gyujts" : "blokk_osszesen");
                 const eredeti = b.textContent;
                 vagolapra(txt).then(jo => {
                     b.textContent = jo ? T("blokk_sor", { n: lista.length }) : T("chip_nem_sikerult");
@@ -2229,14 +2303,14 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         $("stocklist").innerHTML = ids.length
             ? ids.map(id => `<li><span>${ico(id)} ${esc(nameOf(id))}</span>
                 <span class="szam">${raktar[id]}</span></li>`).join("")
-            : `<li><span class="varo">A raktár még nem olvasható. Nyisd meg egyszer a hátizsákot a játékban — utána magától megjelenik.</span></li>`;
+            : `<li><span class="varo">A raktár még nem olvasható. Nyisd meg egyszer a hátizsákot a játékban - utána magától megjelenik.</span></li>`;
         $("smegj").textContent = ismeretlenDb
-            ? `További ${ismeretlenDb} féle tétel van nálad, ami egyik recepthez sem kell — ezeket nem mutatom.`
+            ? `További ${ismeretlenDb} féle tétel van nálad, ami egyik recepthez sem kell - ezeket nem mutatom.`
             : "";
     }
 
     /* ===================================================================
-       7. Diagnosztika — ez adja meg a CSP választ
+       7. Diagnosztika - ez adja meg a CSP választ
        =================================================================== */
 
     let cellaSzam = 0;
@@ -2244,7 +2318,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         return `<li><span>${esc(cim)}</span><span data-cella="${cellaSzam++}" class="${oszt || ""}">${ertek}</span></li>`;
     }
 
-    /* egy kép betöltésének kipróbálása — a CSP img-src szabálya itt derül ki */
+    /* egy kép betöltésének kipróbálása - a CSP img-src szabálya itt derül ki */
 
     function letolt(url, tipus) {
         return new Promise(res => {
@@ -2265,7 +2339,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
        Ha a kliensben megvan a west.gui.Window, a panel abba költözik: a
        keretet, a címsort, a bezárást, a húzást és a méretezést a játék adja.
-       Ha nincs, marad a saját keret — semmi nem vész el.
+       Ha nincs, marad a saját keret - semmi nem vész el.
        =================================================================== */
 
     let nativAblak = null;
@@ -2274,7 +2348,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
        puszta igaz/hamis volt, és csak a saját bezárónk állította vissza.
        Ha a JÁTÉK X-e zárta be az ablakot, a zarNativAblak() nem futott, az
        őr igaz maradt, és a következő nyitáskor az ÚJ példány center()
-       nélkül jött létre — a játék által adott kis helyen, a felnagyítás
+       nélkül jött létre - a játék által adott kis helyen, a felnagyítás
        után jobbra-lefelé elcsúszva. Példányhoz kötve mindkét út helyes:
        új példány → egy center, ugyanaz a példány → nincs újabb. */
     let kozepreIgazitva = null;
@@ -2319,7 +2393,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
         /* Egyszer döntünk, és maradunk nála. Ha oda-vissza mérnénk, billegne:
            kitöltéskor a tartó magassága a sajátja, méréses módban viszont a
-           mi tartalmunk adja — a kettő egymást hajtaná. */
+           mi tartalmunk adja - a kettő egymást hajtaná. */
         let mod = null;
 
         const alkalmaz = () => {
@@ -2368,7 +2442,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
        A játék ablakának hivatalos pergamenje (window2_bg.jpg) alapból a
        saját méretén marad, a keret négy negyede (window2_border.png) pedig
-       ismétlődik — nagy ablaknál ezért látszott kis pergamenfolt és rácsos
+       ismétlődik - nagy ablaknál ezért látszott kis pergamenfolt és rácsos
        keret. A javítás mindkettőt a már betöltött assetekkel oldja meg,
        kizárólag hosszú háttértulajdonságok beállításával.
 
@@ -2399,7 +2473,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         try { return String(getComputedStyle(el).backgroundImage || ""); } catch (e) { return ""; }
     };
 
-    /* Korlátozott gyűjtés — kizárólag a saját ablak részfájában. */
+    /* Korlátozott gyűjtés - kizárólag a saját ablak részfájában. */
     function skinGyujtes(fo) {
         const ki = { insetek: [], quadok: {} };
         Object.keys(SKIN_QUAD).forEach(k => ki.quadok[k] = []);
@@ -2496,7 +2570,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
        Más játékablakot és a globális DOM-ot nem érintjük. */
     const RESIZE_OSZTALYOK = ["tw2gui_window_resize", "tw2gui_window_resizer",
                               "tw2gui_resize", "resizehandle", "tw2gui_window_sizer"];
-    let resizeRejtve = [];   /* {el, eredeti} — bezáráskor visszaáll */
+    let resizeRejtve = [];   /* {el, eredeti} - bezáráskor visszaáll */
 
     function rejtNativResize(abl) {
         let fo = null;
@@ -2625,23 +2699,23 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 
 
         /* Méretet csak a legelső alkalommal kérünk. Utána a játék állítja
-           vissza, amit a játékos beállított — abba nem szólunk bele. */
+           vissza, amit a játékos beállított - abba nem szólunk bele. */
         /* Alapból mindig a nagy méret jön. Csak akkor tér el, ha a játékos
-           maga húzta át az ablakot — azt megjegyezzük, és onnantól az övé. */
+           maga húzta át az ablakot - azt megjegyezzük, és onnantól az övé. */
         /* 1.5.2: mivel a felhasználó nem tud méretezni, mindig a standard
            nagy méret nyílik. A mentett értéket NEM töröljük, csak most nem
-           alkalmazzuk — így egy régi kis méret nem ejti csapdába. */
+           alkalmazzuk - így egy régi kis méret nem ejti csapdába. */
         const sz = nagyMeret();
         beall.width = sz.w; beall.height = sz.h; ment();
         /* 1.5.2: a setSize KIZÁRÓLAG itt fut, pontosan egyszer. A késleltetett
-           körök már nem méretezhetnek — versengő méretállítás nem maradhat. */
+           körök már nem méretezhetnek - versengő méretállítás nem maradhat. */
         hivd("setSize", sz.w, sz.h);
         hivd("doLayout");
         alkalmazNativSkin(abl);
 
         /* A játék a régi, kicsi mérethez helyezte el az ablakot; a felnagyítás
            után ezért lóg ki. A végleges nyitási mérettel egyszer középre
-           igazítjuk — csak új példánynál, és soha nem átméretezéskor. */
+           igazítjuk - csak új példánynál, és soha nem átméretezéskor. */
         if (ujPeldany && kozepreIgazitva !== abl) { kozepreIgazitva = abl; hivd("center"); }
 
         /* setSize nélküli stabilizáló kör: csak elrendez, fest, skint illeszt */
@@ -2705,7 +2779,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     }
 
     /* Mit tud a kliens ablakkezelése? Ebből derül ki, hogy a következő
-       változat a játék saját ablakát használhatja-e — azzal a design és a
+       változat a játék saját ablakát használhatja-e - azzal a design és a
        rétegsorrend is egyszerre megoldódik. */
 
     /* A west.gui.Window pontos használatát nem tippeljük meg: kiolvassuk
@@ -2713,7 +2787,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
        kerül a tartalom. */
 
     /* ===================================================================
-       ==========  NATIVE UI PREVIEW 5D — VIZUÁLIS PREVIEW  ==========
+       ==========  NATIVE UI PREVIEW 5D - VIZUÁLIS PREVIEW  ==========
 
        Az 5C próba egyetlen koherens blokká összevonva, kibővítve a
        kereső, a fagomb és a belső UI natív igazításával.
@@ -2738,7 +2812,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     const UI5D_ASSET = "https://westhu.innogamescdn.com/images/tw2gui/";
 
     const UI5D_CSS = `
-/* ================= C1/C2 — fülek (bizonyított) ================= */
+/* ================= C1/C2 - fülek (bizonyított) ================= */
 :host([data-nativ][data-ui5c]) .tabs{
   background:transparent; padding:0; gap:0; margin-left:0; border-radius:0;
   align-items:flex-end }
@@ -2776,7 +2850,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) .bar{ overflow:visible; gap:6px }
 :host([data-nativ][data-ui5c]) .tabs button:last-child{ margin-right:24px }
 
-/* ================= C7/C8 — játéktipográfia (bizonyított) ================= */
+/* ================= C7/C8 - játéktipográfia (bizonyított) ================= */
 :host([data-nativ][data-ui5c]) .stage,
 :host([data-nativ][data-ui5c]) .col,
 :host([data-nativ][data-ui5c]) .card,
@@ -2810,7 +2884,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) .ver{
   font-family:Arial,Verdana,sans-serif; font-weight:700; color:#3d3020 }
 
-/* ================= C5 — The West görgetősáv (részleges) ================= */
+/* ================= C5 - The West görgetősáv (részleges) ================= */
 :host([data-nativ][data-ui5c]) .stage::-webkit-scrollbar,
 :host([data-nativ][data-ui5c]) .col::-webkit-scrollbar,
 :host([data-nativ][data-ui5c]) .rlist::-webkit-scrollbar{ width:15px }
@@ -2847,7 +2921,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) .col::-webkit-scrollbar-corner,
 :host([data-nativ][data-ui5c]) .rlist::-webkit-scrollbar-corner{ background:transparent }
 
-/* ================= N6/T2 — natív keresőmező (bizonyított) ================= */
+/* ================= N6/T2 - natív keresőmező (bizonyított) ================= */
 :host([data-nativ][data-ui5c]) .tfwrap{ display:block; width:100% }
 
 :host([data-nativ][data-ui5c]) .tfcap{
@@ -2871,7 +2945,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) .search:focus{
   outline:1px solid #8a6330; outline-offset:-1px }
 
-/* ================= C3/C4 — natív fagomb (bizonyított) =================
+/* ================= C3/C4 - natív fagomb (bizonyított) =================
    A referencia 180×36: bal és jobb cap 90×36, közép 18×36 a gyökér
    közepén. A felirat minden háttérréteg FÖLÖTT marad. */
 :host([data-nativ][data-ui5c]) [data-mit="masol"],
@@ -2917,7 +2991,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) [data-mit="masol"] > .cimke,
 :host([data-nativ][data-ui5c]) [data-mit="frissit"] > .cimke,
 :host([data-nativ][data-ui5c]) [data-mit="diagvalt"] > .cimke{
-  /* a feliratot flex központosítja vízszintesen ÉS függőlegesen — nem a
+  /* a feliratot flex központosítja vízszintesen ÉS függőlegesen - nem a
      baseline vagy az örökölt padding, így nem csúszik el, és hoverkor sem */
   position:relative; z-index:2;
   display:flex; align-items:center; justify-content:center;
@@ -3019,7 +3093,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) .col{ padding:11px }
 
 /* ===================================================================
-   1.5.2 SINGLE-VIEW — egyetlen felső vezérlősor
+   1.5.2 SINGLE-VIEW - egyetlen felső vezérlősor
    Bal oldalon az öt szakmafül, jobbra tolva a Frissítés és a fogaskerék.
    A sor magassága KÖTÖTT, flexben nem zsugorodhat vékony csíkká.
    =================================================================== */
@@ -3036,6 +3110,20 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) .topbar .utility{
   display:flex; align-items:center; gap:6px;
   margin-left:auto; padding-left:16px; flex:0 0 auto; align-self:center }
+
+/* a formátumváltó natív módban a játék betűjével és kontrasztjával */
+:host([data-nativ][data-ui5c]) .fmtsor{ flex:0 0 auto; margin-right:2px }
+:host([data-nativ][data-ui5c]) .fmtvalto{
+  border-color:#8a6330; border-radius:3px }
+:host([data-nativ][data-ui5c]) .fmtvalto button{
+  font-family:Arial,"Times New Roman",Georgia,serif; font-size:10.6667px; font-weight:700;
+  padding:2px 9px; line-height:17px; background:rgba(247,238,219,.86); color:#4a3520;
+  text-shadow:none }
+:host([data-nativ][data-ui5c]) .fmtvalto button + button{ border-left-color:#8a6330 }
+:host([data-nativ][data-ui5c]) .fmtvalto button:hover{ background:rgba(255,250,238,.95); color:#2b2119 }
+:host([data-nativ][data-ui5c]) .fmtvalto button[aria-pressed="true"],
+:host([data-nativ][data-ui5c]) .fmtvalto button[aria-pressed="true"]:hover{
+  background:#3a2713; color:#f0c874 }
 
 /* a szakmafülek ugyanazt a natív aktív/inaktív rendszert kapják */
 :host([data-nativ][data-ui5c]) .proftabs .chip{
@@ -3079,7 +3167,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
 :host([data-nativ][data-ui5c]) .grip{ display:none; pointer-events:none }
 
 /* ===================================================================
-   1.5.2 — erősebb kontraszt a pergamenen
+   1.5.2 - erősebb kontraszt a pergamenen
    Nincs új tömör panel; a pergamen látható marad, csak a tokenek erősödnek.
    =================================================================== */
 :host([data-nativ][data-ui5c]) .frame{
@@ -3187,7 +3275,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                     } else allitMeret();
                 }
                 try { if (nativAblak) nativAblak.setTitle(T("ablak_cim")); } catch (e) { /* nem baj */ }
-                rajzolChips(); rajzolKarakter(); rajzolReceptek(); rajzolMunkalap();
+                rajzolChips(); rajzolFmt(); rajzolKarakter(); rajzolReceptek(); rajzolMunkalap();
                 valtLap(beall.tab || "calc");
                 rajzolBeallitasok();
             });
@@ -3302,9 +3390,10 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                 }
             }
             if (mit === "masol" && terv) {
-                /* a TELJES lánc hiánya, a darabszámmal szorozva — nem a
+                /* a TELJES lánc hiánya, a darabszámmal szorozva - nem a
                    recept közvetlen hozzávalói */
-                const txt = hianyLista().map(x => itemSor(x.marad, x.id)).join("\n");
+                const txt = masolLista(
+                    hianyLista().map(x => ({ db: x.marad, id: x.id })), "blokk_meg_gyujts");
                 vagolapra(txt).then(jo =>
                     gombJelez(b, jo ? T("gomb_masolva") : T("gomb_nem_sikerult"), T("gomb_hianylista"), 1400));
             }
@@ -3330,7 +3419,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     let ora = null;
 
     /* Egyetlen közös bezáró a saját ablakunkhoz. A kliens Window API-jában
-       destroy() van, close() nem feltétlenül — ezért több lépcsős. Más
+       destroy() van, close() nem feltétlenül - ezért több lépcsős. Más
        játékablakhoz nem nyúlunk. */
     function zarNativAblak() {
         /* 1-2. a natív skin eredeti stílusai vissza, a sikerjelző törölve */
@@ -3386,7 +3475,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         if (vanNativ()) {
             nativMod(true);
             nativAblak = keszitNativ();
-            if (!nativAblak) {              /* nem ment — visszaesünk a saját keretre */
+            if (!nativAblak) {              /* nem ment - visszaesünk a saját keretre */
                 nativMod(false);
                 if (!host.parentNode) document.body.appendChild(host);
                 allitMeret();
@@ -3531,23 +3620,23 @@ li.collapsed > .node > .toggle::before{ content:"+" }
     function frissitesAblak(ver) {
         const W = jatek();
         const szoveg =
-            "Új verzió érhető el a mesterség-kalkulátor paneljéből.<br><br>" +
-            "<b>Jelenlegi:</b> " + SAJAT_VER + " &nbsp; <b>Elérhető:</b> " + ver + "<br><br>" +
-            "A gombra kattintva megnyílik a Tampermonkey telepítő ablaka, ott elég a " +
-            "<b>Frissítés</b> gombot megnyomni.";
+            T("frissites_bevezeto") + "<br><br>" +
+            "<b>" + T("frissites_jelenlegi") + "</b> " + SAJAT_VER + " &nbsp; " +
+            "<b>" + T("frissites_elerheto") + "</b> " + ver + "<br><br>" +
+            T("frissites_magyarazat");
 
         const tart = document.createElement("div");
         tart.style.cssText = "padding:14px 16px;font:14px/1.5 Arial,sans-serif;color:#f2e9d8";
         tart.innerHTML = "<div style='margin-bottom:12px'>" + szoveg + "</div>";
 
         const gomb = document.createElement("button");
-        gomb.textContent = "Frissítés megnyitása";
+        gomb.textContent = T("frissites_gomb_megnyit");
         gomb.style.cssText = "padding:7px 14px;cursor:pointer;font:600 13px Arial,sans-serif;" +
             "background:#2f261d;color:#e0a844;border:1px solid #e0a844;border-radius:5px";
         gomb.onclick = () => { window.open(SZKRIPT_URL, "_blank"); };
 
         const kesobb = document.createElement("button");
-        kesobb.textContent = "Később";
+        kesobb.textContent = T("frissites_gomb_kesobb");
         kesobb.style.cssText = "padding:7px 14px;cursor:pointer;margin-left:8px;" +
             "font:13px Arial,sans-serif;background:#241d16;color:#a2917a;" +
             "border:1px solid #3d3125;border-radius:5px";
@@ -3558,7 +3647,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         /* elsőként a játék saját ablakát próbáljuk */
         try {
             if (typeof W.west?.gui?.Window === "function") {
-                const abl = new W.west.gui.Window("mk-frissites", "Mesterség-kalkulátor — frissítés");
+                const abl = new W.west.gui.Window("mk-frissites", T("frissites_ablak_cim"));
                 const bel = abl.getMainDiv ? abl.getMainDiv() : null;
                 if (bel) {
                     (bel.appendChild ? bel : bel[0]).appendChild(tart);
@@ -3575,7 +3664,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             "width:360px;background:#241d16;border:2px solid #e0a844;border-radius:8px;" +
             "box-shadow:0 6px 20px rgba(0,0,0,.6)";
         const fej = document.createElement("div");
-        fej.textContent = "Mesterség-kalkulátor — frissítés";
+        fej.textContent = T("frissites_ablak_cim");
         fej.style.cssText = "padding:8px 14px;background:#2f261d;color:#e0a844;border-bottom:1px solid #3d3125;" +
             "font:600 14px Arial,sans-serif;border-radius:6px 6px 0 0";
         box.appendChild(fej);

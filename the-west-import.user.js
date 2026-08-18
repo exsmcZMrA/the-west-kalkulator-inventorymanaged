@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Mesterség-kalkulátor — raktár import
+// @name         The West Crafting Calculator - inventory import
 // @namespace    the-west-kalkulator
-// @version      1.4
-// @description  Egy gomb a játékban, ami átküldi a raktárkészletet a mesterség-kalkulátorba.
-// @author       —
+// @version      1.0.0
+// @description  One button in the game that sends your inventory to the crafting calculator.
+// @author       smcZ
 // @match        https://*.the-west.hu/game.php*
 // @match        https://*.the-west.net/game.php*
 // @match        https://*.the-west.com/game.php*
@@ -35,6 +35,41 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
 
 (function () {
     "use strict";
+
+    /* ---- felületi szövegek ----
+       A szkript nemzetközi néven fut, ezért a három látható szövege sem
+       maradhat magyarul. A nyelvet a szerver címéből ismerjük fel, ugyanúgy,
+       ahogy a játékbeli panel teszi. Sorrend: HU, EN, DE, PL. */
+    const SZOVEG = {
+        gomb: ["Raktárkészlet küldése a mesterség-kalkulátorba",
+               "Send your inventory to the crafting calculator",
+               "Inventar an den Handwerksrechner senden",
+               "Wyślij ekwipunek do kalkulatora rzemiosła"],
+        uj_kerdes: ["Új szkriptverzió érhető el. Megnyitod a telepítéshez?",
+                    "A new script version is available. Open it to install?",
+                    "Eine neue Skriptversion ist verfügbar. Zum Installieren öffnen?",
+                    "Dostępna jest nowa wersja skryptu. Otworzyć, aby zainstalować?"],
+        uj_bubi: ["Új szkriptverzió érhető el: {uj} - kattints ide a telepítéshez (a futó: {most})",
+                  "A new script version is available: {uj} - click here to install it (running: {most})",
+                  "Eine neue Skriptversion ist verfügbar: {uj} - hier klicken zum Installieren (läuft: {most})",
+                  "Dostępna jest nowa wersja skryptu: {uj} - kliknij tutaj, aby zainstalować (działa: {most})"]
+    };
+
+    const NYELV = (() => {
+        const h = location.hostname;
+        if (/\.the-west\.hu$/.test(h)) return 0;
+        if (/\.the-west\.de$/.test(h)) return 2;
+        if (/\.the-west\.pl$/.test(h)) return 3;
+        return 1;
+    })();
+
+    function T(kulcs, cserek) {
+        let sz = (SZOVEG[kulcs] || [])[NYELV] || (SZOVEG[kulcs] || [])[0] || "";
+        if (cserek) Object.keys(cserek).forEach(k => {
+            sz = sz.split("{" + k + "}").join(String(cserek[k]));
+        });
+        return sz;
+    }
 
     /* megvárjuk, amíg a játék betölti a raktárat */
     let tries = 0;
@@ -82,7 +117,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
         const b = document.createElement("div");
         b.id = "mk-import-btn";
         b.textContent = "📦";
-        b.title = "Raktárkészlet küldése a mesterség-kalkulátorba";
+        b.title = T("gomb");
 
         let pos = { right: 2, top: 300 };
         try {
@@ -133,7 +168,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
         b.addEventListener("click", () => {
             if (moved) { moved = false; return; }   /* húzás volt, nem kattintás */
             if (b.dataset.update) {
-                if (confirm("Új szkriptverzió érhető el. Megnyitod a telepítéshez?")) {
+                if (confirm(T("uj_kerdes"))) {
                     try { GM_openInTab(b.dataset.update, { active: true }); }
                     catch (e) { window.open(b.dataset.update, "_blank"); }
                     return;
@@ -151,7 +186,10 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
     /* ---- frissítésfigyelés ----
        A Tampermonkey ritkán keres frissítést, ezért magunk is megnézzük:
        a fent lévő fájl @version sorát hasonlítjuk a futóéhoz. */
-    const MY_VER = "1.4";
+    /* 1.0.0: a futó verzió a metaadatból jön, nem külön beírt értékből.
+       A panelnál a kézzel karbantartott másolat már okozott elcsúszást,
+       ezt itt eleve kizárjuk. */
+    const MY_VER = (typeof GM_info !== "undefined" && GM_info.script && GM_info.script.version) || "1.0.0";
 
     function checkScriptUpdate(btn) {
         const url = CALC_URL.replace(/\/+$/, "/") + "the-west-import.user.js?v=" + Date.now();
@@ -161,8 +199,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
                 const m = txt.match(/@version\s+([^\s]+)/);
                 if (!m || m[1] === MY_VER) return;
                 btn.style.borderColor = "#7fb08a";
-                btn.title = "Új szkriptverzió érhető el: " + m[1] +
-                            " — kattints ide a telepítéshez (a futó: " + MY_VER + ")";
+                btn.title = T("uj_bubi", { uj: m[1], most: MY_VER });
                 const dot = document.createElement("span");
                 dot.textContent = "•";
                 dot.style.cssText = "position:absolute;right:-3px;top:-6px;color:#7fb08a;font-size:20px;line-height:1";
@@ -195,7 +232,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
             if (v === "0px" && AV_KEEP_ZERO.indexOf(k) < 0) return;
             if (k === "background-image")
                 v = v.replace(/url\((["']?)\//g, "url($1" + base + "/");
-            /* az idézőjel szétvágná a style attribútumot — url("…") helyett url(…) */
+            /* az idézőjel szétvágná a style attribútumot - url("…") helyett url(…) */
             v = v.replace(/["']/g, "");
             out.push(k + ":" + v);
         });
@@ -254,7 +291,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
         });
     }
 
-    /* Amint a Crafting objektum megjelenik, azonnal ráülünk — még azelőtt,
+    /* Amint a Crafting objektum megjelenik, azonnal ráülünk - még azelőtt,
        hogy más kiegészítő hozzáférne. A recipes tulajdonságot figyeljük:
        minden beírt értékből kimentjük a last_craft mezős recepteket. */
     function guardCrafting() {
@@ -323,7 +360,7 @@ const CALC_URL = "https://kiszamolja.github.io/the-west-kalkulator-inventorymana
     watchCrafting();
     setInterval(watchCrafting, 250);
 
-    /* megtanult receptek — csak azok, amiken ott a last_craft mező.
+    /* megtanult receptek - csak azok, amiken ott a last_craft mező.
        Ha más kiegészítő tölti fel a listát, ez üresen marad, és akkor nem küldünk semmit. */
     function readLearned() {
         collectLearned();                       /* hátha most is látunk újat */
