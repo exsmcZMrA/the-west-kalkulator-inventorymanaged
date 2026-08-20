@@ -1132,6 +1132,7 @@ const SZOVEG = {
     const HATTER = "#f0e6d1";
     const ABLAK_ID = "mk-kalkulator";
     const ABLAK_CIM = "Mesterség-kalkulátor";   /* a natív ablak címét a keszitNativ írja felül */
+    const FRISS_ID = "mk-frissites";            /* a frissítésértesítő saját ablaka */
 
     const ALAP = {
         nezet: "tree", prof: undefined, enyem: false, nyelv: undefined, left: null, top: 90, width: 880, height: 620,
@@ -3817,17 +3818,61 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         tart.appendChild(gomb);
         tart.appendChild(kesobb);
 
-        /* elsőként a játék saját ablakát próbáljuk */
+        /* Elsőként a játék saját ablakát próbáljuk, ugyanazzal a menettel,
+           amivel a panel is nyílik. 1.0.1 előtt itt három hiba volt egyszerre:
+             - a new Window() UTÁN még egy wman.open() is futott, ezért két
+               ablak jelent meg egymáson,
+             - a cím a konstruktor második paraméterére épült, amit a játék
+               nem használ címként - ezért az azonosító látszott felirat
+               helyett; a címet külön setTitle() adja meg,
+             - a getMainDiv() a teljes ablakkeretet adja vissza, nem a
+               tartalomterületet, ezért a doboz üresen jelent meg.
+           A wman.open() maga is létrehozza a példányt, ha még nincs. */
         try {
-            if (typeof W.west?.gui?.Window === "function") {
-                const abl = new W.west.gui.Window("mk-frissites", T("frissites_ablak_cim"));
-                const bel = abl.getMainDiv ? abl.getMainDiv() : null;
-                if (bel) {
-                    (bel.appendChild ? bel : bel[0]).appendChild(tart);
-                    kesobb.onclick = () => { try { abl.close(); } catch (e) { W.wman && W.wman.close("mk-frissites"); } };
-                    if (W.wman && W.wman.open) W.wman.open("mk-frissites");
+            const wm = W.wman;
+            let abl = null;
+
+            /* ha maradt egy korábbi, üres példány, azt előbb eltakarítjuk */
+            try {
+                const regi = wm && wm.getById ? wm.getById(FRISS_ID) : null;
+                if (regi) {
+                    try { if (wm.close) wm.close(FRISS_ID); } catch (e2) { /* nem baj */ }
+                    try { if (regi.destroy) regi.destroy(); } catch (e2) { /* nem baj */ }
+                }
+            } catch (e2) { /* nem baj */ }
+
+            try { if (wm && wm.open) abl = wm.open(FRISS_ID, T("frissites_ablak_cim")); }
+            catch (e2) { /* megyünk tovább */ }
+            if (!abl && typeof W.west?.gui?.Window === "function") {
+                try { abl = new W.west.gui.Window(FRISS_ID, T("frissites_ablak_cim")); }
+                catch (e2) { abl = null; }
+            }
+
+            if (abl) {
+                const hivd = (nev, ...a) => {
+                    try { if (typeof abl[nev] === "function") abl[nev](...a); } catch (e2) { /* nem baj */ }
+                };
+                hivd("setTitle", T("frissites_ablak_cim"));
+                hivd("setMiniTitle", T("frissites_ablak_cim"));
+                hivd("setResizeable", false);
+
+                let betette = false;
+                try { abl.appendToContentPane(tart); betette = true; } catch (e2) { betette = false; }
+                if (!betette) {
+                    const bel = elemNorm(abl.getContentPane ? abl.getContentPane()
+                                       : (abl.getMainDiv ? abl.getMainDiv() : null));
+                    if (bel) { bel.appendChild(tart); betette = true; }
+                }
+
+                if (betette) {
+                    kesobb.onclick = () => {
+                        try { abl.close(); }
+                        catch (e2) { try { if (wm && wm.close) wm.close(FRISS_ID); } catch (e3) { /* nem baj */ } }
+                    };
                     return;
                 }
+                /* nem sikerült tartalmat tenni bele: zárjuk be, ne maradjon üres ablak */
+                try { abl.close(); } catch (e2) { /* nem baj */ }
             }
         } catch (e) { /* megyünk tovább a tartalékra */ }
 

@@ -859,7 +859,7 @@ async function frissKornyezet(valasz) {
     && !/Mesterség-kalkulátor - frissítés"/.test(F));
   /* az ablak címe MINDKÉT úton kulcsból jön: natív ablak és tartalék doboz */
   all('V/3. a natív és a tartalék ablak címe is kulcsból jön',
-    (F.match(/T\("frissites_ablak_cim"\)/g) || []).length === 2,
+    (F.match(/T\("frissites_ablak_cim"\)/g) || []).length >= 2,
     String((F.match(/T\("frissites_ablak_cim"\)/g) || []).length));
 }
 {
@@ -868,6 +868,26 @@ async function frissKornyezet(valasz) {
   const sorok = SRC.split('\n').filter(l => l.indexOf('\u2014') !== -1);
   all('V/4. nincs hosszú gondolatjel sehol a kódban',
     sorok.length === 0, sorok.slice(0, 3).join(' | ').slice(0, 160));
+  {
+    /* 1.0.1: a frissítésértesítő ablak. Korábban ket ablak jelent meg
+       egymason (new Window + wman.open), a cim helyen az azonosito latszott
+       (a konstruktor masodik parametere nem cim), es ures maradt
+       (a getMainDiv a keretet adja, nem a tartalomterületet). */
+    const F = SRC.slice(SRC.indexOf('function frissitesAblak'), SRC.indexOf('function frissitestNez'));
+    all('V/6. a frissitesablak nem nyit ket peldanyt',
+      !(/new W\.west\?\.gui[\s\S]*wman[\s\S]*\.open\(FRISS_ID\)/.test(F))
+      && (F.match(/wm\.open\(FRISS_ID/g) || []).length === 1);
+    all('V/6b. a cimet kulon setTitle adja meg',
+      /hivd\("setTitle", T\("frissites_ablak_cim"\)\)/.test(F));
+    all('V/6c. a tartalom a tartalomteruletre kerul, nem a keretre',
+      /appendToContentPane\(tart\)/.test(F)
+      && /getContentPane/.test(F));
+    all('V/6d. ures ablak nem maradhat nyitva',
+      /nem sikerült tartalmat tenni bele/.test(F));
+    all('V/6e. az azonosito egy konstansbol jon',
+      SRC.includes('const FRISS_ID = "mk-frissites"')
+      && (SRC.match(/"mk-frissites"/g) || []).length === 1);
+  }
   all('V/5. a szkript neve nemzetközi, a leírás is angol',
     /\/\/ @name\s+The West Crafting Calculator/.test(SRC)
     && /\/\/ @description\s+Crafting calculator inside the game/.test(SRC));
