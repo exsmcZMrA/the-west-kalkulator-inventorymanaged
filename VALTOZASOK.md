@@ -7,6 +7,37 @@ szervereinek, és nem automatizál semmilyen játékbeli cselekvést.
 
 ---
 
+## 1.0.1 - 2026-08-19
+
+**Receptszintek pontosítása**
+
+A recept-lépcsőszámokat összevetettük a játék natív Mesterség ablakával, és
+néhány helyen eltérés volt. Ezek javítva, a panelen és a weboldalon egyaránt.
+Ahol a nyitó szint volt téves, ott a "csak amit most tudok gyártani" szűrés
+is helyreállt.
+
+**A három szint színt kapott**
+
+A munkalapon a mesterséglépcsők ugyanazt az arany, zöld és kék jelölést
+kapják, mint a játék natív ablakában, csak pergamenre hangolt árnyalatokkal.
+A weboldalon is, mindkét témában. A robbantott ábra és a lépéskártyák
+színezetlenek maradtak, hogy ne versenyezzenek az állapotjelzésekkel.
+
+**Max kijelzés a munkalapon**
+
+A darabszám mellett megjelenik, hogy az adott receptből mennyit tudsz most
+legyártani a készletedből. A számítás a saját mesterségedre korlátozódik:
+ha a láncban más mesterség terméke szerepel, azt nem tudod magad elkészíteni,
+ilyenkor a panel meg is nevezi, mi az akadály. A szintedet és a megtanult
+receptjeidet is figyelembe veszi.
+
+Zárolt receptnél 1 áll a jelzőn, mert a játékban is csak egy indítható
+egyszerre; hogy hány darabra van alapanyagod, az egérráhúzáskor látszik.
+
+A jelző kijelzés, nem gomb: a panel nem gyárt és nem küld kérést a szervernek.
+
+---
+
 ## 1.0.0 - 2026-08-18
 
 Első nyilvános kiadás. A panel ettől a verziótól kezdve nem fejlesztési

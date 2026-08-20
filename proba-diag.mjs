@@ -393,8 +393,8 @@ console.log('\n--- E) takarítás ---');
   all('36. nincs DIAG/TEST felületi jelzés',
     !/DIAG/.test(SRC) && !/NATIVE TEST/.test(SRC) && !/PARCHMENT MODES/.test(SRC));
   all('36b. a verzió egyetlen konstansból jön',
-    SRC.includes('const VERZIO = "1.0.0"') && SRC.includes('<span class="ver">v${VERZIO}')
-    && /@version\s+1\.0\.0/.test(SRC)
+    SRC.includes('const VERZIO = "1.0.1"') && SRC.includes('<span class="ver">v${VERZIO}')
+    && /@version\s+1\.0\.1/.test(SRC)
     /* 1.6.5: a frissítésellenőrzés is a VERZIO-t használja, nem külön értéket */
     && SRC.includes('const SAJAT_VER = VERZIO;')
     && !/const SAJAT_VER = "/.test(SRC));
@@ -487,7 +487,7 @@ console.log('\n--- F) production funkciók ---');
   all('Beállítások: nyelv, verzió, állapot és honlap szakasz',
     ['dnyelv', 'dverzio', 'dallapot', 'dhonlap'].every(m => !!u.q(m)));
   all('Beállítások: a telepített verzió látszik',
-    u.q('dverzio').textContent.includes('1.0.0'));
+    u.q('dverzio').textContent.includes('1.0.1'));
   all('Beállítások: az adatállapot kiolvasható',
     u.q('dallapot').textContent.includes('222')
     && /Megtanult receptek/.test(u.q('dallapot').textContent)
@@ -826,7 +826,7 @@ async function frissKornyezet(valasz) {
 }
 
 {
-  const { k, txt, u } = await frissKornyezet(x => x.onload({ status: 200, response: '// @version      1.0.0\n' }));
+  const { k, txt, u } = await frissKornyezet(x => x.onload({ status: 200, response: '// @version      1.0.1\n' }));
   all('U/1. azonos verzió → naprakész, nincs frissítés gomb',
     txt.includes('A legfrissebb változat fut.')
     && !u.gy.querySelector('[data-mit="frissitesnyit"]'), txt.slice(0, 120));
@@ -841,7 +841,7 @@ async function frissKornyezet(valasz) {
   k.dom.window.close();
 }
 {
-  /* 1.0.0: a frissítésértesítő ablak szövegei kulcsból jönnek, nem kódba
+  /* 1.0.1: a frissítésértesítő ablak szövegei kulcsból jönnek, nem kódba
      égetve. Korábban mind a hét szöveg magyarul volt beírva, így német és
      lengyel felhasználó is magyar értesítőt kapott volna - épp a kiadáskor,
      amikor mindenki megkapja. */
@@ -863,7 +863,7 @@ async function frissKornyezet(valasz) {
     String((F.match(/T\("frissites_ablak_cim"\)/g) || []).length));
 }
 {
-  /* 1.0.0: a kiadott fájlban SEHOL nincs hosszú gondolatjel. A @name is
+  /* 1.0.1: a kiadott fájlban SEHOL nincs hosszú gondolatjel. A @name is
      megszabadult tőle, mert nemzetközi névre váltottunk. */
   const sorok = SRC.split('\n').filter(l => l.indexOf('\u2014') !== -1);
   all('V/4. nincs hosszú gondolatjel sehol a kódban',
@@ -1227,7 +1227,7 @@ console.log('\n--- S) 1.7.4 javítások ---');
 
 
 /* ============================================================
-   T. 1.0.0 - H14: DARABSZÁM UTÁN IS LEHET RECEPTET VÁLTANI
+   T. 1.0.1 - H14: DARABSZÁM UTÁN IS LEHET RECEPTET VÁLTANI
 
    A darabszám beírása magától létrehoz egy egyelemű tervbejegyzést.
    Ettől a celok() a tervek tömböt adta vissza, és a listában választott
@@ -1235,7 +1235,7 @@ console.log('\n--- S) 1.7.4 javítások ---');
    tervet ezért a receptre kattintás üríti; a + gombbal tudatosan épített
    több célt viszont nem bántja.
    ============================================================ */
-console.log('\n--- T) 1.0.0 javítások (H13, H14) ---');
+console.log('\n--- T) 1.0.1 javítások (H13, H14) ---');
 {
   const u = await nyelvFut('the-west.hu');
   const elsoNev = u.cim();
@@ -1335,13 +1335,13 @@ console.log('\n--- T) 1.0.0 javítások (H13, H14) ---');
 }
 
 /* ============================================================
-   U. 1.0.0 - MÁSOLÁSI FORMÁTUM
+   U. 1.0.1 - MÁSOLÁSI FORMÁTUM
 
    A [item=ID] alak mellé egy olvasható alak is kell, hogy a listát a
    játékon kívülre is el lehessen küldeni. Mindhárom másolási út ugyanazon
    a formázón megy át, hogy ne adhassanak eltérő eredményt.
    ============================================================ */
-console.log('\n--- U) 1.0.0 másolási formátum ---');
+console.log('\n--- U) 1.0.1 másolási formátum ---');
 {
   const u = await nyelvFut('the-west.hu');
   const valto = [...u.q('fmtsor').querySelectorAll('[data-fmt]')];
