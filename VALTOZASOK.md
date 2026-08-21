@@ -7,6 +7,18 @@ szervereinek, és nem automatizál semmilyen játékbeli cselekvést.
 
 ---
 
+## 1.0.2 - 2026-08-19
+
+**A panel követi a készletváltozást**
+
+Ha a játék natív ablakában gyártottál valamit, a panel eddig nem vette
+észre magától: csak a tételfajták számát figyelte, gyártáskor viszont
+általában csak a darabszámok mozdulnak. Mostantól a darabszámokat is nézi,
+tehát a hiánylista és a készültség magától frissül - nem csak gyártás után,
+hanem minden készletváltozásra.
+
+---
+
 ## 1.0.1 - 2026-08-19
 
 **Receptszintek pontosítása**

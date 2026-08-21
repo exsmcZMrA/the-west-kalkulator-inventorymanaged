@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         The West Crafting Calculator
 // @namespace    the-west-kalkulator-ingame
-// @version      1.0.1
+// @version      1.0.2
 // @description  Crafting calculator inside the game, in a movable window. Reads only data already loaded in the browser.
 // @author       smcZ
 // @match        https://*.the-west.hu/game.php*
@@ -953,7 +953,7 @@ const SZOVEG = {
 (function () {
     "use strict";
 
-    const VERZIO = "1.0.1";
+    const VERZIO = "1.0.2";
 
     /* ===================================================================
        1. Segédek és a játék adatai
@@ -3670,12 +3670,33 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         }, 3000);
     }
 
-    /* olcsó összehasonlítás: csak akkor rajzolunk újra, ha tényleg változott */
+    /* Olcsó összehasonlítás: csak akkor rajzolunk újra, ha tényleg változott.
+
+       1.0.2: a DARABSZÁMOK is beleszámítanak, nem csak a tételfajták száma.
+       Korábban ha a natív ablakban gyártottál, a panel nem vette észre:
+       gyártáskor a fajták száma általában NEM változik (a Dohánylevél
+       megmarad, csak kevesebb lesz belőle), ezért az ujjlenyomat ugyanaz
+       maradt. Csak akkor frissült magától, ha egy alapanyag teljesen
+       elfogyott, vagy új tétel került a hátizsákba.
+
+       A bejárás ugyanaz, amit az olvasRaktar() is végez, tehát nem kerül
+       érdemben többe. */
     function ujjlenyomat() {
         const bag = jatek().Bag;
-        const db = bag && bag.items_by_id ? Object.keys(bag.items_by_id).length : 0;
+        let db = 0, ossz = 0;
+        if (bag && bag.items_by_id) {
+            const kulcsok = Object.keys(bag.items_by_id);
+            db = kulcsok.length;
+            if (bag.getItemCount) {
+                for (const k of kulcsok) {
+                    const id = Number(k);
+                    if (!id || id % 1000 !== 0) continue;
+                    try { ossz += bag.getItemCount(id) || 0; } catch (e) { /* nem baj */ }
+                }
+            }
+        }
         const C = jatek().Character;
-        return db + "|" + megtanult.size + "|" + (C ? C.professionSkill : "");
+        return db + ":" + ossz + "|" + megtanult.size + "|" + (C ? C.professionSkill : "");
     }
 
     /* ===================================================================
@@ -3799,24 +3820,48 @@ li.collapsed > .node > .toggle::before{ content:"+" }
             "<b>" + T("frissites_elerheto") + "</b> " + ver + "<br><br>" +
             T("frissites_magyarazat");
 
+        /* 1.0.2: a szöveg a NATÍV ablak pergamen hátteréhez igazodik, mert az
+           a fő út. Korábban világos krém színű volt, ami a saját sötét
+           dobozhoz készült, és a pergamenen szinte olvashatatlan maradt.
+           Ha mégis a tartalék dobozba kerül, ott a sotetre() állítja át. */
         const tart = document.createElement("div");
-        tart.style.cssText = "padding:14px 16px;font:14px/1.5 Arial,sans-serif;color:#f2e9d8";
+        tart.style.cssText = "padding:14px 16px;font:14px/1.5 Arial,sans-serif;color:#2b2119";
         tart.innerHTML = "<div style='margin-bottom:12px'>" + szoveg + "</div>";
 
         const gomb = document.createElement("button");
         gomb.textContent = T("frissites_gomb_megnyit");
         gomb.style.cssText = "padding:7px 14px;cursor:pointer;font:600 13px Arial,sans-serif;" +
-            "background:#2f261d;color:#e0a844;border:1px solid #e0a844;border-radius:5px";
+            "background:#3a2713;color:#f0c874;border:1px solid #8a6330;border-radius:5px";
         gomb.onclick = () => { window.open(SZKRIPT_URL, "_blank"); };
 
         const kesobb = document.createElement("button");
         kesobb.textContent = T("frissites_gomb_kesobb");
         kesobb.style.cssText = "padding:7px 14px;cursor:pointer;margin-left:8px;" +
-            "font:13px Arial,sans-serif;background:#241d16;color:#a2917a;" +
-            "border:1px solid #3d3125;border-radius:5px";
+            "font:13px Arial,sans-serif;background:rgba(247,238,219,.7);color:#5a4326;" +
+            "border:1px solid #8a6330;border-radius:5px";
+
+        /* a szerző jelzése, halványan, a doboz jobb alsó sarkában */
+        const alairas = document.createElement("div");
+        alairas.textContent = "powered by smcZ";
+        alairas.style.cssText = "margin-top:14px;text-align:right;font:11px Arial,sans-serif;" +
+            "color:rgba(43,33,25,.45);letter-spacing:.03em";
 
         tart.appendChild(gomb);
         tart.appendChild(kesobb);
+        tart.appendChild(alairas);
+
+        /* A tartalék doboz sötét hátterű, ott a pergamenhez hangolt színek
+           nem olvashatók - ez az egy hívás állítja át az egészet. */
+        const sotetre = () => {
+            tart.style.color = "#f2e9d8";
+            gomb.style.background = "#2f261d";
+            gomb.style.color = "#e0a844";
+            gomb.style.borderColor = "#e0a844";
+            kesobb.style.background = "#241d16";
+            kesobb.style.color = "#a2917a";
+            kesobb.style.borderColor = "#3d3125";
+            alairas.style.color = "rgba(242,233,216,.4)";
+        };
 
         /* Elsőként a játék saját ablakát próbáljuk, ugyanazzal a menettel,
            amivel a panel is nyílik. 1.0.1 előtt itt három hiba volt egyszerre:
@@ -3877,6 +3922,7 @@ li.collapsed > .node > .toggle::before{ content:"+" }
         } catch (e) { /* megyünk tovább a tartalékra */ }
 
         /* tartalék: saját, a játék stílusához igazított doboz */
+        sotetre();
         const box = document.createElement("div");
         box.style.cssText = "position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:99999;" +
             "width:360px;background:#241d16;border:2px solid #e0a844;border-radius:8px;" +

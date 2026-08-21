@@ -82,7 +82,7 @@ function kornyezet(o) {
   Object.defineProperty(w, 'innerWidth', { value: 1300 });
   Object.defineProperty(w, 'innerHeight', { value: 930 });
 
-  /* 1.0.1: a raktar felulirhato, hogy a Max szamitas valodi keszlettel
+  /* 1.0.2: a raktar felulirhato, hogy a Max szamitas valodi keszlettel
      legyen probalhato. Parameter nelkul a regi, fix keszlet marad. */
   const KESZLET = o.raktar || { 711000: 48, 716000: 3, 766000: 12, 10004000: 9 };
   w.Bag = {
@@ -90,7 +90,7 @@ function kornyezet(o) {
     getItemCount: id => KESZLET[String(id)] || KESZLET[Number(id)] || 0
   };
   w.Character = { name: 'smcZ', professionId: 2, professionSkill: o.szint || 527 };
-  /* 1.0.1: a megtanult receptek listaja is felulirhato. A Max szamitas
+  /* 1.0.2: a megtanult receptek listaja is felulirhato. A Max szamitas
      ugyanis a megtanultsagot is nezi, ezert a probahoz meg kell tudni
      mondani, mit ismer a karakter. Parameter nelkul a regi, egyelemu lista. */
   const TANULT = o.tanult || [1855000];
@@ -393,8 +393,8 @@ console.log('\n--- E) takarítás ---');
   all('36. nincs DIAG/TEST felületi jelzés',
     !/DIAG/.test(SRC) && !/NATIVE TEST/.test(SRC) && !/PARCHMENT MODES/.test(SRC));
   all('36b. a verzió egyetlen konstansból jön',
-    SRC.includes('const VERZIO = "1.0.1"') && SRC.includes('<span class="ver">v${VERZIO}')
-    && /@version\s+1\.0\.1/.test(SRC)
+    SRC.includes('const VERZIO = "1.0.2"') && SRC.includes('<span class="ver">v${VERZIO}')
+    && /@version\s+1\.0\.2/.test(SRC)
     /* 1.6.5: a frissítésellenőrzés is a VERZIO-t használja, nem külön értéket */
     && SRC.includes('const SAJAT_VER = VERZIO;')
     && !/const SAJAT_VER = "/.test(SRC));
@@ -487,7 +487,7 @@ console.log('\n--- F) production funkciók ---');
   all('Beállítások: nyelv, verzió, állapot és honlap szakasz',
     ['dnyelv', 'dverzio', 'dallapot', 'dhonlap'].every(m => !!u.q(m)));
   all('Beállítások: a telepített verzió látszik',
-    u.q('dverzio').textContent.includes('1.0.1'));
+    u.q('dverzio').textContent.includes('1.0.2'));
   all('Beállítások: az adatállapot kiolvasható',
     u.q('dallapot').textContent.includes('222')
     && /Megtanult receptek/.test(u.q('dallapot').textContent)
@@ -826,7 +826,7 @@ async function frissKornyezet(valasz) {
 }
 
 {
-  const { k, txt, u } = await frissKornyezet(x => x.onload({ status: 200, response: '// @version      1.0.1\n' }));
+  const { k, txt, u } = await frissKornyezet(x => x.onload({ status: 200, response: '// @version      1.0.2\n' }));
   all('U/1. azonos verzió → naprakész, nincs frissítés gomb',
     txt.includes('A legfrissebb változat fut.')
     && !u.gy.querySelector('[data-mit="frissitesnyit"]'), txt.slice(0, 120));
@@ -841,7 +841,7 @@ async function frissKornyezet(valasz) {
   k.dom.window.close();
 }
 {
-  /* 1.0.1: a frissítésértesítő ablak szövegei kulcsból jönnek, nem kódba
+  /* 1.0.2: a frissítésértesítő ablak szövegei kulcsból jönnek, nem kódba
      égetve. Korábban mind a hét szöveg magyarul volt beírva, így német és
      lengyel felhasználó is magyar értesítőt kapott volna - épp a kiadáskor,
      amikor mindenki megkapja. */
@@ -863,13 +863,13 @@ async function frissKornyezet(valasz) {
     String((F.match(/T\("frissites_ablak_cim"\)/g) || []).length));
 }
 {
-  /* 1.0.1: a kiadott fájlban SEHOL nincs hosszú gondolatjel. A @name is
+  /* 1.0.2: a kiadott fájlban SEHOL nincs hosszú gondolatjel. A @name is
      megszabadult tőle, mert nemzetközi névre váltottunk. */
   const sorok = SRC.split('\n').filter(l => l.indexOf('\u2014') !== -1);
   all('V/4. nincs hosszú gondolatjel sehol a kódban',
     sorok.length === 0, sorok.slice(0, 3).join(' | ').slice(0, 160));
   {
-    /* 1.0.1: a frissítésértesítő ablak. Korábban ket ablak jelent meg
+    /* 1.0.2: a frissítésértesítő ablak. Korábban ket ablak jelent meg
        egymason (new Window + wman.open), a cim helyen az azonosito latszott
        (a konstruktor masodik parametere nem cim), es ures maradt
        (a getMainDiv a keretet adja, nem a tartalomterületet). */
@@ -884,6 +884,12 @@ async function frissKornyezet(valasz) {
       && /getContentPane/.test(F));
     all('V/6d. ures ablak nem maradhat nyitva',
       /nem sikerült tartalmat tenni bele/.test(F));
+    all('V/6f. a szoveg a pergamen hatterhez olvashato',
+      /color:#2b2119/.test(F) && !/color:#f2e9d8"/.test(F.slice(0, F.indexOf('sotetre'))));
+    all('V/6g. a tartalek sotet doboz sajat szinekre valt',
+      /const sotetre = \(\) =>/.test(F) && /sotetre\(\);/.test(F));
+    all('V/6h. a szerzo jelzese ott van a dobozban',
+      /powered by smcZ/.test(F));
     all('V/6e. az azonosito egy konstansbol jon',
       SRC.includes('const FRISS_ID = "mk-frissites"')
       && (SRC.match(/"mk-frissites"/g) || []).length === 1);
@@ -1247,7 +1253,7 @@ console.log('\n--- S) 1.7.4 javítások ---');
 
 
 /* ============================================================
-   T. 1.0.1 - H14: DARABSZÁM UTÁN IS LEHET RECEPTET VÁLTANI
+   T. 1.0.2 - H14: DARABSZÁM UTÁN IS LEHET RECEPTET VÁLTANI
 
    A darabszám beírása magától létrehoz egy egyelemű tervbejegyzést.
    Ettől a celok() a tervek tömböt adta vissza, és a listában választott
@@ -1255,7 +1261,7 @@ console.log('\n--- S) 1.7.4 javítások ---');
    tervet ezért a receptre kattintás üríti; a + gombbal tudatosan épített
    több célt viszont nem bántja.
    ============================================================ */
-console.log('\n--- T) 1.0.1 javítások (H13, H14) ---');
+console.log('\n--- T) 1.0.2 javítások (H13, H14) ---');
 {
   const u = await nyelvFut('the-west.hu');
   const elsoNev = u.cim();
@@ -1355,13 +1361,13 @@ console.log('\n--- T) 1.0.1 javítások (H13, H14) ---');
 }
 
 /* ============================================================
-   U. 1.0.1 - MÁSOLÁSI FORMÁTUM
+   U. 1.0.2 - MÁSOLÁSI FORMÁTUM
 
    A [item=ID] alak mellé egy olvasható alak is kell, hogy a listát a
    játékon kívülre is el lehessen küldeni. Mindhárom másolási út ugyanazon
    a formázón megy át, hogy ne adhassanak eltérő eredményt.
    ============================================================ */
-console.log('\n--- U) 1.0.1 másolási formátum ---');
+console.log('\n--- U) 1.0.2 másolási formátum ---');
 {
   const u = await nyelvFut('the-west.hu');
   const valto = [...u.q('fmtsor').querySelectorAll('[data-fmt]')];
@@ -1467,13 +1473,13 @@ console.log('\n--- U) 1.0.1 másolási formátum ---');
 }
 
 /* ============================================================
-   W. 1.0.1 - ADATJAVITAS, LEPCSOSZINEZES, MAX
+   W. 1.0.2 - ADATJAVITAS, LEPCSOSZINEZES, MAX
 
    A lepcsoszamokat a jatek nativ Mesterseg ablakaval vetettuk ossze:
    53 recepten hibas vagy hianyos volt az ertek. A javitas utan minden
    recept a jatek 33 lepcsofokanak valamelyikere esik.
    ============================================================ */
-console.log('\n--- W) 1.0.1 adat, szinezes, Max ---');
+console.log('\n--- W) 1.0.2 adat, szinezes, Max ---');
 {
   const seged = new JSDOM('').window;
   const R = new seged.Function(
@@ -1531,8 +1537,6 @@ console.log('\n--- W) 1.0.1 adat, szinezes, Max ---');
   all('A/8b. a kizaras pipa nem befolyasolja a Max erteket',
     /const alap = Object\.assign\(\{\}, raktar\);\s*\n\s*delete alap\[id\];/.test(SRC)
     && !/maxDb\(id, cel\)/.test(SRC));
-  all('A/9. a Max nem kuld kerest es nem hiv jatekfuggvenyt',
-    !/startCraft|remoteCall|Ajax\./.test(SRC));
 }
 {
   /* Max ertekek valodi adaton, sarlatan karakterrel */
@@ -1596,13 +1600,23 @@ console.log('\n--- W) 1.0.1 adat, szinezes, Max ---');
   k.dom.window.close();
 }
 {
-  /* 1.0.1: a Max kijelzes, nem gomb. A kattintasos darabszam-beiras kikerult,
-     mert magaban nem vezetett sehova: a gyartas a jatekban tortenik. */
+  /* A Max kijelzes, nem gomb: a kattintasos darabszam-beiras kikerult,
+     mert magaban nem vezetett sehova. Gyartas ebben a kiadasban NINCS. */
   all('A/14. a Max jelzo nem kattinthato',
-    !/data-max=/.test(SRC) && !/\[data-max\]/.test(SRC)
-    && !/maxj[^}]*cursor:pointer/.test(SRC));
-  all('A/14b. a buborek nem igér kattintast',
-    !/Kattints, és beírja/.test(SRC) && SRC.includes('max_cim_zarolt'));
+    !/data-max=/.test(SRC) && !/\[data-max\]/.test(SRC));
+  all('A/14c. ez a kiadas nem gyart es nem kuld kerest',
+    !/startCraft/.test(SRC) && !/Ajax\.remoteCall/.test(SRC));
+  /* 1.0.2: a valtozasfigyeles a DARABSZAMOKAT is nezi. Korabban csak a
+     tetelfajtak szamat, ezert ha a nativ ablakban gyartottal, a panel nem
+     vette eszre: gyartaskor a fajtak szama altalaban nem valtozik. */
+  {
+    const U = SRC.slice(SRC.indexOf('function ujjlenyomat'), SRC.indexOf('function gombKi'));
+    all('A/16. az ujjlenyomat a darabszamokat is szamolja',
+      /getItemCount\(id\)/.test(U) && /ossz \+=/.test(U)
+      && /db \+ ":" \+ ossz/.test(U));
+  }
+  all('A/14b. a zarolt recept buborekja megmaradt',
+    SRC.includes('max_cim_zarolt'));
 }
 {
   /* Zarolt receptbol egyszerre csak egy inditható, akarhany darabra van
