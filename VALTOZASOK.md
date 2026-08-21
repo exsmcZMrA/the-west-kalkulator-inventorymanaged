@@ -17,6 +17,11 @@ Ha a játék natív ablakában gyártottál valamit, a panel eddig nem vette
 tehát a hiánylista és a készültség magától frissül - nem csak gyártás után,
 hanem minden készletváltozásra.
 
+A darabszámok azonosítóval súlyozva adódnak össze. Erre azért van szükség,
+mert tizenegy recept egyetlen darab alapanyagból készít egy darab terméket
+(Nyers pirit, Kén, Grafit, Cserzett bőr és társaik) - puszta összeggel ezek
+kioltanák egymást, és a panel továbbra sem venné észre a gyártást.
+
 ---
 
 ## 1.0.1 - 2026-08-19

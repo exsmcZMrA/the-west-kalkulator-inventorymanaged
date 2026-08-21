@@ -3679,6 +3679,20 @@ li.collapsed > .node > .toggle::before{ content:"+" }
        maradt. Csak akkor frissült magától, ha egy alapanyag teljesen
        elfogyott, vagy új tétel került a hátizsákba.
 
+       A darabszámokat AZONOSÍTÓVAL SÚLYOZVA adjuk össze, nem pusztán
+       összegezve. Puszta összeggel ugyanis 11 recept ki tudná oltani a
+       változást: azok egyetlen darab alapanyagból készítenek egy darab
+       terméket (Nyers pirit, Kén, Grafit, Cserzett bőr, Vágódeszka és
+       társaik). Egy be, egy ki - az összeg marad, a fajtaszám pedig csak
+       akkor mozdul, ha a termékből még nem volt készleten. A súlyozás
+       ezt kizárja: a Nyers piritnél -708 és +1944 kerül az összegbe.
+
+       Az ezres osztás azért kell, mert a nyers azonosítókkal szorozva az
+       összeg a biztonságos egészhatár 18 százalékáig is felmehet; így
+       viszont a tartalék több ezerszeres. A Math.round pedig arra való,
+       hogy az érték akkor is egész maradjon, ha egyszer nem ezerrel
+       osztható azonosító érkezne.
+
        A bejárás ugyanaz, amit az olvasRaktar() is végez, tehát nem kerül
        érdemben többe. */
     function ujjlenyomat() {
@@ -3691,7 +3705,8 @@ li.collapsed > .node > .toggle::before{ content:"+" }
                 for (const k of kulcsok) {
                     const id = Number(k);
                     if (!id || id % 1000 !== 0) continue;
-                    try { ossz += bag.getItemCount(id) || 0; } catch (e) { /* nem baj */ }
+                    try { ossz += Math.round(id / 1000) * (bag.getItemCount(id) || 0); }
+                    catch (e) { /* nem baj */ }
                 }
             }
         }
