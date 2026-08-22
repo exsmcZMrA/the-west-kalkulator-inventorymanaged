@@ -315,17 +315,25 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 
 /* Munkaikonok a targy neve mellett, esely szerint csokkeno sorrendben.
    A sorrend maga az informacio: az elso adja a legnagyobb esellyel. */
-.jobs{ display:inline-flex; align-items:center; gap:3px; margin-left:7px;
+/* A munkaikonok kisebbek a targyikonnal (22px), de nem sokkal: 16 pixelen
+   meg felismerhetetlenek voltak. A 20 meg egyertelmuen masodlagos marad,
+   de mar kiveheto rajta, melyik munka. */
+.jobs{ display:inline-flex; align-items:center; gap:4px; margin-left:8px;
   vertical-align:middle }
-.jobs img{ width:16px; height:16px; object-fit:contain; opacity:.85; cursor:help }
-.jobs img:hover{ opacity:1 }
+.jobs img{ width:20px; height:20px; object-fit:contain; opacity:.85; cursor:help }
+.jobs img:hover{ opacity:1; transform:scale(1.15) }
 
 /* A masolasi formatum valtoja. Ugyanaz a ket allas, mint a jatekbeli
    panelen: kod a jatekba, szoveg a jatekon kivulre. */
 /* A valto a felso sav JOBB oldalan all, kozvetlenul a Szamolas/Raktar
-   fulek elott. A margin-left:auto tolja oda; a .tabs sajat auto margoja igy
-   mar nem kap helyet, tehat a ketto egymas mellett marad. */
+   fulek elott.
+
+   A .tabs eredetileg margin-left:auto-val tolta magat jobbra. Ha a valto is
+   auto margot kap, KETTO auto lesz egymas utan, es a bongeszo a szabad helyet
+   EGYENLOEN osztja el kozottuk - a valto ekkor pont felutra ul be, nem a
+   fulek melle. Ezert kapja az autot a valto, es a kovetkezo .tabs nullat. */
 .masolvalto{ display:flex; align-items:center; gap:6px; margin-left:auto }
+.masolvalto + .tabs{ margin-left:0 }
 .masolvalto .mvcim{ font-size:11px; letter-spacing:.12em; text-transform:uppercase;
   color:var(--dim); margin-right:2px }
 .masolvalto button{ font:inherit; font-size:12px; padding:3px 10px; cursor:pointer;
