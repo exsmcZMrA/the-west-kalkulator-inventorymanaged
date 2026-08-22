@@ -315,14 +315,17 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 
 /* Munkaikonok a targy neve mellett, esely szerint csokkeno sorrendben.
    A sorrend maga az informacio: az elso adja a legnagyobb esellyel. */
-.ing .jobs{ display:inline-flex; align-items:center; gap:3px; margin-left:7px;
+.jobs{ display:inline-flex; align-items:center; gap:3px; margin-left:7px;
   vertical-align:middle }
-.ing .jobs img{ width:16px; height:16px; object-fit:contain; opacity:.85 }
-.ing:hover .jobs img{ opacity:1 }
+.jobs img{ width:16px; height:16px; object-fit:contain; opacity:.85; cursor:help }
+.jobs img:hover{ opacity:1 }
 
 /* A masolasi formatum valtoja. Ugyanaz a ket allas, mint a jatekbeli
    panelen: kod a jatekba, szoveg a jatekon kivulre. */
-.masolvalto{ display:flex; align-items:center; gap:6px; margin:0 8px 0 0 }
+/* A valto a felso sav JOBB oldalan all, kozvetlenul a Szamolas/Raktar
+   fulek elott. A margin-left:auto tolja oda; a .tabs sajat auto margoja igy
+   mar nem kap helyet, tehat a ketto egymas mellett marad. */
+.masolvalto{ display:flex; align-items:center; gap:6px; margin-left:auto }
 .masolvalto .mvcim{ font-size:11px; letter-spacing:.12em; text-transform:uppercase;
   color:var(--dim); margin-right:2px }
 .masolvalto button{ font:inherit; font-size:12px; padding:3px 10px; cursor:pointer;
@@ -2190,7 +2193,7 @@ function renderNeeds(){
   $("needs").innerHTML = needOrder.map(id => {
     const b = plan.byId[id];
     return `<li class="need" data-need="${id}">
-      <div class="needmain">${ico(id,"lg")}<div><div class="nm">${b.name}</div><div class="sub" data-sub="${id}"></div>
+      <div class="needmain">${ico(id,"lg")}<div><div class="nm">${b.name}${munkaIkonok(id)}</div><div class="sub" data-sub="${id}"></div>
         <div class="miniset"><button data-dec="${id}">−</button>
           <input data-in="${id}" inputmode="numeric" value="${stock[id] || 0}" aria-label="${b.name} készlet">
           <button data-inc="${id}">+</button></div></div></div>
