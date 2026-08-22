@@ -322,7 +322,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 
 /* A masolasi formatum valtoja. Ugyanaz a ket allas, mint a jatekbeli
    panelen: kod a jatekba, szoveg a jatekon kivulre. */
-.masolvalto{ display:flex; align-items:center; gap:6px; margin:10px 0 8px }
+.masolvalto{ display:flex; align-items:center; gap:6px; margin:0 8px 0 0 }
 .masolvalto .mvcim{ font-size:11px; letter-spacing:.12em; text-transform:uppercase;
   color:var(--dim); margin-right:2px }
 .masolvalto button{ font:inherit; font-size:12px; padding:3px 10px; cursor:pointer;
@@ -337,6 +337,13 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 <div class="top">
   <span class="mark">Mesterség-kalkulátor</span>
   <span class="saved" id="saved">Mentve</span>
+  <div class="masolvalto" role="group" aria-label="Másolás formátuma">
+    <span class="mvcim">Másolás</span>
+    <button type="button" id="mvKod" data-mv="kod" aria-pressed="true"
+      title="A játékba illeszthető alak">Kód</button>
+    <button type="button" id="mvSzoveg" data-mv="szoveg" aria-pressed="false"
+      title="Olvasható név, a játékon kívülre - ez visszaolvasható a kalkulátorba">Szöveg</button>
+  </div>
   <div class="tabs" role="tablist">
     <button role="tab" id="tabCalc" aria-selected="true">Számolás</button>
     <button role="tab" id="tabStock" aria-selected="false">Raktár</button>
@@ -413,13 +420,6 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <p class="eyebrow">Mit gyűjts <span id="needCount"></span></p>
     <div class="summary" id="summary"></div>
     <ul class="needlist" id="needs"></ul>
-    <div class="masolvalto" role="group" aria-label="Másolás formátuma">
-      <span class="mvcim">Másolás</span>
-      <button type="button" id="mvKod" data-mv="kod" aria-pressed="true"
-        title="A játékba illeszthető alak">Kód</button>
-      <button type="button" id="mvSzoveg" data-mv="szoveg" aria-pressed="false"
-        title="Olvasható név, a játékon kívülre - ez visszaolvasható a kalkulátorba">Szöveg</button>
-    </div>
     <button class="act" id="copy">Hiánylista másolása</button>
   </aside>
 </div>
@@ -1951,8 +1951,8 @@ function renderSteps(){
     ul.querySelectorAll("[data-copyall]").forEach(btn => {
       btn.onclick = async () => {
         const rows = btn.dataset.copyall === "left"
-          ? masolFejlec().concat(left.map(b => masolSor(b.id, b.rest, b.name)))
-          : masolFejlec().concat(all.map(b => masolSor(b.id, b.need, b.name)));
+          ? masolFejlec("Még ennyit gyűjts").concat(left.map(b => masolSor(b.id, b.rest, b.name)))
+          : masolFejlec("Összesen kell a gyártáshoz").concat(all.map(b => masolSor(b.id, b.need, b.name)));
         const html = btn.innerHTML;
         const ok = await copyText(rows.join("\n"));
         btn.classList.add("copied");
@@ -2111,11 +2111,20 @@ function holdable(btn, step){
               latja, mirol van szo, es be is tudja masolni.
    Mindharom masolasi utra hat: egy tetel, a teljes lista, es a hianylista. */
 let masolMod = "kod";
+/* A SZOVEGES ALAK PONTOSAN A PANELE. Ott ez a ket forma all:
+     sor:    "991 Kancso"                 - szorzojel NINCS
+     fejlec: "999 db Gyanta - Meg ennyit gyujts:"
+   Kodos modban fejlec nincs: az a jatek chatjebe megy, ott a rovidseg
+   szamit. Ha a ketto eltervedik, a szoveges alak nem olvashato vissza a
+   kalkulatorba - epp az veszne el, amiert letezik. */
 function masolSor(id, db, nev){
-  return masolMod === "szoveg" ? `${db} × ${nev}` : `${db} [item=${id}]`;
+  return masolMod === "szoveg" ? `${db} ${nev}` : `${db} [item=${id}]`;
 }
-function masolFejlec(){
-  return masolMod === "szoveg" ? ["Mesterség-kalkulátor - hiánylista", ""] : [];
+function celFelsorolas(){
+  return targets().map(t => `${t.q} db ${recipeMap.get(t.i) ? recipeMap.get(t.i).n : t.i}`).join(", ");
+}
+function masolFejlec(mit){
+  return masolMod === "szoveg" ? [`${celFelsorolas()} - ${mit}:`] : [];
 }
 function masolValtoFrissit(){
   ["mvKod","mvSzoveg"].forEach(id => {
@@ -2435,7 +2444,7 @@ searchClearSync();
 $("copy").onclick = async () => {
   const sorok = plan.base.filter(b => b.rest).map(b => masolSor(b.id, b.rest, b.name));
   const txt = sorok.length
-    ? masolFejlec().concat(sorok).join("\n")
+    ? masolFejlec("Még ennyit gyűjts").concat(sorok).join("\n")
     : "Minden alapanyag megvan.";
   try{ await navigator.clipboard.writeText(txt); $("copy").textContent = "Vágólapra másolva"; }
   catch{ $("copy").textContent = "A másolás nem sikerült"; }
