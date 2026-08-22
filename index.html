@@ -496,21 +496,7 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
        color:var(--brass);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px">
        ⬇ Játékbeli panel telepítése</a>
     <p style="margin:8px 0 0;font-size:12px;color:var(--dim)">Ugyanazt számolja, mint ez az oldal:
-    a teljes gyártási láncot, darabszámmal, több céllal - csak élő raktáradatból, beolvasás nélkül.
-    Ezen felül <b>gyártani</b> is tudsz belőle, és a hiánylista tárgyikonjaira kattintva megnyílik
-    annak a <b>munkának</b> az ablaka, amelyik a legjobb eséllyel adja az adott alapanyagot.</p>
-    <div style="margin:10px 0 0;padding:9px 11px;border:1px solid var(--line);border-radius:6px">
-      <b style="font-size:13px">Amit tudnod kell: a panel három helyen kérést küld a játék szerverének</b>
-      <ul style="margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--dim);line-height:1.55">
-        <li>gyártáskor, a játék saját gyártásindító függvényén keresztül;</li>
-        <li>a panel megnyitásakor egyszer, mert a gyártáshoz a játéknak elő kell készítenie
-            a Mesterség ablakot;</li>
-        <li>a munkakeresés első kattintásakor egyszer, a térképadatért.</li>
-      </ul>
-      <p style="margin:6px 0 0;font-size:12.5px;color:var(--dim)">Ezeken kívül minden számítás a
-      böngésződben, már betöltött adatból történik. A panel nem automatizál és nem ismétel semmit:
-      minden kérés a te kattintásodra megy el.</p>
-    </div>
+    a teljes gyártási láncot, darabszámmal, több céllal - csak élő raktáradatból, beolvasás nélkül.</p>
   </div>
   <textarea id="impText" spellcheck="false" placeholder="Ide illeszd be…"></textarea>
   <div class="drow">
@@ -724,13 +710,189 @@ const MUNKA = {
    tabacco - mind betolt, es a cim mas nyelvu szerverekrol is mukodik, tehat
    nem kell aldomaint valtogatni. Ha egy kep megsem toltene be, az onerror
    elrejti, es az elrendezes all tovabb. */
+/* A munkak NEVE, shortname szerint. Ugyanabbol a meresbol, a jatek
+   JobList.getSortedJobs() fuggvenyebol. Csak az a 152 szerepel benne, amit a
+   MUNKA tabla tenylegesen hasznal - a jatekban 203 munka van.
+
+   EZ MAGYAR NYELVU, mert a mereset magyar kliens adta. A weboldal magyar,
+   tehat ma ez rendben van; ha valaha mas nyelvre is kimenne, a munkanevek
+   magyarul maradnanak - ellentetben a targynevekkel, amiket a jatek sajat
+   adatbazisa ad. */
+const MUNKA_NEV = {
+  "agave": "Agávészedés",
+  "alcohol": "Alkoholszállítás",
+  "angle": "Horgászat",
+  "archaeologist": "Munkavállalás régészként",
+  "arm_wrestling": "Szkanderezés",
+  "barber": "Munkavállalás borbélyként",
+  "beans": "Babszedés",
+  "beaver": "Hódvadászat",
+  "beekeeper": "Méhészkedés",
+  "berry": "Bogyószedés",
+  "blueberries": "Áfonyaszedés",
+  "brand": "Marhák megjelölése",
+  "break_in": "Lovak betörése",
+  "bridge": "Hídépítés",
+  "buffalo": "Bölényvadászat",
+  "buffelo_bill": "Fellépés Buffalo Billnél",
+  "build_settlement": "Település építése",
+  "build_teepees": "Tipi építése",
+  "building_boats": "Munkavállalás hajóácsként",
+  "building_chests": "Ládaépítés",
+  "captured": "Fegyencjárat",
+  "cartographer": "Munkavállalás térképészként",
+  "casino": "Kaszinóépítés",
+  "cereal": "Gabonabetakarítás",
+  "chuck_wagon": "Lovasszekér javítása",
+  "clearing": "Erdőirtás",
+  "coal": "Szénbányászat",
+  "colonialize_areas": "Új földek meghódítása",
+  "construct_lazarett": "Katonai kórház építése",
+  "cook": "Munkavállalás szakácsként",
+  "corn": "Kukoricaszedés",
+  "coroner": "Munkavállalás halottkémként",
+  "cotton": "Gyapotszedés",
+  "cougar": "Pumavadászat",
+  "cow": "Marhahajtás",
+  "coyote": "Prérifarkas vadászat",
+  "crab_hunting": "Rákászás",
+  "craft_dynamite": "Dinamit készítése",
+  "cut": "Fűnyírás a legelőn",
+  "dam": "Gát lerombolása",
+  "destille_alkohol": "Alkoholfőzés",
+  "digging": "Aranymosás",
+  "diligence_aggression": "Postakocsirablás",
+  "dynamite": "Lőszerszállítás",
+  "embassador": "Munkavállalás nagykövetként",
+  "feed_animal": "Jószág takarmányozása",
+  "fence": "Kerítésjavítás",
+  "fishing": "Halászat",
+  "float": "Faúsztatás",
+  "free_slaves": "Rabszolgák felszabadítása",
+  "fur_trader": "Munkavállalás szőrmekereskedőként",
+  "gather_feathers": "Sastoll gyűjtés",
+  "gems": "Féldrágakövek felkutatása",
+  "general_store": "Munkavállalás eladóként",
+  "grave_digger": "Munkavállalás temetkezési vállalkozóként",
+  "grind_coffee": "Kávédarálás",
+  "grinding": "Gabonaőrlés",
+  "guide_greenhorns": "Zöldfülűek kalauzolása",
+  "gunslinger": "Munkavállalás párbajhősként",
+  "gunsmith": "Munkavállalás fegyverkovácsként",
+  "harvest_pepper": "Paprika szüretelése",
+  "historian": "Munkavállalás történészként",
+  "horse_transport": "Lószállítás",
+  "horseshoe": "Patkolás",
+  "hunt_aligators": "Aligátorvadászat",
+  "hunting_antelopes": "Antilopvadászat",
+  "hunting_foxes": "Rókavadászat",
+  "hunting_rabbits": "Nyúlvadászat",
+  "ice_cutting": "Lékelés",
+  "indians": "Alku az indiánokkal",
+  "indigo_gathering": "Indigószedés",
+  "iron": "Vasbányászat",
+  "lambs": "Bárányok terelése",
+  "lawyer": "Munkavállalás ügyvédként",
+  "lead_expedition": "Expedíció vezetése",
+  "lead_gathering": "Ólombányászat",
+  "lotus_gathering": "Lótuszszirmok gyűjtése",
+  "make_campfire": "Máglyarakás",
+  "maple_tapping": "Juharcsapolás",
+  "marshall": "Munkavállalás rendőrbíróként",
+  "mast": "Telegráfoszlopok állítása",
+  "melting_bullets": "Golyókészítés",
+  "mercenary": "Zsoldosmunka",
+  "muck_out": "Istálló kitrágyázása",
+  "newspaper": "Újságárulás",
+  "nickel_mining": "Nikkelbányászat",
+  "office": "Munkavállalás irodában",
+  "oil": "Olajfúrás",
+  "orange": "Narancsszedés",
+  "order_troops": "Csapatok irányítása",
+  "ox": "Lólopás",
+  "peace": "Béketárgyalások",
+  "peace_officer": "Munkavállalás békéltetőként",
+  "picking_carrots": "Répaszedés",
+  "picking_herbs": "Gyógynövényszedés",
+  "picking_mushrooms": "Gombaszedés",
+  "plan_reservat": "Rezervátum tervezés",
+  "plant_trees": "Faültetés",
+  "play_piano": "Munkavállalás zongorajátékosként",
+  "ponyexpress": "Pony expressz",
+  "potatoe": "Burgonyaszedés",
+  "preacher": "Munkavállalás prédikátorként",
+  "print": "Újságnyomtatás",
+  "pumpkin": "Tökszedés",
+  "quackery": "Sarlatán",
+  "rail": "Sínfektetés",
+  "ranch": "Ranchépítés",
+  "rattlesnake": "Csörgőkígyó-vadászat",
+  "recruit_soldiers": "Katonák toborzása",
+  "reporter": "Munkavállalás riporterként",
+  "rob_gold_digger": "Aranyásók kifosztása",
+  "rob_gun_salesman": "Fegyverkereskedő kirablása",
+  "rodeo": "Rodeó rendezése",
+  "salpeter_gathering": "Salétrombányászat",
+  "saw": "Fafűrészelés",
+  "scarecrow": "Madarak elkergetése a földekről",
+  "selling_horses": "Lovak értékesítése",
+  "sheeps": "Birkaőrzés",
+  "shoes": "Cipőpucolás",
+  "silver": "Ezüstbányászat",
+  "socks_darn": "Sarkantyúzás",
+  "spring": "Kútásás",
+  "springe": "Lovak befogása",
+  "steal": "Telepesek kifosztása",
+  "stealing_cattle": "Marhalopás",
+  "stealing_food_supplies": "Élelmiszerrablás",
+  "stone": "Kőfejtés",
+  "straighten": "Folyómeder kiegyenesítése",
+  "stud_farmer": "Munkavállalás ménfelügyelőként",
+  "sugar": "Cukornádvágás",
+  "sulfur_gathering": "Kénbányászat",
+  "swine": "Disznók őrzése",
+  "tabacco": "Dohányszedés",
+  "tailor": "Munkavállalás szabóként",
+  "tanning": "Bőrcserzés",
+  "teaching": "Oktatás",
+  "ticket_agent": "Munkavállalás jegyellenőrként",
+  "tomato": "Paradicsomszedés",
+  "track": "Telepes karaván védelme",
+  "trade": "Kereskedelem",
+  "train_mechanic": "Munkavállalás mozdonyszerelőként",
+  "trapper": "Munkavállalás prémvadászként",
+  "turkey": "Pulykavadászat",
+  "vet": "Munkavállalás állatorvosként",
+  "wanted": "Plakátok felragasztása",
+  "wildwater": "Vadvízi szállítás",
+  "windmeel": "Szélkeréképítés",
+  "wire": "Szögesdrótkerítés felállítása",
+  "wolf": "Farkasvadászat",
+  "wood": "Favágás",
+  "work_pinkerton_agent": "Munkavállalás Pinkerton ügynökként",
+  "work_wells_fargo": "Munkavállalás a Wells Fargonál"
+};
+
 const MUNKA_KEP = "https://westhu.innogamescdn.com/images/jobs/";
+/* A weboldalon nincs altalanos escape-segedfuggveny. A munkanevek beegetett,
+   ellenorzott adatok, de attributumba menni ellenorizetlenul akkor sem jo
+   szokas - ezert ez a haromsoros vedelem. */
+function mesc(t){
+  return String(t).replace(/&/g,"&amp;").replace(/"/g,"&quot;")
+                  .replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
 function munkaIkonok(id){
   const l = MUNKA[String(id)];
   if(!l || !l.length) return "";
-  return `<span class="jobs">` + l.map(sn =>
-    `<img src="${MUNKA_KEP}${sn}.png" alt="" loading="lazy"
-       onerror="this.style.display='none'">`).join("") + `</span>`;
+  /* A buborek a munka NEVET mondja, nem a shortname-et. Szazalek nincs: a
+     valodi esely a jatekos felszerelesetol fugg, azt a weboldal nem ismeri -
+     a SORREND viszont megmondja, melyik a jobb. */
+  return `<span class="jobs">` + l.map((sn, i) => {
+    const n = MUNKA_NEV[sn] || sn;
+    const cim = (i === 0 && l.length > 1) ? n + " - a legjobb eséllyel" : n;
+    return `<img src="${MUNKA_KEP}${sn}.png" alt="${mesc(n)}" title="${mesc(cim)}" loading="lazy"
+       onerror="this.style.display='none'">`;
+  }).join("") + `</span>`;
 }
 
 const BASE_NAMES = {
