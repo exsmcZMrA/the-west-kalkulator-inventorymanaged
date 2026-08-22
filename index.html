@@ -296,6 +296,40 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 @media (prefers-reduced-motion:no-preference){
   .step,.need,.rlist button,.whrows li{transition:opacity .15s ease, background .15s ease}
 }
+
+/* A kereses masodik csoportjanak fejlece: nem gomb, nem kattinthato. */
+.rlist .valaszto{ font-family:"Space Mono",monospace; font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--dim); padding:10px 4px 4px;
+  border-top:1px solid var(--line); margin-top:6px; display:block }
+
+/* Sajat torlo jel a keresomezoben. NEM az input type="search" nativ X-e:
+   annak a megjelenese bongeszonkent mas, Firefoxban nincs is. */
+.kwrap{ position:relative; display:block }
+.kwrap .search{ padding-right:28px }
+.kwrap .search::-webkit-search-cancel-button{ -webkit-appearance:none; appearance:none }
+.ktorol{ position:absolute; top:50%; right:7px; transform:translateY(-50%);
+  width:18px; height:18px; border:0; border-radius:50%; background:none;
+  color:var(--dim); opacity:.55; font-size:13px; line-height:1; cursor:pointer; padding:0 }
+.ktorol:hover{ background:rgba(128,128,128,.18); opacity:1 }
+.ktorol[hidden]{ display:none }
+
+/* Munkaikonok a targy neve mellett, esely szerint csokkeno sorrendben.
+   A sorrend maga az informacio: az elso adja a legnagyobb esellyel. */
+.ing .jobs{ display:inline-flex; align-items:center; gap:3px; margin-left:7px;
+  vertical-align:middle }
+.ing .jobs img{ width:16px; height:16px; object-fit:contain; opacity:.85 }
+.ing:hover .jobs img{ opacity:1 }
+
+/* A masolasi formatum valtoja. Ugyanaz a ket allas, mint a jatekbeli
+   panelen: kod a jatekba, szoveg a jatekon kivulre. */
+.masolvalto{ display:flex; align-items:center; gap:6px; margin:10px 0 8px }
+.masolvalto .mvcim{ font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--dim); margin-right:2px }
+.masolvalto button{ font:inherit; font-size:12px; padding:3px 10px; cursor:pointer;
+  border:1px solid var(--line); background:transparent; color:var(--dim);
+  border-radius:5px }
+.masolvalto button[aria-pressed="true"]{ border-color:var(--brass); color:var(--brass);
+  background:rgba(154,106,17,.10); font-weight:600 }
 </style>
 </head>
 <body>
@@ -315,7 +349,11 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
 <div class="wrap" id="calcView">
   <aside class="col side">
     <p class="eyebrow">Recept <span id="recipeCount"></span></p>
-    <input class="search" id="search" placeholder="Keresés név szerint…" aria-label="Recept keresése">
+    <span class="kwrap">
+      <input class="search" id="search" placeholder="Keresés név szerint…" aria-label="Recept keresése">
+      <button class="ktorol" id="searchClear" type="button" title="Keresés törlése"
+        aria-label="Keresés törlése" hidden>✕</button>
+    </span>
     <div class="chips" id="chips"></div>
     <div id="charBar" hidden></div>
     <label class="lvl" style="margin-bottom:8px" id="mineWrap" hidden><input type="checkbox" id="onlyMine" style="width:auto">
@@ -375,6 +413,13 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
     <p class="eyebrow">Mit gyűjts <span id="needCount"></span></p>
     <div class="summary" id="summary"></div>
     <ul class="needlist" id="needs"></ul>
+    <div class="masolvalto" role="group" aria-label="Másolás formátuma">
+      <span class="mvcim">Másolás</span>
+      <button type="button" id="mvKod" data-mv="kod" aria-pressed="true"
+        title="A játékba illeszthető alak">Kód</button>
+      <button type="button" id="mvSzoveg" data-mv="szoveg" aria-pressed="false"
+        title="Olvasható név, a játékon kívülre - ez visszaolvasható a kalkulátorba">Szöveg</button>
+    </div>
     <button class="act" id="copy">Hiánylista másolása</button>
   </aside>
 </div>
@@ -451,7 +496,21 @@ dialog textarea{width:100%;min-height:180px;background:var(--bg);color:var(--ink
        color:var(--brass);border-radius:6px;padding:7px 14px;text-decoration:none;font-size:13.5px">
        ⬇ Játékbeli panel telepítése</a>
     <p style="margin:8px 0 0;font-size:12px;color:var(--dim)">Ugyanazt számolja, mint ez az oldal:
-    a teljes gyártási láncot, darabszámmal, több céllal - csak élő raktáradatból, beolvasás nélkül.</p>
+    a teljes gyártási láncot, darabszámmal, több céllal - csak élő raktáradatból, beolvasás nélkül.
+    Ezen felül <b>gyártani</b> is tudsz belőle, és a hiánylista tárgyikonjaira kattintva megnyílik
+    annak a <b>munkának</b> az ablaka, amelyik a legjobb eséllyel adja az adott alapanyagot.</p>
+    <div style="margin:10px 0 0;padding:9px 11px;border:1px solid var(--line);border-radius:6px">
+      <b style="font-size:13px">Amit tudnod kell: a panel három helyen kérést küld a játék szerverének</b>
+      <ul style="margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--dim);line-height:1.55">
+        <li>gyártáskor, a játék saját gyártásindító függvényén keresztül;</li>
+        <li>a panel megnyitásakor egyszer, mert a gyártáshoz a játéknak elő kell készítenie
+            a Mesterség ablakot;</li>
+        <li>a munkakeresés első kattintásakor egyszer, a térképadatért.</li>
+      </ul>
+      <p style="margin:6px 0 0;font-size:12.5px;color:var(--dim)">Ezeken kívül minden számítás a
+      böngésződben, már betöltött adatból történik. A panel nem automatizál és nem ismétel semmit:
+      minden kérés a te kattintásodra megy el.</p>
+    </div>
   </div>
   <textarea id="impText" spellcheck="false" placeholder="Ide illeszd be…"></textarea>
   <div class="drow">
@@ -492,6 +551,188 @@ const PROFS = [
 ];
 
 /* alapanyagok - hivatalos magyar nevek a játék adatbázisából */
+/* MUNKA-TABLA: targyazonosito -> a targyat ado munkak shortname-je, ESELY
+   SZERINT CSOKKENOEN, tehat a legjobb all elol.
+
+   HONNAN: a jatek JobList.getJobsByItemId() fuggvenyebol, EGYSZERI meressel
+   gyujtve. A weboldal nem fut a jatekban, tehat elo adatot nem tud kerni -
+   ezert van beegetve. HA A JATEK UJ MUNKAT KAP, EZT A TABLAT KEZZEL KELL
+   BOVITENI; magatol nem frissul.
+
+   Az 52499000 (Egy ures pohar) szandekosan hianyzik: ahhoz nincs munka, az
+   UP boltbol szerezheto meg.
+
+   Szazalek NINCS. A valodi esely a jatekos felszerelesetol fugg, azt a
+   weboldal nem ismerheti - a SORREND viszont onmagaban megmondja, melyik a
+   jobb. */
+const MUNKA = {
+  "700000": ["swine"],
+  "701000": ["cereal"],
+  "702000": ["tabacco"],
+  "703000": ["sugar"],
+  "704000": ["cotton"],
+  "705000": ["angle","fishing"],
+  "706000": ["berry"],
+  "707000": ["sheeps"],
+  "708000": ["digging"],
+  "709000": ["turkey"],
+  "710000": ["cow"],
+  "711000": ["clearing","float","wood"],
+  "712000": ["tanning"],
+  "714000": ["dam","beaver"],
+  "715000": ["trade"],
+  "716000": ["stone"],
+  "717000": ["fishing"],
+  "718000": ["coyote"],
+  "719000": ["indians"],
+  "720000": ["gems"],
+  "721000": ["coal"],
+  "722000": ["chuck_wagon"],
+  "724000": ["buffalo"],
+  "725000": ["silver"],
+  "728000": ["steal"],
+  "733000": ["diligence_aggression"],
+  "737000": ["dynamite"],
+  "739000": ["wire"],
+  "740000": ["brand"],
+  "741000": ["spring"],
+  "742000": ["saw"],
+  "743000": ["wanted"],
+  "744000": ["print","newspaper"],
+  "745000": ["grinding"],
+  "746000": ["beans"],
+  "747000": ["fence"],
+  "748000": ["corn"],
+  "749000": ["springe"],
+  "751000": ["peace"],
+  "752000": ["oil"],
+  "754000": ["horseshoe"],
+  "756000": ["windmeel"],
+  "757000": ["scarecrow"],
+  "761000": ["bridge"],
+  "763000": ["wolf"],
+  "764000": ["captured"],
+  "765000": ["cut"],
+  "766000": ["rail"],
+  "767000": ["mast"],
+  "771000": ["beaver"],
+  "778000": ["track"],
+  "779000": ["ponyexpress"],
+  "782000": ["angle"],
+  "784000": ["ranch"],
+  "787000": ["break_in","ox"],
+  "789000": ["shoes"],
+  "790000": ["iron"],
+  "791000": ["orange"],
+  "792000": ["agave"],
+  "793000": ["tomato"],
+  "794000": ["quackery"],
+  "795000": ["straighten"],
+  "797000": ["muck_out"],
+  "1708000": ["mercenary"],
+  "1791000": ["digging"],
+  "1807000": ["socks_darn"],
+  "1808000": ["potatoe"],
+  "1809000": ["feed_animal"],
+  "1810000": ["pumpkin"],
+  "1811000": ["blueberries"],
+  "1812000": ["plant_trees"],
+  "1813000": ["gather_feathers"],
+  "1814000": ["lotus_gathering"],
+  "1815000": ["crab_hunting"],
+  "1816000": ["teaching"],
+  "1818000": ["sulfur_gathering"],
+  "1820000": ["rattlesnake"],
+  "1821000": ["salpeter_gathering"],
+  "1822000": ["horse_transport"],
+  "1824000": ["cougar"],
+  "1825000": ["indigo_gathering"],
+  "1826000": ["alcohol"],
+  "1827000": ["lead_gathering"],
+  "1832000": ["casino"],
+  "1833000": ["marshall"],
+  "1834000": ["free_slaves"],
+  "1835000": ["buffelo_bill"],
+  "2000000": ["wildwater"],
+  "2003000": ["rattlesnake"],
+  "2006000": ["rodeo"],
+  "2009000": ["wildwater"],
+  "2162000": ["grind_coffee"],
+  "2163000": ["lambs"],
+  "2430000": ["melting_bullets"],
+  "2431000": ["recruit_soldiers"],
+  "2432000": ["guide_greenhorns"],
+  "2433000": ["build_settlement"],
+  "2435000": ["construct_lazarett"],
+  "2436000": ["play_piano"],
+  "2437000": ["work_pinkerton_agent"],
+  "2439000": ["order_troops"],
+  "2442000": ["colonialize_areas"],
+  "2443000": ["embassador"],
+  "2444000": ["plan_reservat"],
+  "2445000": ["trapper"],
+  "2446000": ["gunslinger"],
+  "2447000": ["harvest_pepper"],
+  "2450000": ["arm_wrestling"],
+  "2451000": ["craft_dynamite"],
+  "2452000": ["grave_digger"],
+  "2453000": ["peace_officer"],
+  "2454000": ["preacher"],
+  "2455000": ["hunt_aligators"],
+  "2456000": ["destille_alkohol"],
+  "2457000": ["work_wells_fargo"],
+  "2458000": ["lead_expedition"],
+  "52932000": ["picking_herbs"],
+  "52933000": ["picking_carrots"],
+  "52934000": ["reporter"],
+  "52935000": ["ticket_agent"],
+  "52936000": ["general_store"],
+  "52937000": ["tailor"],
+  "52938000": ["gunsmith"],
+  "52939000": ["office"],
+  "52941000": ["barber"],
+  "52942000": ["hunting_rabbits"],
+  "52943000": ["historian"],
+  "52945000": ["stealing_cattle"],
+  "52946000": ["maple_tapping"],
+  "52947000": ["lawyer"],
+  "52949000": ["train_mechanic"],
+  "52950000": ["cook"],
+  "52951000": ["stealing_food_supplies"],
+  "52952000": ["selling_horses"],
+  "52953000": ["building_chests"],
+  "52954000": ["nickel_mining"],
+  "52956000": ["stud_farmer"],
+  "52958000": ["vet"],
+  "52959000": ["beekeeper"],
+  "52961000": ["picking_mushrooms"],
+  "52962000": ["build_teepees"],
+  "52963000": ["archaeologist"],
+  "52964000": ["building_boats"],
+  "52965000": ["ice_cutting"],
+  "52966000": ["fur_trader"],
+  "52967000": ["make_campfire"],
+  "52969000": ["rob_gold_digger"],
+  "52970000": ["cartographer"],
+  "52971000": ["hunting_antelopes"],
+  "52972000": ["rob_gun_salesman"],
+  "52974000": ["coroner"],
+  "52975000": ["hunting_foxes"]
+};
+
+/* Az ikon utvonala a shortname-bol all ossze. Mérve: wood, float, clearing,
+   tabacco - mind betolt, es a cim mas nyelvu szerverekrol is mukodik, tehat
+   nem kell aldomaint valtogatni. Ha egy kep megsem toltene be, az onerror
+   elrejti, es az elrendezes all tovabb. */
+const MUNKA_KEP = "https://westhu.innogamescdn.com/images/jobs/";
+function munkaIkonok(id){
+  const l = MUNKA[String(id)];
+  if(!l || !l.length) return "";
+  return `<span class="jobs">` + l.map(sn =>
+    `<img src="${MUNKA_KEP}${sn}.png" alt="" loading="lazy"
+       onerror="this.style.display='none'">`).join("") + `</span>`;
+}
+
 const BASE_NAMES = {
 "700000":"Sonka",
 "701000":"Gabona",
@@ -1444,22 +1685,71 @@ const unlearned = r => !!learned && !!char
 const canCraftNow = r => r.g.every(([id, q]) => (stock[id] || 0) >= q);
 
 /* ======================= receptlista ======================= */
+/* KERESES HOZZAVALO SZERINT.
+   A kereso ket csoportot ad: elol a NEVRE illeszkedo receptek, alattuk egy
+   elvalaszto, majd azok a receptek, AMIKBE a keresett targy kell. A masodik
+   csoport a TELJES LANCOT nezi, nem csak a kozvetlen osszetevoket - ha a
+   Hollotoll egy koztes termekben van, az is talalat. A jatekbeli panel
+   ugyanezt csinalja, onnan van atveve.
+   A lancbejaras mentve van: receptenkent ujraszamolni minden billentyu-
+   leutesnel dragа lenne. */
+const lancCache = new Map();
+function lancTargyai(id, ut){
+  if(lancCache.has(id)) return lancCache.get(id);
+  const r = recipeMap.get(id);
+  const ki = new Set();
+  if(r){
+    const jart = ut || [];
+    if(!jart.includes(id)){
+      r.g.forEach(([gid]) => {
+        ki.add(String(gid));
+        lancTargyai(gid, [...jart, id]).forEach(x => ki.add(x));
+      });
+    }
+  }
+  if(!ut) lancCache.set(id, ki);
+  return ki;
+}
+
 function renderRecipes(){
   const q = $("search").value.trim().toLowerCase();
   const ready = $("onlyReady").checked;
   const mine = char && $("onlyMine").checked;
-  const list = RECIPES
+  const szurok = r => (!mine || !unlearned(r))
+    && (!ready || (canCraftNow(r) && !overLevel(r) && !unlearned(r)));
+  const rend = (a,b) => minLvl(a) - minLvl(b) || a.n.localeCompare(b.n,"hu");
+
+  const nevre = RECIPES
     .filter(r => q ? r.n.toLowerCase().includes(q) : profIds(r.p).includes(sel.prof))
-    .filter(r => !mine || !unlearned(r))
-    .filter(r => !ready || (canCraftNow(r) && !overLevel(r) && !unlearned(r)))
-    .sort((a,b) => minLvl(a) - minLvl(b) || a.n.localeCompare(b.n,"hu"));
-  $("recipeCount").textContent = list.length + " db";
+    .filter(szurok).sort(rend);
+
+  let hozzavalora = [];
+  if(q){
+    const marVan = new Set(nevre.map(r => r.i));
+    const keresett = new Set();
+    RECIPES.forEach(r => { if(r.n.toLowerCase().includes(q)) keresett.add(String(r.i)); });
+    Object.keys(BASE_NAMES).forEach(id => {
+      if(String(BASE_NAMES[id]).toLowerCase().includes(q)) keresett.add(String(id)); });
+    if(keresett.size){
+      hozzavalora = RECIPES.filter(r => {
+        if(marVan.has(r.i)) return false;
+        if(!szurok(r)) return false;
+        const l = lancTargyai(r.i);
+        for(const k of keresett) if(l.has(k)) return true;
+        return false;
+      }).sort(rend);
+    }
+  }
+  const list = nevre.concat(hozzavalora);
+  $("recipeCount").textContent = hozzavalora.length
+    ? nevre.length + " + " + hozzavalora.length
+    : list.length + " db";
   if(!list.length && (ready || mine)){
     $("recipeCount").textContent = "0 db";
     $("rlist").innerHTML = `<p class="empty">Nincs a szűrésnek megfelelő recept.</p>`;
     return;
   }
-  $("rlist").innerHTML = list.map(r => {
+  const sorHTML = r => {
     const locked = overLevel(r);
     const nolearn = unlearned(r);
     const state = (locked || nolearn) ? "" : canCraftNow(r) ? "ready" : "close";
@@ -1475,7 +1765,14 @@ function renderRecipes(){
         title="${inPlan ? "Még egy darab a tervbe" : "Hozzáadás a tervhez"}"
         style="${inPlan ? "color:var(--brass)" : ""}">+</button>
       </li>`;
-  }).join("") || `<p class="empty">Nincs ilyen nevű recept.</p>`;
+  };
+  /* Elvalaszto CSAK akkor, ha mindket csoportban van talalat. */
+  $("rlist").innerHTML = (hozzavalora.length
+      ? nevre.map(sorHTML).join("")
+        + `<li class="valaszto">ehhez kell:</li>`
+        + hozzavalora.map(sorHTML).join("")
+      : list.map(sorHTML).join(""))
+    || `<p class="empty">Nincs ilyen nevű recept.</p>`;
   $("rlist").querySelectorAll("[data-add]").forEach(b => {
     b.onclick = () => addTarget(b.dataset.add);
   });
@@ -1634,8 +1931,8 @@ function renderSteps(){
       `<span class="ing ${b.rest ? "" : "ok"}"><b>${b.need}</b> ${b.name}</span>`).join("");
     const left = all.filter(b => b.rest).sort((a,b) => b.rest - a.rest);
     const leftChips = left.map(b =>
-      `<button class="ing miss" data-copy="${b.id}" data-q="${b.rest}"
-        title="Kattints a másoláshoz: ${b.rest} [item=${b.id}]"><b>${b.rest}</b> ${b.name}</button>`).join("");
+      `<button class="ing miss" data-copy="${b.id}" data-q="${b.rest}" data-nev="${b.name}"
+        title="Kattints a másoláshoz: ${masolSor(b.id, b.rest, b.name)}"><b>${b.rest}</b> ${b.name}${munkaIkonok(b.id)}</button>`).join("");
     ul.className = "steps";
     ul.innerHTML = `
       <li class="step final">
@@ -1654,8 +1951,8 @@ function renderSteps(){
     ul.querySelectorAll("[data-copyall]").forEach(btn => {
       btn.onclick = async () => {
         const rows = btn.dataset.copyall === "left"
-          ? left.map(b => `${b.rest} [item=${b.id}]`)
-          : all.map(b => `${b.need} [item=${b.id}]`);
+          ? masolFejlec().concat(left.map(b => masolSor(b.id, b.rest, b.name)))
+          : masolFejlec().concat(all.map(b => masolSor(b.id, b.need, b.name)));
         const html = btn.innerHTML;
         const ok = await copyText(rows.join("\n"));
         btn.classList.add("copied");
@@ -1665,7 +1962,7 @@ function renderSteps(){
     });
     ul.querySelectorAll("[data-copy]").forEach(btn => {
       btn.onclick = async () => {
-        const txt = `${btn.dataset.q} [item=${btn.dataset.copy}]`;
+        const txt = masolSor(btn.dataset.copy, btn.dataset.q, btn.dataset.nev || "");
         const html = btn.innerHTML;
         const ok = await copyText(txt);
         btn.classList.add("copied");
@@ -1807,6 +2104,41 @@ function holdable(btn, step){
 }
 
 /* ---- vágólap, régebbi böngészőkre is ---- */
+/* A KETFELE MASOLAS.
+   "kod"   -> a jatekba illesztheto [item=ID] alak
+   "szoveg"-> olvashato nev, a jatekon kivulre. Ez az alak VISSZAOLVASHATO a
+              kalkulatorba, ezert kap a lista ele fejlecsort - a cimzett igy
+              latja, mirol van szo, es be is tudja masolni.
+   Mindharom masolasi utra hat: egy tetel, a teljes lista, es a hianylista. */
+let masolMod = "kod";
+function masolSor(id, db, nev){
+  return masolMod === "szoveg" ? `${db} × ${nev}` : `${db} [item=${id}]`;
+}
+function masolFejlec(){
+  return masolMod === "szoveg" ? ["Mesterség-kalkulátor - hiánylista", ""] : [];
+}
+function masolValtoFrissit(){
+  ["mvKod","mvSzoveg"].forEach(id => {
+    const b = $(id);
+    if(b) b.setAttribute("aria-pressed", String(b.dataset.mv === masolMod));
+  });
+}
+["mvKod","mvSzoveg"].forEach(id => {
+  const b = $(id);
+  if(!b) return;
+  b.onclick = () => {
+    masolMod = b.dataset.mv;
+    try{ localStorage.setItem("mk-masolmod", masolMod); }catch(e){}
+    masolValtoFrissit();
+    renderPlan();
+  };
+});
+try{
+  const m = localStorage.getItem("mk-masolmod");
+  if(m === "kod" || m === "szoveg") masolMod = m;
+}catch(e){}
+masolValtoFrissit();
+
 async function copyText(t){
   try{ await navigator.clipboard.writeText(t); return true; }
   catch(e){
@@ -2084,9 +2416,27 @@ $("seg").querySelectorAll("[data-mode]").forEach(b => {
     renderSteps(); save();
   };
 });
+/* A torlo jel: csak beirt szovegnel latszik, kattintasra urit, visszaadja a
+   fokuszt, es a lista visszaall. Az Esc ugyanezt teszi. */
+function searchClearSync(){ $("searchClear").hidden = !$("search").value; }
+function searchClearDo(){
+  $("search").value = "";
+  searchClearSync();
+  renderRecipes();
+  $("search").focus();
+}
+$("search").addEventListener("input", searchClearSync);
+$("searchClear").addEventListener("click", searchClearDo);
+$("search").addEventListener("keydown", e => {
+  if(e.key === "Escape" && $("search").value){ e.preventDefault(); searchClearDo(); }
+});
+searchClearSync();
+
 $("copy").onclick = async () => {
-  const txt = plan.base.filter(b => b.rest).map(b => `${b.rest} × ${b.name}`).join("\n")
-    || "Minden alapanyag megvan.";
+  const sorok = plan.base.filter(b => b.rest).map(b => masolSor(b.id, b.rest, b.name));
+  const txt = sorok.length
+    ? masolFejlec().concat(sorok).join("\n")
+    : "Minden alapanyag megvan.";
   try{ await navigator.clipboard.writeText(txt); $("copy").textContent = "Vágólapra másolva"; }
   catch{ $("copy").textContent = "A másolás nem sikerült"; }
   setTimeout(() => $("copy").textContent = "Hiánylista másolása", 1600);
