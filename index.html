@@ -1858,6 +1858,27 @@ const unlearned = r => !!learned && !!char
 const canCraftNow = r => r.g.every(([id, q]) => (stock[id] || 0) >= q);
 
 /* ======================= receptlista ======================= */
+/* EKEZET NELKULI KERESES.
+   Nem mindenkinek van ekezetes billentyuzete, es sokan egyszeruen nem
+   bajlodnak vele. A "rago" mostantol megtalalja a Ragodohanyt - es a "rago"
+   ekezetesen is, mert mindketto ugyanarra az alakra egyszerusodik.
+   A Unicode NFD alakja szetszedi az ekezetes betut alapbeture es kulon
+   ekezetre, azt pedig kidobjuk; a magyar o es u kettos ekezete is igy bomlik.
+   A weboldal magyar, tehat a lengyel l es a nemet ss kiveteleire itt nincs
+   szukseg - a panelben van rajuk kulon kezeles. */
+function ekNelkul(t){
+  return String(t == null ? "" : t).toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+/* Egyszer szamoljuk ki, nem minden billentyuleutesnel 375 neven. */
+const ekCache = new Map();
+function ekNev(id, nev){
+  const k = String(id);
+  let v = ekCache.get(k);
+  if(v === undefined){ v = ekNelkul(nev); ekCache.set(k, v); }
+  return v;
+}
+
 /* KERESES HOZZAVALO SZERINT.
    A kereso ket csoportot ad: elol a NEVRE illeszkedo receptek, alattuk egy
    elvalaszto, majd azok a receptek, AMIKBE a keresett targy kell. A masodik
@@ -1885,7 +1906,7 @@ function lancTargyai(id, ut){
 }
 
 function renderRecipes(){
-  const q = $("search").value.trim().toLowerCase();
+  const q = ekNelkul($("search").value.trim());
   const ready = $("onlyReady").checked;
   const mine = char && $("onlyMine").checked;
   const szurok = r => (!mine || !unlearned(r))
@@ -1893,16 +1914,16 @@ function renderRecipes(){
   const rend = (a,b) => minLvl(a) - minLvl(b) || a.n.localeCompare(b.n,"hu");
 
   const nevre = RECIPES
-    .filter(r => q ? r.n.toLowerCase().includes(q) : profIds(r.p).includes(sel.prof))
+    .filter(r => q ? ekNev(r.i, r.n).includes(q) : profIds(r.p).includes(sel.prof))
     .filter(szurok).sort(rend);
 
   let hozzavalora = [];
   if(q){
     const marVan = new Set(nevre.map(r => r.i));
     const keresett = new Set();
-    RECIPES.forEach(r => { if(r.n.toLowerCase().includes(q)) keresett.add(String(r.i)); });
+    RECIPES.forEach(r => { if(ekNev(r.i, r.n).includes(q)) keresett.add(String(r.i)); });
     Object.keys(BASE_NAMES).forEach(id => {
-      if(String(BASE_NAMES[id]).toLowerCase().includes(q)) keresett.add(String(id)); });
+      if(ekNev(id, BASE_NAMES[id]).includes(q)) keresett.add(String(id)); });
     if(keresett.size){
       hozzavalora = RECIPES.filter(r => {
         if(marVan.has(r.i)) return false;
